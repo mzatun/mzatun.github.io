@@ -1,0 +1,2100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#FFF8EF">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>积木机械原理探索乐园 · H5</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  :root{
+    --coral:#FF8A80; --coral-l:#FFDAD6;
+    --sky:#4FC3F7; --sky-l:#D6F1FF;
+    --mint:#4DB6AC; --mint-l:#D7F2EE;
+    --lemon:#FFD54F; --lemon-l:#FFF3C9;
+    --lav:#B39DDB; --lav-l:#EAE2FA;
+    --ink:#5B4A63; --ink2:#8A7B93;
+    --card:#FFFFFF;
+    --sh:0 10px 30px rgba(120,100,140,.14);
+  }
+  html,body{ width:100%; height:100%; overflow:hidden; overscroll-behavior:none; }
+  body{
+    font-family:"PingFang SC","Microsoft YaHei","Hiragino Sans GB",sans-serif;
+    background:linear-gradient(160deg,#FFF8EF 0%,#F3FBFF 45%,#F4F0FF 100%);
+    color:var(--ink);
+    user-select:none; -webkit-user-select:none; -webkit-touch-callout:none;
+    font-size:16px;
+  }
+
+  /* ===== 顶栏 ===== */
+  .appbar{
+    position:fixed; top:0; left:0; right:0; z-index:60;
+    display:flex; align-items:center; gap:10px;
+    padding:calc(env(safe-area-inset-top) + 8px) 14px 8px;
+    background:rgba(255,255,255,.86); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+    border-bottom:1px solid rgba(120,100,140,.10);
+  }
+  .appbar .logo{ font-size:19px; font-weight:800; color:var(--ink); white-space:nowrap; display:flex; align-items:center; gap:6px; }
+  .appbar .logo em{ font-style:normal; color:var(--coral); }
+  .appbar .badge{ font-size:10px; font-weight:800; background:var(--coral); color:#fff; border-radius:999px; padding:2px 8px; letter-spacing:1px; }
+  .appbar .st{ font-size:11px; color:var(--ink2); margin-left:auto; white-space:nowrap; }
+  @media (max-width:640px){ .appbar .st{ display:none; } }
+
+  /* ===== 首页 ===== */
+  #view-home{ position:fixed; top:calc(env(safe-area-inset-top) + 52px); bottom:calc(env(safe-area-inset-bottom) + 60px); left:0; right:0; overflow-y:auto; -webkit-overflow-scrolling:touch; padding-bottom:18px; }
+  .hero{ padding:18px 16px 6px; }
+  .hero h1{ font-size:26px; font-weight:900; letter-spacing:1px; line-height:1.35; }
+  .hero h1 em{ font-style:normal; background:linear-gradient(90deg,var(--coral),var(--lemon)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .hero p{ margin-top:8px; font-size:13.5px; line-height:1.8; color:var(--ink2); }
+  .hero .chips{ display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }
+  .chip{ font-size:12px; font-weight:700; padding:6px 13px; border-radius:999px; }
+  .chip.c1{ background:var(--coral-l); color:#D9554C; }
+  .chip.c2{ background:var(--sky-l); color:#2C7DB8; }
+  .chip.c3{ background:var(--mint-l); color:#2E8B80; }
+  .chip.c4{ background:var(--lav-l); color:#7C5FB8; }
+  .chip.c5{ background:var(--lemon-l); color:#A07C12; }
+
+  .sec{ margin-top:20px; }
+  .sec h2{ display:flex; align-items:baseline; gap:8px; padding:0 16px; font-size:18px; font-weight:800; }
+  .sec h2 small{ font-size:11.5px; font-weight:600; color:var(--ink2); }
+
+  .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(225px,1fr)); gap:12px; padding:12px 14px; }
+  .mcard{
+    position:relative; display:flex; flex-direction:column; align-items:flex-start;
+    background:var(--card); border-radius:20px; padding:16px 14px 14px;
+    box-shadow:var(--sh); cursor:pointer; border:3px solid transparent;
+    transition:transform .18s ease, box-shadow .18s ease;
+  }
+  .mcard:active{ transform:scale(.97); }
+  .mcard .ic{ width:54px; height:54px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:30px; margin-bottom:10px; }
+  .mcard h3{ font-size:16px; font-weight:800; margin-bottom:4px; }
+  .mcard p{ font-size:12px; color:var(--ink2); line-height:1.5; flex:1; }
+  .mcard .go{ margin-top:10px; font-size:12px; font-weight:700; color:#fff; border-radius:999px; padding:5px 12px; }
+  .mcard .tag{ position:absolute; top:12px; right:12px; font-size:10px; font-weight:700; padding:2px 8px; border-radius:999px; }
+  /* 手机：横滑卡片 */
+  @media (max-width:640px){
+    .grid{ display:flex; overflow-x:auto; padding:10px 14px; gap:10px; scroll-snap-type:x proximity; -webkit-overflow-scrolling:touch; }
+    .grid::-webkit-scrollbar{ display:none; }
+    .mcard{ min-width:76vw; scroll-snap-align:start; }
+    .hero h1{ font-size:22px; }
+    .hero p{ font-size:12.5px; }
+    .sec h2{ font-size:16px; }
+  }
+
+  /* ===== 底部导航 ===== */
+  .bnav{
+    position:fixed; left:0; right:0; bottom:0; z-index:70;
+    display:flex; background:rgba(255,255,255,.94); backdrop-filter:blur(14px);
+    border-top:1px solid rgba(120,100,140,.10); padding-bottom:env(safe-area-inset-bottom);
+  }
+  .bnav button{
+    flex:1; border:none; background:none; font-family:inherit; font-size:11px; font-weight:700;
+    color:var(--ink2); padding:7px 0 9px; display:flex; flex-direction:column; align-items:center; gap:2px;
+  }
+  .bnav button .i{ font-size:20px; line-height:1.1; }
+  .bnav button.on{ color:var(--sky); }
+
+  /* ===== 演示页 ===== */
+  #view-demo{ position:fixed; inset:0; display:none; }
+  #view-demo.on{ display:block; }
+  #scene{ position:absolute; inset:0; }
+  #scene canvas{ touch-action:none; }
+
+  #demo-head{
+    position:fixed; top:0; left:0; right:0; z-index:40;
+    display:flex; align-items:center; gap:8px;
+    padding:calc(env(safe-area-inset-top) + 8px) 12px 8px;
+    background:linear-gradient(180deg,rgba(255,255,255,.9),rgba(255,255,255,0));
+  }
+  #demo-head .back{
+    border:none; cursor:pointer; font-family:inherit; font-size:12px; font-weight:700;
+    color:var(--ink); background:rgba(255,255,255,.9); border:1px solid rgba(120,100,140,.15);
+    padding:7px 12px; border-radius:999px; box-shadow:0 2px 10px rgba(120,100,140,.12);
+  }
+  #demo-head h2{ font-size:16px; font-weight:800; }
+  #demo-head .st{ font-size:11px; color:var(--ink2); font-weight:500; max-width:38vw; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+  /* ===== 底部信息抽屉 ===== */
+  .sheet{
+    position:fixed; left:10px; right:10px;
+    bottom:calc(env(safe-area-inset-bottom) + 62px);
+    z-index:40; height:42vh; display:flex; flex-direction:column;
+    background:rgba(255,255,255,.96); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+    border-radius:22px; box-shadow:0 -6px 30px rgba(120,100,140,.20);
+    border:1px solid rgba(120,100,140,.10);
+    animation:sheetIn .28s ease;
+    transition:height .28s ease;
+  }
+  @keyframes sheetIn{ from{ transform:translateY(40px); opacity:0; } to{ transform:none; opacity:1; } }
+  .sheet .shead{ position:relative; flex:0 0 auto; display:flex; align-items:center; justify-content:center; padding:6px 0 0; cursor:pointer; }
+  .sheet .handle{ width:42px; height:5px; border-radius:3px; background:rgba(150,130,170,.35); position:relative; }
+  .sheet .chev{
+    position:absolute; left:50%; transform:translateX(-50%); top:9px;
+    font-size:11px; color:var(--ink2); font-style:normal;
+  }
+  .sheet .sclose{
+    position:absolute; right:8px; top:2px; border:none; cursor:pointer; font-family:inherit;
+    font-size:12px; font-weight:800; color:var(--ink2); background:#F2EEF6;
+    width:26px; height:26px; border-radius:50%; line-height:1; display:flex; align-items:center; justify-content:center;
+  }
+  .sheet .sclose:active{ transform:scale(.92); }
+  .sheet.collapsed{ height:auto; }
+  .sheet.collapsed .body{ display:none; }
+  .sheet.closed{ display:none; }
+  .sheet .tabs{ display:flex; gap:6px; padding:12px 12px 6px; flex:0 0 auto; }
+  .sheet .tabs button{
+    flex:1; border:none; cursor:pointer; font-family:inherit; font-size:12px; font-weight:700;
+    padding:7px 4px; border-radius:999px; color:var(--ink); background:#F2EEF6; white-space:nowrap;
+  }
+  .sheet .tabs button.on{ color:#fff; background:var(--coral); box-shadow:0 3px 10px rgba(255,138,128,.35); }
+  .sheet .body{ flex:1; overflow-y:auto; padding:6px 14px 14px; -webkit-overflow-scrolling:touch; }
+  .sheet .body::-webkit-scrollbar{ width:5px; }
+  .sheet .body::-webkit-scrollbar-thumb{ background:rgba(150,130,170,.28); border-radius:3px; }
+
+  /* 关闭后的重开悬浮键 */
+  #reopen{
+    display:none; position:fixed; right:12px;
+    bottom:calc(env(safe-area-inset-bottom) + 74px);
+    z-index:45; border:none; cursor:pointer; font-family:inherit; font-size:13px; font-weight:800;
+    color:#fff; background:var(--coral); border-radius:999px; padding:10px 16px;
+    box-shadow:0 6px 20px rgba(255,138,128,.45);
+  }
+  #reopen.show{ display:block; animation:sheetIn .25s ease; }
+
+  /* ===== 悬浮控制条 ===== */
+  .dock{
+    position:fixed; left:8px; right:8px;
+    bottom:calc(env(safe-area-inset-bottom) + 6px);
+    z-index:50; display:flex; align-items:center; gap:6px; overflow-x:auto;
+    background:rgba(255,255,255,.95); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+    border-radius:18px; padding:7px 10px; box-shadow:0 6px 24px rgba(120,100,140,.22);
+    border:1px solid rgba(120,100,140,.10); -webkit-overflow-scrolling:touch;
+  }
+  .dock::-webkit-scrollbar{ display:none; }
+  .chip{
+    flex:0 0 auto; border:none; cursor:pointer; font-family:inherit; font-size:12px; font-weight:700;
+    color:var(--ink); background:#F2EEF6; border-radius:999px; padding:8px 11px; white-space:nowrap;
+    display:flex; align-items:center; gap:4px; transition:transform .12s;
+  }
+  .chip:active{ transform:scale(.94); }
+  .chip.on{ color:#fff; }
+  .chip.p{ background:var(--coral); color:#fff; min-width:52px; justify-content:center; }
+  .chip.p.on{ background:#fff; color:var(--coral); box-shadow:inset 0 0 0 2px var(--coral); }
+  .chip.v{ background:var(--sky); color:#fff; } .chip.v.on{ background:var(--coral); }
+  .chip.m{ background:var(--mint); color:#fff; } .chip.m.on{ background:var(--lav); }
+  .chip.y{ background:var(--lemon); color:#7A5C08; } .chip.y.on{ background:var(--coral); color:#fff; }
+  .spd{ flex:0 0 auto; display:flex; align-items:center; gap:5px; font-size:11px; font-weight:700; color:var(--ink2); background:#F7F4FA; border-radius:999px; padding:6px 10px; }
+  .spd input{ width:76px; accent-color:var(--coral); }
+  .spd select{ border:none; background:#fff; font-family:inherit; font-size:11px; font-weight:700; color:var(--ink); border-radius:8px; padding:3px 4px; }
+
+  /* ===== 面板内容 ===== */
+  .panel h3{ font-size:15px; font-weight:800; margin-bottom:8px; display:flex; align-items:center; gap:6px; }
+  .panel .intro{ font-size:13px; line-height:1.85; color:#6B5B74; margin-bottom:10px; }
+  .panel .kbox{ background:#FAF7FC; border-radius:14px; padding:11px 13px; margin-bottom:10px; }
+  .panel .kbox h4{ font-size:12.5px; font-weight:800; margin-bottom:6px; color:var(--lav); }
+  .panel .kbox ul{ padding-left:17px; }
+  .panel .kbox li{ font-size:12.5px; line-height:1.8; color:#6B5B74; }
+  .panel .kbox li b{ color:var(--ink); }
+  .lessons-chips{ display:flex; flex-wrap:wrap; gap:6px; margin:8px 0 4px; }
+  .lessons-chips span{ font-size:11.5px; font-weight:600; background:var(--lemon-l); color:#A07C12; padding:4px 10px; border-radius:999px; }
+  .lifelist{ display:flex; flex-wrap:wrap; gap:4px; }
+  .lifelist span{ font-size:11px; background:var(--mint-l); color:#2E8B80; padding:3px 9px; border-radius:999px; }
+  .pr-box{ border-radius:16px; border:2px solid var(--sky-l); background:#FBFCFF; padding:12px 14px; margin-bottom:12px; position:relative; }
+  .pr-box .pr-label{ font-size:12px; font-weight:800; color:var(--sky); margin-bottom:6px; display:flex; align-items:center; gap:6px; padding-right:52px; }
+  .pr-box .pr-text{ font-size:12.5px; line-height:1.8; color:#5A6B7A; max-height:150px; overflow-y:auto; white-space:pre-wrap; }
+  .pr-box .pr-text::-webkit-scrollbar{ width:5px; }
+  .pr-box .pr-text::-webkit-scrollbar-thumb{ background:var(--sky-l); border-radius:3px; }
+  .copy-btn{
+    position:absolute; top:10px; right:10px; border:none; cursor:pointer; font-family:inherit;
+    font-size:12px; font-weight:700; color:#fff; background:var(--sky); border-radius:999px;
+    padding:5px 12px; transition:all .18s;
+  }
+  .copy-btn.ok{ background:var(--mint); }
+  .pr-tip{ font-size:11.5px; color:var(--ink2); line-height:1.7; background:var(--lav-l); border-radius:12px; padding:8px 12px; }
+  .ssvg{ background:#FAF7FC; border-radius:16px; padding:8px; margin-bottom:10px; }
+  .ssvg svg{ width:100%; height:auto; display:block; }
+  .case{ background:#FBF9FE; border:1px solid rgba(120,100,140,.10); border-radius:16px; padding:12px; margin-bottom:12px; }
+  .case h5{ font-size:13.5px; font-weight:800; margin-bottom:4px; }
+  .case .note{ font-size:12px; color:var(--ink2); line-height:1.6; margin-bottom:8px; }
+  .case iframe{ width:100%; height:170px; border-radius:12px; border:none; background:#E9E4F0; display:block; }
+  .case .links{ display:flex; gap:8px; margin-top:8px; }
+  .case a{ flex:1; text-align:center; font-size:12px; font-weight:700; text-decoration:none; color:#fff; background:var(--lav); border-radius:999px; padding:7px 10px; }
+  .case .fallback{ font-size:11px; color:var(--ink2); margin-top:6px; }
+  .local-video{ width:100%; border-radius:12px; background:#E9E4F0; margin-top:8px; }
+
+  /* ===== 平板/桌面：侧栏 + 网格 ===== */
+  @media (min-width:900px){
+    .sheet{ left:auto; right:16px; top:calc(env(safe-area-inset-top) + 76px); bottom:calc(env(safe-area-inset-bottom) + 84px); width:min(410px,44vw); height:auto; border-radius:22px; animation:none; }
+    .sheet .shead{ cursor:default; }
+    .sheet .chev{ display:none; }
+    .sheet.collapsed{ display:none; }   /* 平板收起=整体隐藏 */
+    .grid{ grid-template-columns:repeat(3,1fr); }
+    #view-home{ bottom:calc(env(safe-area-inset-bottom) + 66px); }
+    .dock{ left:50%; right:auto; transform:translateX(-50%); bottom:calc(env(safe-area-inset-bottom) + 10px); width:auto; max-width:94vw; flex-direction:row; overflow-x:auto; border-radius:18px; }
+    #reopen{ bottom:calc(env(safe-area-inset-bottom) + 14px); right:16px; }
+    #demo-head{ padding-top:calc(env(safe-area-inset-top) + 10px); }
+    .bnav{ display:none; }
+  }
+  @media (min-width:1300px){ .grid{ grid-template-columns:repeat(4,1fr); } }
+  @media (min-width:900px) and (max-width:1280px){ #view-home{ top:calc(env(safe-area-inset-top) + 56px); } }
+
+  /* ===== 加载/提示 ===== */
+  #loading{
+    position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:200;
+    text-align:center; font-size:15px; font-weight:700; color:var(--ink);
+  }
+  .spinner{ display:inline-block; width:34px; height:34px; border:4px solid var(--sky-l); border-top-color:var(--sky); border-radius:50%; animation:spin 1s linear infinite; margin-bottom:10px; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .pop{
+    position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:300;
+    background:var(--mint); color:#fff; font-size:15px; font-weight:800;
+    padding:14px 30px; border-radius:999px; box-shadow:0 10px 30px rgba(77,182,172,.5);
+    opacity:0; pointer-events:none; transition:opacity .3s;
+  }
+  .pop.show{ opacity:1; }
+</style>
+</head>
+<body>
+
+<div id="loading"><div class="spinner"></div><div>正在搭建积木乐园…</div></div>
+<div class="pop" id="pop">已复制到剪贴板！</div>
+
+<!-- ===== 顶栏 ===== -->
+<div class="appbar">
+  <div class="logo">🧸 积木原理<em>探索乐园</em></div>
+  <span class="badge">H5</span>
+  <span class="st" id="appbar-st">14 个机械原理 · 3D 演示</span>
+</div>
+
+<!-- ===== 首页 ===== -->
+<div id="view-home">
+  <div class="hero">
+    <h1>转动的小齿轮，藏着<em>大世界的秘密</em></h1>
+    <p>14 个机械原理，全部配了可拖拽旋转的 3D 交互演示、AI 动画咒语和生活案例。点开卡片开始探索！</p>
+    <div class="chips">
+      <span class="chip c1">⚙️ 齿轮传动</span><span class="chip c2">🐌 蜗轮蜗杆</span>
+      <span class="chip c3">🔄 惰轮</span><span class="chip c4">🛝 杠杆</span>
+      <span class="chip c5">🎠 凸轮</span><span class="chip c2">🏹 弹性势能</span>
+    </div>
+  </div>
+  <div class="sec">
+    <h2>⚙️ 传动家族 <small>让动力跑起来的五种方式</small></h2>
+    <div class="grid" id="grid-trans"></div>
+  </div>
+  <div class="sec">
+    <h2>🔄 运动变形师 <small>把"转圈圈"变成有趣的运动</small></h2>
+    <div class="grid" id="grid-move"></div>
+  </div>
+  <div class="sec">
+    <h2>🧱 搭建小课堂 <small>搭积木的秘诀，也有 3D 演示</small></h2>
+    <div class="grid" id="grid-build"></div>
+  </div>
+</div>
+
+<!-- ===== 演示页 ===== -->
+<div id="view-demo">
+  <div id="scene"></div>
+  <div id="demo-head">
+    <button class="back" id="demo-back">← 返回</button>
+    <h2 id="demo-title">齿轮传动</h2>
+    <span class="st" id="demo-sub">大轮带小轮跑得快</span>
+  </div>
+  <div class="sheet" id="sheet">
+    <div class="shead" id="sheet-head">
+      <span class="handle"></span>
+      <em class="chev" id="sheet-chev">▾</em>
+      <button class="sclose" id="sheet-close" title="关闭讲解面板">✕</button>
+    </div>
+    <div class="tabs">
+      <button class="on" data-tab="principle">📖 原理小课堂</button>
+      <button data-tab="prompt">🎬 视频魔法棒</button>
+      <button data-tab="cases">🌍 生活大发现</button>
+    </div>
+    <div class="body">
+      <div class="panel on" id="panel-principle"></div>
+      <div class="panel" id="panel-prompt"></div>
+      <div class="panel" id="panel-cases"></div>
+    </div>
+  </div>
+  <button class="chip v" id="reopen" style="background:var(--coral);color:#fff">📖 打开讲解</button>
+  <div class="dock" id="dock"></div>
+</div>
+
+<!-- ===== 底部导航 ===== -->
+<div class="bnav" id="bnav">
+  <button id="nav-home" class="on"><span class="i">🏠</span>首页</button>
+  <button id="nav-demo"><span class="i">🎡</span>机构乐园</button>
+  <button id="nav-statics"><span class="i">🧱</span>搭建课堂</button>
+</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+}}
+</script>
+<script type="module">
+/* ============================================================
+   3D 引擎基础设施：渲染器 / 零件库 / 标签 / 相机
+   ============================================================ */
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+/* ---------- 金属材质预设（真实质感） ---------- */
+const METAL = {
+  steel:  new THREE.MeshStandardMaterial({ color:0xC9CFD8, metalness:0.95, roughness:0.22 }),
+  steelH: new THREE.MeshStandardMaterial({ color:0xE2E7ED, metalness:0.96, roughness:0.12 }),
+  alu:    new THREE.MeshStandardMaterial({ color:0xB8C0CC, metalness:0.9,  roughness:0.28 }),
+  brass:  new THREE.MeshStandardMaterial({ color:0xC8A34D, metalness:0.92, roughness:0.22 }),
+  brassH: new THREE.MeshStandardMaterial({ color:0xD9B45F, metalness:0.94, roughness:0.14 }),
+  copper: new THREE.MeshStandardMaterial({ color:0xC67A52, metalness:0.9,  roughness:0.3 }),
+  dark:   new THREE.MeshStandardMaterial({ color:0x3A3444, metalness:0.6,  roughness:0.5 }),
+  plastic:{ color:0xEFE9F5, metalness:0.02, roughness:0.8 },
+};
+
+const G = {
+  scene:null, camera:null, renderer:null, controls:null,
+  active:null,        // 当前机构 {group, update, explode, reset, parts}
+  playing:true, speed:1, xray:false, labels:true, showAxis:false,
+  exploded:false, expT:0, expAnim:null,
+  axisGroup:null,
+};
+
+const VIEWS = {
+  iso:   { pos:new THREE.Vector3(7,4.5,8.5), t:new THREE.Vector3(0,0,0) },
+  front: { pos:new THREE.Vector3(0,2,11),    t:new THREE.Vector3(0,0,0) },
+  side:  { pos:new THREE.Vector3(11,2,0),    t:new THREE.Vector3(0,0,0) },
+  top:   { pos:new THREE.Vector3(0,11,0.01), t:new THREE.Vector3(0,0,0) },
+};
+
+function initEngine(){
+  G.scene = new THREE.Scene();
+  G.camera = new THREE.PerspectiveCamera(48, window.innerWidth/window.innerHeight, 0.1, 200);
+  G.camera.position.copy(VIEWS.iso.pos);
+  G.renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
+  G.renderer.setSize(window.innerWidth, window.innerHeight);
+  G.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  G.renderer.shadowMap.enabled = true;
+  G.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  G.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  G.renderer.toneMappingExposure = 1.05;
+  document.getElementById('scene').appendChild(G.renderer.domElement);
+
+  // HDR 环境反射（金属质感的灵魂）
+  const pmrem = new THREE.PMREMGenerator(G.renderer);
+  G.scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+  G.controls = new OrbitControls(G.camera, G.renderer.domElement);
+  G.controls.enableDamping = true;
+  G.controls.dampingFactor = 0.07;
+  G.controls.minDistance = 3;
+  G.controls.maxDistance = 30;
+
+  // 灯光
+  G.scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+  const key = new THREE.DirectionalLight(0xffffff, 1.8);
+  key.position.set(6, 12, 8); key.castShadow = true;
+  key.shadow.mapSize.set(1024,1024);
+  key.shadow.camera.left=-9; key.shadow.camera.right=9;
+  key.shadow.camera.top=9; key.shadow.camera.bottom=-9;
+  G.scene.add(key);
+  const fill = new THREE.DirectionalLight(0xbbddff, 0.5); fill.position.set(-7,4,-5); G.scene.add(fill);
+  const rim = new THREE.DirectionalLight(0xffe6b8, 0.45); rim.position.set(0,-3,-8); G.scene.add(rim);
+
+  // 轴线辅助组
+  G.axisGroup = new THREE.Group(); G.axisGroup.visible = false;
+  G.scene.add(G.axisGroup);
+
+  window.addEventListener('resize', () => {
+    G.camera.aspect = window.innerWidth/window.innerHeight;
+    G.camera.updateProjectionMatrix();
+    G.renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+}
+
+function animateCamera(pos, t){
+  const sp = G.camera.position.clone(), st = G.controls.target.clone();
+  const t0 = performance.now(), dur = 700;
+  function step(now){
+    let k = Math.min((now-t0)/dur, 1); k = 1-Math.pow(1-k,3);
+    G.camera.position.lerpVectors(sp, pos, k);
+    G.controls.target.lerpVectors(st, t, k);
+    G.controls.update();
+    if(k<1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+/* ---------- 通用材质（默认金属质感，积木/基板走哑光塑料） ---------- */
+function mat(color, opts={}){
+  const def = { metalness:0.62, roughness:0.32 };
+  return new THREE.MeshStandardMaterial({ color, ...def, ...opts });
+}
+function matPlastic(color, opts={}){
+  return new THREE.MeshStandardMaterial({ color, metalness:0.03, roughness:0.72, ...opts });
+}
+
+/* ---------- 齿轮 ---------- */
+function makeGear({teeth=16, pitch=0.32, thick=0.34, color=0xFF8A80, toothColor=null, hole=true}){
+  const g = new THREE.Group();
+  const r = teeth*pitch/(2*Math.PI);
+  const disc = new THREE.Mesh(new THREE.CylinderGeometry(r*0.82, r*0.82, thick, 40), mat(color));
+  disc.castShadow = disc.receiveShadow = true;
+  g.add(disc);
+  const tm = mat(toothColor||color);
+  const w = pitch*0.5, h = pitch*0.55;
+  for(let i=0;i<teeth;i++){
+    const a = i/teeth*Math.PI*2;
+    const tooth = new THREE.Mesh(new THREE.BoxGeometry(h, w, thick+0.04), tm);
+    tooth.position.set(Math.cos(a)*r, Math.sin(a)*r, 0);
+    tooth.rotation.z = -a;
+    tooth.castShadow = true;
+    g.add(tooth);
+  }
+  if(hole){
+    const holeMesh = new THREE.Mesh(new THREE.CylinderGeometry(r*0.30, r*0.30, thick+0.06, 24), mat(0x3A3444));
+    g.add(holeMesh);
+  }
+  return g;
+}
+
+/* ---------- 圆盘/带轮 ---------- */
+function makePulley(r=0.7, thick=0.28, color=0x4FC3F7, groove=true){
+  const g = new THREE.Group();
+  const disc = new THREE.Mesh(new THREE.CylinderGeometry(r, r, thick, 40), mat(color));
+  disc.castShadow = true; g.add(disc);
+  if(groove){
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(r*0.92, thick*0.22, 10, 40), mat(0x2A2533));
+    ring.rotation.x = Math.PI/2; g.add(ring);
+  }
+  const hub = new THREE.Mesh(new THREE.CylinderGeometry(r*0.28, r*0.28, thick+0.1, 20), mat(0x3A3444));
+  g.add(hub);
+  return g;
+}
+
+/* ---------- 轴 ---------- */
+function makeAxle(len=3, r=0.11, color=0x9AA3B2){
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, len, 16), mat(color, {metalness:0.5, roughness:0.3}));
+  m.castShadow = true;
+  return m;
+}
+
+/* ---------- 圆角梁/杆 ---------- */
+function makeBar(len=2, w=0.22, color=0xFFB74D){
+  const g = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(w/2, w/2, len-0.06, 12), mat(color));
+  body.rotation.z = Math.PI/2;
+  body.castShadow = true; g.add(body);
+  const capR = new THREE.Mesh(new THREE.SphereGeometry(w/2*1.05, 12, 12), mat(color));
+  capR.position.x = len/2; capR.castShadow = true; g.add(capR);
+  const capL = capR.clone(); capL.position.x = -len/2; g.add(capL);
+  return g;
+}
+
+/* ---------- 积木块（带凸点，哑光塑料） ---------- */
+function makeBrick({w=1,d=1,h=0.6,color=0xFF8A80,studs=true}){
+  const g = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), matPlastic(color));
+  body.castShadow = body.receiveShadow = true; g.add(body);
+  if(studs){
+    const nw = Math.max(1, Math.round(w/0.5)), nd = Math.max(1, Math.round(d/0.5));
+    const gap = 0.5;
+    for(let i=0;i<nw;i++) for(let j=0;j<nd;j++){
+      const stud = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.12, 16), matPlastic(color, {roughness:0.6}));
+      stud.position.set((i-(nw-1)/2)*gap, h/2+0.06, (j-(nd-1)/2)*gap);
+      g.add(stud);
+    }
+  }
+  return g;
+}
+
+/* ---------- 基板（哑光塑料） ---------- */
+function makeBase(w=7, d=4.4, color=0xE8E2EE, y=0){
+  const g = new THREE.Group();
+  const base = new THREE.Mesh(new THREE.BoxGeometry(w, 0.3, d), matPlastic(color));
+  base.position.y = y; base.receiveShadow = true; base.castShadow = true;
+  g.add(base);
+  for(let i=-Math.floor(w/1)+1;i<=Math.floor(w/1)-1;i++){
+    for(let j=-Math.floor(d/1)+1;j<=Math.floor(d/1)-1;j++){
+      const s = new THREE.Mesh(new THREE.CylinderGeometry(0.10, 0.10, 0.10, 12), matPlastic(0xD8D0E4, {roughness:0.65}));
+      s.position.set(i*1, y+0.2, j*1); g.add(s);
+    }
+  }
+  return g;
+}
+
+/* ---------- 单位杆件（长度1，可缩放定位，金属杆） ---------- */
+function makeUnitBar(r=0.06, color=0x5B4A63, metal=true){
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 1, 10),
+    metal ? mat(color, {metalness:0.85, roughness:0.3}) : matPlastic(color));
+  m.castShadow = true;
+  return m;
+}
+function placeBar(m, A2, B2){ // A2/B2 为 {x,y} 平面点
+  const a = new THREE.Vector3(A2.x, A2.y, 0), b = new THREE.Vector3(B2.x, B2.y, 0);
+  const mid = a.clone().add(b).multiplyScalar(0.5);
+  const len = a.distanceTo(b);
+  m.position.copy(mid);
+  m.rotation.z = Math.atan2(b.y-a.y, b.x-a.x);
+  m.scale.set(len, 1, 1);
+}
+
+/* ---------- 文字标签（Sprite） ---------- */
+function makeLabel(text, opts={}){
+  const { bg='rgba(255,255,255,0.94)', fg='#5B4A63', border='#FF8A80', size=1.0 } = opts;
+  const c = document.createElement('canvas');
+  const ctx = c.getContext('2d');
+  c.width = 512; c.height = 140;
+  ctx.roundRect = function(x,y,w,h,r){ this.beginPath(); this.moveTo(x+r,y); this.arcTo(x+w,y,x+w,y+h,r); this.arcTo(x+w,y+h,x,y+h,r); this.arcTo(x,y+h,x,y,r); this.arcTo(x,y,x+w,y,r); this.closePath(); };
+  ctx.fillStyle = bg; ctx.roundRect(10,10,492,120,30); ctx.fill();
+  ctx.strokeStyle = border; ctx.lineWidth = 8; ctx.stroke();
+  ctx.fillStyle = fg; ctx.font = 'bold 64px "PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(text, 256, 72);
+  const tex = new THREE.CanvasTexture(c);
+  tex.anisotropy = 4;
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map:tex, transparent:true, depthTest:false, depthWrite:false }));
+  const w = size*(c.width/c.height);
+  sp.scale.set(w*0.012, size*0.012, 1);
+  return sp;
+}
+
+/* ---------- 箭头（指示方向/轴线） ---------- */
+function makeArrow(len=1.6, color=0xFF5252, r=0.035){
+  const g = new THREE.Group();
+  const shaft = new THREE.Mesh(new THREE.CylinderGeometry(r, r, len*0.72, 10), mat(color, {metalness:0.3, roughness:0.5}));
+  shaft.rotation.z = Math.PI/2; shaft.position.x = len*0.12; g.add(shaft);
+  const head = new THREE.Mesh(new THREE.ConeGeometry(r*2.6, len*0.26, 10), mat(color));
+  head.rotation.z = -Math.PI/2; head.position.x = len*0.5; g.add(head);
+  return g;
+}
+
+function setAxis(axes){ // axes: [{from,to,color}]
+  clearAxis();
+  for(const a of axes){
+    const pts = [a.from.clone(), a.to.clone()];
+    const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),
+      new THREE.LineBasicMaterial({ color:a.color, linewidth:1 }));
+    G.axisGroup.add(line);
+  }
+}
+function clearAxis(){ while(G.axisGroup.children.length) G.axisGroup.remove(G.axisGroup.children[0]); }
+
+/* ---------- 爆炸视图 ---------- */
+let PENDING_EXPLODE = null;
+function setExplode(parts){ // parts: [{obj, dir:THREE.Vector3, dist}] —— 构建期暂存，loadMech 后挂到 active
+  PENDING_EXPLODE = parts;
+}
+function applyExplodeTo(active){
+  if(!PENDING_EXPLODE || !active) return;
+  const parts = PENDING_EXPLODE;
+  active.explode = (t) => {
+    for(const p of parts){
+      p.obj.position.copy(p.base).addScaledVector(p.dir, p.dist*t);
+    }
+  };
+  active.explodeParts = parts;
+  PENDING_EXPLODE = null;
+}
+function toggleExplode(){
+  if(!G.active || !G.active.explode) return;
+  G.exploded = !G.exploded;
+  const target = G.exploded ? 1 : 0;
+  G.expAnim = { from:G.exploded?0:1, to:target, t0:performance.now() };
+}
+function stepExplode(){
+  if(!G.active || !G.active.explode || !G.expAnim) return;
+  const a = G.expAnim;
+  let k = (performance.now()-a.t0)/450; k = Math.min(k,1); k = 1-Math.pow(1-k,3);
+  G.active.explode(a.from + (a.to-a.from)*k);
+  if(k>=1) G.expAnim = null;
+}
+
+/* ---------- X 光透视 ---------- */
+function setXray(on){
+  G.xray = on;
+  if(!G.active) return;
+  G.active.group.traverse(o=>{
+    if(o.isMesh && o.material && o.material.color){
+      o.material.transparent = on;
+      o.material.opacity = on ? 0.42 : 1;
+      o.material.depthWrite = !on;
+      o.material.needsUpdate = true;
+    }
+  });
+}
+
+/* ---------- 标签显示开关 ---------- */
+function setLabels(on){
+  G.labels = on;
+  if(G.active) G.active.group.traverse(o=>{ if(o.isSprite) o.visible = on; });
+}
+
+/* ---------- 清场 ---------- */
+function disposeGroup(group){
+  if(!group) return;
+  group.traverse(o=>{
+    if(o.isMesh || o.isSprite){
+      if(o.geometry) o.geometry.dispose();
+      if(o.material){
+        if(o.material.map) o.material.map.dispose();
+        o.material.dispose();
+      }
+    }
+  });
+  G.scene.remove(group);
+}
+
+function clearActive(){
+  if(G.active){
+    if(G.active.group) disposeGroup(G.active.group);
+    G.active = null;
+  }
+  G.exploded = false; G.expAnim = null;
+  clearAxis();
+}
+
+
+/* ============================================================
+   8 大机构 3D 演示模块
+   每个 build() 返回 { group, update(dt), reset? }
+   ============================================================ */
+const DEMOS = {
+
+  /* ---------- 1 齿轮传动 ---------- */
+  gear: function(){
+    const group = new THREE.Group();
+    const base = makeBase(6.6, 3.4, 0xEFE9F5); base.position.y = -0.1; group.add(base);
+    let drive, driven, dotA, dotB, labelA, labelB, mode = 'speedup';
+    const motor = new THREE.Group();
+    motor.add(new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.62, 0.62), mat(0x9AA3B2, {roughness:0.5})));
+    motor.add(new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.2, 0.2), mat(0x5B4A63)));
+    motor.position.set(-2.55, 0.62, 0);
+    group.add(motor);
+    const axle = makeAxle(0.8, 0.09, 0x8E9BA8); axle.rotation.z = Math.PI/2; axle.position.set(-2.05, 0.62, 0); group.add(axle);
+    const mL = makeLabel('电机', {bg:'rgba(154,163,178,0.92)', fg:'#fff', border:'#9AA3B2', size:0.6});
+    mL.position.set(-2.55, 1.35, 0); group.add(mL);
+
+    function rebuild(){
+      if(drive){ group.remove(drive.group); group.remove(driven.group); disposeGroup2(drive.group); disposeGroup2(driven.group); group.remove(labelA); group.remove(labelB); }
+      const big = mode==='speedup' ? 24 : 12, small = mode==='speedup' ? 12 : 24;
+      const ax = -0.6, pitch = 0.32;
+      const rA = big*pitch/(2*Math.PI), rB = small*pitch/(2*Math.PI);
+      const bx = ax + rA + rB + 0.03;   // 两轮外缘相切
+      drive = { teeth:big, group:makeGear({teeth:big, pitch, thick:0.36, color:0xFFD54F, toothColor:0xF5C83C}), r:rA };
+      drive.group.position.set(ax, 0.62, 0);
+      group.add(drive.group);
+      driven = { teeth:small, group:makeGear({teeth:small, pitch, thick:0.36, color:0x4FC3F7, toothColor:0x35AED9}), r:rB };
+      driven.group.position.set(bx, 0.62, 0);
+      group.add(driven.group);
+      // 转速标记点
+      dotA = new THREE.Mesh(new THREE.SphereGeometry(0.09, 14, 14), mat(0xFF5252));
+      dotA.position.set(0, drive.r*0.92, 0.1); drive.group.add(dotA);
+      dotB = new THREE.Mesh(new THREE.SphereGeometry(0.09, 14, 14), mat(0xFF8A80));
+      dotB.position.set(0, driven.r*0.92, 0.1); driven.group.add(dotB);
+      labelA = makeLabel(mode==='speedup' ? '大齿轮' : '小齿轮', {border:0xFFD54F, size:0.62});
+      labelA.position.set(ax, 1.5 + rA*0.55, 0); group.add(labelA);
+      labelB = makeLabel(mode==='speedup' ? '小齿轮' : '大齿轮', {border:0x4FC3F7, size:0.62});
+      labelB.position.set(bx, 1.5 + rB*0.55, 0); group.add(labelB);
+      setAxis([
+        {from:new THREE.Vector3(ax-1.0,0.62,0), to:new THREE.Vector3(ax+1.0,0.62,0), color:0xFFD54F},
+        {from:new THREE.Vector3(bx-1.0,0.62,0), to:new THREE.Vector3(bx+1.0,0.62,0), color:0x4FC3F7},
+      ]);
+    }
+    function disposeGroup2(g){ g.traverse(o=>{ if(o.geometry)o.geometry.dispose(); if(o.material)o.material.dispose(); }); }
+
+    const state = { thA:0, thB:0 };
+    rebuild();
+
+    // 模式切换（暴露给 UI）
+    group.userData = { setMode:(m)=>{ mode=m; rebuild(); } };
+
+    return {
+      group,
+      update(dt){
+        state.thA += dt*2.2;
+        state.thB = -state.thA*(drive.teeth/driven.teeth);
+        drive.group.rotation.z = state.thA;
+        driven.group.rotation.z = state.thB;
+      },
+      reset(){ mode='speedup'; rebuild(); }
+    };
+  },
+
+  /* ---------- 2 蜗轮蜗杆 ---------- */
+  worm: function(){
+    const group = new THREE.Group();
+    const base = makeBase(6.6, 3.8, 0xEFE9F5); base.position.y = -0.15; group.add(base);
+    const RATIO = 36;
+    const WR = 1.0;                 // 蜗轮半径（立在基板上）
+    const WORM_Y = 0.05 + WR*2 - 0.62 + 0.05;   // 蜗杆轴心 = 蜗轮顶 - 蜗杆半径
+    // 蜗杆（沿 X 轴，抛光不锈钢）
+    const wormG = new THREE.Group();
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 3.6, 28), METAL.steel);
+    body.rotation.z = Math.PI/2; body.castShadow = true; wormG.add(body);
+    const turns = 5, n = 240, lR = 0.62, len = 3.3;
+    for(let i=0;i<n;i++){
+      const t = i/n, ang = t*Math.PI*2*turns, x = (t-0.5)*len;
+      const tooth = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.3, 0.2), METAL.steelH);
+      tooth.position.set(x, lR*Math.cos(ang), lR*Math.sin(ang));
+      tooth.lookAt(x+10, lR*2*Math.cos(ang), lR*2*Math.sin(ang));
+      tooth.castShadow = true; wormG.add(tooth);
+    }
+    wormG.position.set(0, WORM_Y, 0);
+    group.add(wormG);
+    // 蜗轮（沿 Y 轴，黄铜，立在基板上）
+    const wheelG = new THREE.Group();
+    const disc = new THREE.Mesh(new THREE.CylinderGeometry(WR, WR, 0.55, 48), METAL.brass);
+    disc.castShadow = true; wheelG.add(disc);
+    const wr = WR + 0.05;
+    for(let i=0;i<RATIO;i++){
+      const a = i/RATIO*Math.PI*2;
+      const tooth = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.36, 0.24), METAL.brassH);
+      tooth.position.set(wr*Math.cos(a), 0, wr*Math.sin(a));
+      tooth.rotation.y = -a; tooth.rotation.z = Math.PI/9;
+      tooth.castShadow = true; wheelG.add(tooth);
+    }
+    const hole = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.62, 24), METAL.dark);
+    wheelG.add(hole);
+    wheelG.position.set(0, 0.05 + WR, 0);
+    group.add(wheelG);
+    // 轴
+    const axleV = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 1.3, 20), METAL.alu);
+    axleV.position.set(0, 0.6, 0); group.add(axleV);
+    // 啮合标记（自发光红点）
+    const glowMat = new THREE.MeshStandardMaterial({ color:0xFF3B30, emissive:0xFF0000, emissiveIntensity:0.6, roughness:0.4 });
+    const meshP = new THREE.Mesh(new THREE.SphereGeometry(0.11, 16, 16), glowMat);
+    meshP.position.set(0, -0.62, 0.16); wormG.add(meshP);
+    const glow = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 16),
+      new THREE.MeshBasicMaterial({ color:0xFF5252, transparent:true, opacity:0.25 }));
+    glow.position.copy(meshP.position); wormG.add(glow);
+    // 红点标记转速
+    const rimDot = new THREE.Mesh(new THREE.SphereGeometry(0.1, 14, 14), glowMat);
+    rimDot.position.set(wr, 0, 0); wheelG.add(rimDot);
+    // 标签
+    const l1 = makeLabel('蜗杆', {border:0x8E9BA8, size:0.6}); l1.position.set(0, WORM_Y+1.0, 0); group.add(l1);
+    const l2 = makeLabel('蜗轮', {border:0xC8A34D, size:0.6}); l2.position.set(0, 0.15, WR+0.9); group.add(l2);
+    const l3 = makeLabel('蜗杆转 36 圈 → 蜗轮 1 圈', {bg:'rgba(255,213,79,0.92)', fg:'#7A5C08', border:'#FFD54F', size:0.58});
+    l3.position.set(0, WORM_Y+1.75, 0); group.add(l3);
+    setAxis([
+      {from:new THREE.Vector3(-2.6,WORM_Y,0), to:new THREE.Vector3(2.6,WORM_Y,0), color:0x8E9BA8},
+      {from:new THREE.Vector3(0,0.05,0), to:new THREE.Vector3(0,WR*2+0.05,0), color:0xC8A34D},
+    ]);
+    // 爆炸
+    const wb = wormG.position.clone(), whb = wheelG.position.clone();
+    setExplode([
+      {obj:wormG, base:wb, dir:new THREE.Vector3(0,1,0), dist:1.4},
+      {obj:wheelG, base:whb, dir:new THREE.Vector3(0,1,0), dist:0.6},
+    ]);
+    return {
+      group,
+      update(dt){
+        wormG.rotation.x += dt*3.0;
+        wheelG.rotation.y -= dt*3.0/RATIO;
+      }
+    };
+  },
+
+  /* ---------- 3 垂直传动（冠状齿轮） ---------- */
+  bevel: function(){
+    const group = new THREE.Group();
+    const base = makeBase(6, 3.6, 0xEFE9F5); base.position.y = -0.55; group.add(base);
+    // 电机 + 竖直轴
+    const motor = new THREE.Group();
+    motor.add(new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.7, 0.7), mat(0x9AA3B2, {roughness:0.5})));
+    motor.position.set(0, 0.15, 0); group.add(motor);
+    const axle = makeAxle(1.4, 0.1, 0xB9C4D0); axle.position.y = 0.85; group.add(axle);
+    const mL = makeLabel('电机', {bg:'rgba(154,163,178,0.92)', fg:'#fff', border:'#9AA3B2', size:0.55});
+    mL.position.set(0, -0.15, 0.85); group.add(mL);
+    // 冠状齿轮（水平盘，齿朝上，齿环半径1.2）
+    const crown = new THREE.Group();
+    const disc = new THREE.Mesh(new THREE.CylinderGeometry(1.05, 1.05, 0.34, 40), mat(0xFFD54F, {roughness:0.35}));
+    disc.castShadow = true; crown.add(disc);
+    const CN = 16, cr = 1.18, pitchC = 2*Math.PI*cr/CN;
+    for(let i=0;i<CN;i++){
+      const a = i/CN*Math.PI*2;
+      const tooth = new THREE.Mesh(new THREE.BoxGeometry(pitchC*0.55, 0.5, 0.34), mat(0xF5C83C));
+      tooth.position.set(Math.cos(a)*cr, 0.42, Math.sin(a)*cr);
+      tooth.rotation.y = -a;
+      tooth.castShadow = true; crown.add(tooth);
+    }
+    crown.position.set(0, 0.52, 0);
+    group.add(crown);
+    // 锥齿轮（斜置，轴沿 X，齿在竖直平面，底齿与冠状齿轮齿环咬合）
+    const vert = new THREE.Group();
+    const spin = new THREE.Group();
+    const vTeeth = 12, vPitch = pitchC;
+    const vg = makeGear({teeth:vTeeth, pitch:vPitch, thick:0.34, color:0x4DB6AC, toothColor:0x3DA79B});
+    vg.rotation.z = Math.PI/2;           // 齿轮轴转为 X 向（齿在竖直 XY 平面）
+    spin.add(vg);
+    vert.add(spin);
+    const vR = vTeeth*vPitch/(2*Math.PI);
+    vert.position.set(1.18 + vR*0.6, 0.94 + vR*0.8, 0);  // 斜下方抵住齿环
+    vert.rotation.x = -Math.PI/3.4;      // 整体倾斜，呈锥齿轮姿态
+    group.add(vert);
+    const rimDot = new THREE.Mesh(new THREE.SphereGeometry(0.1, 14, 14), mat(0xFF5252));
+    rimDot.position.set(0, 0, vR); vg.add(rimDot);
+    // 标签
+    const l1 = makeLabel('冠状齿轮', {border:0xFFD54F, size:0.62}); l1.position.set(0, 1.5, 0); group.add(l1);
+    const l2 = makeLabel('锥齿轮', {border:0x4DB6AC, size:0.62}); l2.position.set(1.7, 2.3, 0); group.add(l2);
+    const l3 = makeLabel('90° 转向', {bg:'rgba(255,214,79,0.92)', fg:'#7A5C08', border:'#FFD54F', size:0.55});
+    l3.position.set(0.5, 2.0, 0); group.add(l3);
+    setAxis([
+      {from:new THREE.Vector3(0,0.3,0), to:new THREE.Vector3(0,2.2,0), color:0xFFD54F},
+      {from:new THREE.Vector3(-1.4,2.1,0), to:new THREE.Vector3(2.6,0.5,0), color:0x4DB6AC},
+    ]);
+    const cb = crown.position.clone(), vb = vert.position.clone();
+    setExplode([
+      {obj:crown, base:cb, dir:new THREE.Vector3(0,-1,0), dist:0.9},
+      {obj:vert, base:vb, dir:new THREE.Vector3(0,1,0), dist:0.9},
+    ]);
+    return {
+      group,
+      update(dt){
+        crown.rotation.y += dt*2.0;
+        spin.rotation.x -= dt*2.0;   // 锥齿轮绕自身轴自旋
+      }
+    };
+  },
+
+  /* ---------- 4 皮带传动 ---------- */
+  belt: function(){
+    const group = new THREE.Group();
+    const base = makeBase(6.8, 3, 0xEFE9F5); base.position.y = -0.15; group.add(base);
+    const L = new THREE.Vector3(-1.7, 1.15, 0), R = new THREE.Vector3(1.7, 1.0, 0);
+    const rL = 0.62, rR = 0.95;
+    // 带轮
+    const pulL = makePulley(rL, 0.34, 0xFF8A80); pulL.position.copy(L); group.add(pulL);
+    const pulR = makePulley(rR, 0.34, 0x4FC3F7); pulR.position.copy(R); group.add(pulR);
+    // 电机
+    const motor = new THREE.Group();
+    motor.add(new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.55, 0.55), mat(0x9AA3B2, {roughness:0.5})));
+    motor.position.set(-1.7, 0.32, 0); group.add(motor);
+    // 皮带路径
+    const pts = [];
+    const N = 40;
+    const oL = rL+0.13, oR = rR+0.13;
+    const B_L = new THREE.Vector3(L.x, L.y-oL, 0), B_R = new THREE.Vector3(R.x-oR, R.y-oR, 0);
+    const T_R = new THREE.Vector3(R.x+oR, R.y+oR, 0), T_L = new THREE.Vector3(L.x+oL, L.y+oL, 0);
+    for(let i=0;i<N;i++){
+      const t = i/N;
+      if(t < 0.25){ const a = Math.PI/2 + (t/0.25)*Math.PI; pts.push(new THREE.Vector3(L.x+Math.cos(a)*oL, L.y+Math.sin(a)*oL, 0)); }
+      else if(t < 0.5){ const k=(t-0.25)/0.25; pts.push(B_L.clone().lerp(B_R, k)); }
+      else if(t < 0.75){ const a = -Math.PI/2 + ((t-0.5)/0.25)*Math.PI; pts.push(new THREE.Vector3(R.x+Math.cos(a)*oR, R.y+Math.sin(a)*oR, 0)); }
+      else { const k=(t-0.75)/0.25; pts.push(T_R.clone().lerp(T_L, k)); }
+    }
+    const curve = new THREE.CatmullRomCurve3(pts, true, 'catmullrom', 0.5);
+    // 皮带条纹纹理
+    const tc = document.createElement('canvas'); tc.width=512; tc.height=64;
+    const tctx = tc.getContext('2d');
+    tctx.fillStyle='#3A3444'; tctx.fillRect(0,0,512,64);
+    tctx.fillStyle='#FFF3C9';
+    for(let x=0;x<512;x+=64) tctx.fillRect(x, 10, 22, 44);
+    const beltTex = new THREE.CanvasTexture(tc);
+    beltTex.wrapS = beltTex.wrapT = THREE.RepeatWrapping;
+    beltTex.repeat.set(6, 1);
+    const belt = new THREE.Mesh(new THREE.TubeGeometry(curve, 96, 0.11, 10, true),
+      new THREE.MeshStandardMaterial({ map:beltTex, roughness:0.85 }));
+    belt.castShadow = true; group.add(belt);
+    const l1 = makeLabel('小带轮', {border:0xFF8A80, size:0.55}); l1.position.set(L.x, L.y+rL+0.5, 0); group.add(l1);
+    const l2 = makeLabel('大带轮', {border:0x4FC3F7, size:0.55}); l2.position.set(R.x, R.y+rR+0.5, 0); group.add(l2);
+    setAxis([
+      {from:new THREE.Vector3(L.x,L.y-1,0), to:new THREE.Vector3(L.x,L.y+1,0), color:0xFF8A80},
+      {from:new THREE.Vector3(R.x,R.y-1,0), to:new THREE.Vector3(R.x,R.y+1,0), color:0x4FC3F7},
+    ]);
+    const lb = pulL.position.clone(), rb = pulR.position.clone(), bb = belt.position.clone();
+    setExplode([
+      {obj:pulL, base:lb, dir:new THREE.Vector3(0,0,-1), dist:0.8},
+      {obj:pulR, base:rb, dir:new THREE.Vector3(0,0,-1), dist:0.8},
+      {obj:belt, base:bb, dir:new THREE.Vector3(0,0,1), dist:0.8},
+    ]);
+    return {
+      group,
+      update(dt){
+        const w = dt*2.2;
+        pulL.rotation.z += w;
+        pulR.rotation.z += w*(rL/rR);
+        beltTex.offset.x += w*rL*0.9;
+      }
+    };
+  },
+
+  /* ---------- 5 杠杆 ---------- */
+  lever: function(){
+    const group = new THREE.Group();
+    const base = makeBase(6.6, 3.2, 0xEFE9F5); base.position.y = -0.1; group.add(base);
+    const HALF = 2.35, PIVOT_Y = 1.0;
+    // 支点（三角，可移动）
+    const fulcrum = new THREE.Group();
+    const tri = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.68, 1.2, 3), mat(0xFFD54F, {roughness:0.4}));
+    tri.rotation.y = -Math.PI/2; tri.castShadow = true; fulcrum.add(tri);
+    group.add(fulcrum);
+    // 旋转组：原点即支点（世界位置随 fx 移动）
+    const beamG = new THREE.Group();
+    const beam = new THREE.Mesh(new THREE.BoxGeometry(HALF*2, 0.2, 0.42), mat(0xFF8A80, {roughness:0.35}));
+    beam.castShadow = true; beamG.add(beam);
+    // 吊篮 + 砝码（挂在梁端，梁局部随支点偏移）
+    const bL = new THREE.Group(), bR = new THREE.Group();
+    function makeBucket(g, color){
+      const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.36, 0.5, 20), mat(color));
+      cup.position.y = -0.25; cup.castShadow = true; g.add(cup);
+      const handle = new THREE.Mesh(new THREE.TorusGeometry(0.18, 0.035, 8, 20), mat(0x5B4A63));
+      handle.rotation.x = Math.PI/2; handle.position.y = 0.02; g.add(handle);
+    }
+    makeBucket(bL, 0x4FC3F7); makeBucket(bR, 0xFF5252);
+    beamG.add(bL); beamG.add(bR);
+    const wLgrp = new THREE.Group(), wRgrp = new THREE.Group();
+    bL.add(wLgrp); bR.add(wRgrp);
+    wLgrp.position.y = -0.6; wRgrp.position.y = -0.6;
+    group.add(beamG);
+    function setWeights(grp, n){
+      while(grp.children.length) grp.remove(grp.children[0]);
+      for(let i=0;i<n;i++){
+        const w = new THREE.Mesh(new THREE.SphereGeometry(0.22, 18, 18), mat(i%2? 0x4DB6AC : 0xFFD54F));
+        w.position.set(0, 0.24+i*0.42, 0); w.castShadow = true; grp.add(w);
+      }
+    }
+    // 力箭头 + 标签（世界坐标跟随）
+    const fAL = makeArrow(1.1, 0x4FC3F7); fAL.rotation.z = Math.PI; group.add(fAL);
+    const fAR = makeArrow(1.1, 0xFF5252); fAR.rotation.z = Math.PI; group.add(fAR);
+    const lblF = makeLabel('动力', {border:0x4FC3F7, size:0.5}); group.add(lblF);
+    const lblR = makeLabel('阻力', {border:0xFF5252, size:0.5}); group.add(lblR);
+    const lblP = makeLabel('支点', {bg:'rgba(255,214,79,0.92)', fg:'#7A5C08', border:'#FFD54F', size:0.55}); group.add(lblP);
+
+    const st = { fx:0, wL:3, wR:3 };
+    function apply(){
+      const fx = THREE.MathUtils.clamp(st.fx, -1.15, 1.15);
+      const inset = 0.15;
+      const dL = HALF - inset + fx, dR = HALF - inset - fx;
+      const target = THREE.MathUtils.clamp((st.wL*dL - st.wR*dR)*0.05, -0.5, 0.5);
+      // 支点世界位置
+      beamG.position.set(fx, PIVOT_Y, 0);
+      fulcrum.position.set(fx, 0.4, 0);
+      // 梁绕支点：梁中心偏移 -fx，吊篮挂在梁端
+      beam.position.x = -fx;
+      bL.position.set(-fx-(HALF-inset), -0.25, 0);
+      bR.position.set(-fx+(HALF-inset), -0.25, 0);
+      beamG.rotation.z = target;
+      // 力箭头
+      const cL = Math.cos(target), sL = Math.sin(target);
+      const wbLx = fx + cL*(-fx-(HALF-inset)) - sL*(-0.6);
+      const wbLy = PIVOT_Y + sL*(-fx-(HALF-inset)) + cL*(-0.6);
+      fAL.position.set(wbLx, wbLy-0.35, 0.55); lblF.position.set(wbLx, wbLy-0.85, 0.55);
+      const wbRx = fx + cL*(-fx+(HALF-inset)) - sL*(-0.6);
+      const wbRy = PIVOT_Y + sL*(-fx+(HALF-inset)) + cL*(-0.6);
+      fAR.position.set(wbRx, wbRy-0.35, 0.55); lblR.position.set(wbRx, wbRy-0.85, 0.55);
+      lblP.position.set(fx, PIVOT_Y+1.0, 0);
+      setWeights(wLgrp, st.wL); setWeights(wRgrp, st.wR);
+    }
+    apply();
+    group.userData = { set:(k,v)=>{ st[k]=v; apply(); } };
+    return {
+      group,
+      update(dt){}
+    };
+  },
+
+  /* ---------- 6 曲柄连杆（四连杆） ---------- */
+  crank: function(){
+    const group = new THREE.Group();
+    const base = makeBase(6.4, 3.2, 0xEFE9F5); base.position.y = -0.35; group.add(base);
+    const O1 = new THREE.Vector2(-1.4, 1.15), O2 = new THREE.Vector2(1.35, 1.15);
+    const r = 0.9, L = 2.5, R2 = 1.5;
+    // 立柱
+    const p1 = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.28, 1.05, 14), mat(0x8E9BA8)); p1.position.set(O1.x, 0.28, 0); group.add(p1);
+    const p2 = p1.clone(); p2.position.set(O2.x, 0.28, 0); group.add(p2);
+    // 电机
+    const motor = new THREE.Group();
+    motor.add(new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.7, 0.7), mat(0x9AA3B2, {roughness:0.5})));
+    motor.position.set(O1.x, 0.95, 0); group.add(motor);
+    const mL = makeLabel('电机', {bg:'rgba(154,163,178,0.92)', fg:'#fff', border:'#9AA3B2', size:0.52});
+    mL.position.set(O1.x, 2.0, 0); group.add(mL);
+    // 曲柄
+    const crank = new THREE.Group();
+    const crankBar = makeBar(r, 0.24, 0xFF8A80);
+    crankBar.position.x = r/2; crank.add(crankBar);
+    const jointP = new THREE.Mesh(new THREE.SphereGeometry(0.16, 16, 16), mat(0xFF5252)); jointP.position.x = r; crank.add(jointP);
+    crank.position.set(O1.x, O1.y, 0);
+    group.add(crank);
+    // 摇臂
+    const rocker = new THREE.Group();
+    const rockerBar = makeBar(R2, 0.24, 0xFFD54F);
+    rockerBar.position.x = R2/2; rocker.add(rockerBar);
+    const jointQ = new THREE.Mesh(new THREE.SphereGeometry(0.16, 16, 16), mat(0xF5A623)); jointQ.position.x = R2; rocker.add(jointQ);
+    rocker.position.set(O2.x, O2.y, 0);
+    group.add(rocker);
+    // 连杆（动态创建）
+    const coupler = makeBar(L, 0.22, 0x4FC3F7); group.add(coupler);
+    // 抽油杆演示
+    const pumpRod = new THREE.Mesh(new THREE.BoxGeometry(0.16, 1.6, 0.16), mat(0x8E9BA8, {roughness:0.4}));
+    pumpRod.position.set(0, 0.5, 0); group.add(pumpRod);
+    const well = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.46, 0.5, 18), mat(0x5B4A63));
+    well.position.set(0, -0.02, 0); group.add(well);
+    const l1 = makeLabel('曲柄', {border:0xFF8A80, size:0.52}); l1.position.set(O1.x, 2.2, 0); group.add(l1);
+    const l2 = makeLabel('摇臂', {border:0xFFD54F, size:0.52}); l2.position.set(O2.x, 2.2, 0); group.add(l2);
+    const l3 = makeLabel('连杆', {border:0x4FC3F7, size:0.5}); l3.position.set(0.1, 2.6, 0); group.add(l3);
+    setAxis([
+      {from:new THREE.Vector3(O1.x,-0.3,0), to:new THREE.Vector3(O1.x,2.2,0), color:0xFF8A80},
+      {from:new THREE.Vector3(O2.x,-0.3,0), to:new THREE.Vector3(O2.x,2.2,0), color:0xFFD54F},
+    ]);
+    let th = 0;
+    return {
+      group,
+      update(dt){
+        th += dt*1.6;
+        crank.rotation.z = th;
+        const P = new THREE.Vector2(O1.x + r*Math.cos(th), O1.y + r*Math.sin(th));
+        const d = P.distanceTo(O2);
+        const dc = THREE.MathUtils.clamp((d*d + R2*R2 - L*L)/(2*d*R2), -1, 1);
+        let beta = Math.acos(dc);
+        const phi = Math.atan2(P.y-O2.y, P.x-O2.x);
+        const rockA = phi + beta;
+        const Q = new THREE.Vector2(O2.x + R2*Math.cos(rockA), O2.y + R2*Math.sin(rockA));
+        rocker.rotation.z = rockA;
+        // 连杆位置
+        const mid = P.clone().add(Q).multiplyScalar(0.5);
+        const len = P.distanceTo(Q);
+        coupler.position.set(mid.x, mid.y, 0);
+        coupler.rotation.z = Math.atan2(Q.y-P.y, Q.x-P.x);
+        coupler.scale.set(len/L, 1, 1);
+        // 抽油杆随摇臂端点头
+        const rx = Q.x - O2.x;
+        pumpRod.position.x = O2.x + rx*1.35 + 0.2;
+        pumpRod.position.y = 0.45 + (Q.y - O1.y)*0.45;
+        well.position.x = O2.x + 1.9;
+      }
+    };
+  },
+
+  /* ---------- 7 曲柄滑块 ---------- */
+  slider: function(){
+    const group = new THREE.Group();
+    const base = makeBase(6.6, 3.2, 0xEFE9F5); base.position.y = -0.15; group.add(base);
+    const pivot = new THREE.Vector2(0, 1.15);
+    const r = 0.75, L = 2.15, pathY = 0.35;
+    // 电机
+    const motor = new THREE.Group();
+    motor.add(new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.75, 0.75), mat(0x9AA3B2, {roughness:0.5})));
+    motor.position.set(pivot.x, pivot.y+0.15, 0); group.add(motor);
+    const mL = makeLabel('电机', {bg:'rgba(154,163,178,0.92)', fg:'#fff', border:'#9AA3B2', size:0.5});
+    mL.position.set(pivot.x, pivot.y+1.35, 0); group.add(mL);
+    // 曲柄
+    const crank = new THREE.Group();
+    const crankBar = makeBar(r, 0.22, 0xFF8A80); crankBar.position.x = r/2; crank.add(crankBar);
+    const jointP = new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 16), mat(0xFF5252)); jointP.position.x = r; crank.add(jointP);
+    crank.position.set(pivot.x, pivot.y, 0); group.add(crank);
+    // 导轨
+    const rail1 = new THREE.Mesh(new THREE.BoxGeometry(4.6, 0.1, 0.1), mat(0xB9C4D0)); rail1.position.set(0, pathY+0.05, 0); group.add(rail1);
+    const rail2 = rail1.clone(); rail2.position.set(0, pathY-0.42, 0); group.add(rail2);
+    // 滑块
+    const slider = new THREE.Group();
+    const block = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.52, 0.72), mat(0xFF5252, {roughness:0.4}));
+    block.castShadow = true; slider.add(block);
+    const flag = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.6, 0.06), mat(0xFFD54F));
+    flag.position.y = 0.42; slider.add(flag);
+    slider.position.set(0, pathY, 0); group.add(slider);
+    // 连杆（动态）
+    const rod = makeBar(L, 0.2, 0x4FC3F7); group.add(rod);
+    // 往复箭头
+    const arr = makeArrow(1.6, 0x4DB6AC); arr.position.set(0, pathY+0.75, 0.55); group.add(arr);
+    const l1 = makeLabel('曲柄', {border:0xFF8A80, size:0.5}); l1.position.set(pivot.x, pivot.y+1.05, 0); group.add(l1);
+    const l2 = makeLabel('滑块', {border:0xFF5252, size:0.5}); l2.position.set(2.0, pathY+0.45, 0); group.add(l2);
+    const l3 = makeLabel('连杆', {border:0x4FC3F7, size:0.5}); l3.position.set(0.5, 1.9, 0); group.add(l3);
+    const l4 = makeLabel('转动 → 直线往复', {bg:'rgba(77,182,172,0.92)', fg:'#fff', border:'#4DB6AC', size:0.55});
+    l4.position.set(0, -0.55, 0); group.add(l4);
+    let th = 0;
+    return {
+      group,
+      update(dt){
+        th += dt*2.0;
+        crank.rotation.z = th;
+        const P = new THREE.Vector2(pivot.x + r*Math.cos(th), pivot.y + r*Math.sin(th));
+        const dy = P.y - pathY;
+        const dx = Math.sqrt(Math.max(L*L - dy*dy, 0.01));
+        const S = new THREE.Vector2(P.x + dx, pathY);
+        slider.position.x = S.x;
+        const mid = P.clone().add(S).multiplyScalar(0.5);
+        rod.position.set(mid.x, mid.y, 0);
+        rod.rotation.z = Math.atan2(S.y-P.y, S.x-P.x);
+        rod.scale.set(P.distanceTo(S)/2.15, 1, 1);
+      }
+    };
+  },
+
+  /* ---------- 8 凸轮 ---------- */
+  cam: function(){
+    const group = new THREE.Group();
+    const base = makeBase(5.6, 3.2, 0xEFE9F5); base.position.y = -0.15; group.add(base);
+    const pivotY = 0.85, R = 0.85, e = 0.3;
+    // 电机（轴沿 X 进凸轮）
+    const motor = new THREE.Group();
+    motor.add(new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.7, 0.95), mat(0x9AA3B2, {roughness:0.5})));
+    motor.position.set(-1.9, pivotY, 0); group.add(motor);
+    const axle = makeAxle(1.3, 0.1, 0xB9C4D0); axle.rotation.z = Math.PI/2; axle.position.set(-1.2, pivotY, 0); group.add(axle);
+    const mL = makeLabel('电机', {bg:'rgba(154,163,178,0.92)', fg:'#fff', border:'#9AA3B2', size:0.5});
+    mL.position.set(-1.9, pivotY+1.0, 0); group.add(mL);
+    // 偏心凸轮
+    const camG = new THREE.Group();
+    const disc = new THREE.Mesh(new THREE.CylinderGeometry(R, R, 0.34, 48), mat(0xFF8A80, {roughness:0.35}));
+    disc.castShadow = true; camG.add(disc);
+    const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.4, 14), mat(0x3A3444)); camG.add(hub);
+    disc.position.y = e; hub.position.y = e; // 偏心
+    camG.position.set(-0.35, pivotY, 0);
+    group.add(camG);
+    // 导向套筒
+    const tube1 = new THREE.Mesh(new THREE.BoxGeometry(0.12, 2.6, 0.5), mat(0xB9C4D0)); tube1.position.set(-0.62, pivotY+R+e+1.0, 0); group.add(tube1);
+    const tube2 = tube1.clone(); tube2.position.set(-0.08, pivotY+R+e+1.0, 0); group.add(tube2);
+    // 从动杆
+    const rod = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1, 0.3), mat(0x4FC3F7, {roughness:0.4}));
+    rod.castShadow = true; group.add(rod);
+    const roller = new THREE.Mesh(new THREE.SphereGeometry(0.17, 16, 16), mat(0xFFD54F)); group.add(roller);
+    const topFlag = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.1, 0.3), mat(0xFF5252)); group.add(topFlag);
+    const l1 = makeLabel('凸轮', {border:0xFF8A80, size:0.55}); l1.position.set(-0.35, pivotY+R+0.45, 0); group.add(l1);
+    const l2 = makeLabel('从动件（一上一下）', {bg:'rgba(79,195,247,0.92)', fg:'#fff', border:'#4FC3F7', size:0.55});
+    l2.position.set(-0.35, pivotY+R+e+2.5, 0); group.add(l2);
+    const l3 = makeLabel('转动 → 升降', {bg:'rgba(77,182,172,0.92)', fg:'#fff', border:'#4DB6AC', size:0.52});
+    l3.position.set(1.3, 0.6, 0); group.add(l3);
+    setAxis([
+      {from:new THREE.Vector3(-2.2,pivotY,0), to:new THREE.Vector3(1.2,pivotY,0), color:0xFF8A80},
+    ]);
+    let th = 0;
+    function placeFollower(){
+      const h = R + e*Math.cos(th) + 0.06;
+      const baseY = pivotY + h;
+      rod.position.set(-0.35, baseY + 0.55, 0);
+      roller.position.set(-0.35, baseY, 0);
+      topFlag.position.set(-0.35, baseY + 1.05, 0);
+    }
+    placeFollower();
+    return {
+      group,
+      update(dt){
+        th += dt*2.2;
+        camG.rotation.x = th;
+        placeFollower();
+      }
+    };
+  },
+
+  /* ---------- 9 惰轮 ---------- */
+  idler: function(){
+    const group = new THREE.Group();
+    const base = makeBase(7.4, 3.2, 0xEFE9F5); base.position.y = -0.15; group.add(base);
+    const pitch = 0.34, teeth = 16, r = teeth*pitch/(2*Math.PI);
+    const gap = 2*r + 0.03, Y = 0.7;
+    const L = new THREE.Vector3(-gap, Y, 0), M = new THREE.Vector3(0, Y, 0), R = new THREE.Vector3(gap, Y, 0);
+    const gL = makeGear({teeth, pitch, thick:0.34, color:0xFF8A80, toothColor:0xF56A5E});
+    const gM = makeGear({teeth, pitch, thick:0.34, color:0x9AA3B2, toothColor:0x8E9BA8});
+    const gR = makeGear({teeth, pitch, thick:0.34, color:0x4FC3F7, toothColor:0x35AED9});
+    gL.position.copy(L); gM.position.copy(M); gR.position.copy(R);
+    group.add(gL, gM, gR);
+    // 电机
+    const motor = new THREE.Group();
+    motor.add(new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.6, 0.6), mat(0x9AA3B2, {roughness:0.5})));
+    motor.position.set(L.x-1.05, Y, 0); group.add(motor);
+    const axle = makeAxle(0.7, 0.09, 0x8E9BA8); axle.rotation.z = Math.PI/2; axle.position.set(L.x-0.62, Y, 0); group.add(axle);
+    // 白点标记
+    const dotL = new THREE.Mesh(new THREE.SphereGeometry(0.09, 14, 14), mat(0xFFFFFF)); dotL.position.set(0, r*0.92, 0.1); gL.add(dotL);
+    const dotM = new THREE.Mesh(new THREE.SphereGeometry(0.09, 14, 14), mat(0x3A3444)); dotM.position.set(0, r*0.92, 0.1); gM.add(dotM);
+    const dotR = new THREE.Mesh(new THREE.SphereGeometry(0.09, 14, 14), mat(0xFFFFFF)); dotR.position.set(0, r*0.92, 0.1); gR.add(dotR);
+    // 标签
+    const l1 = makeLabel('主动轮', {border:0xFF8A80, size:0.55}); l1.position.set(L.x, 1.7, 0); group.add(l1);
+    const l2 = makeLabel('惰轮', {border:0x9AA3B2, size:0.55}); l2.position.set(M.x, 1.7, 0); group.add(l2);
+    const l3 = makeLabel('从动轮', {border:0x4FC3F7, size:0.55}); l3.position.set(R.x, 1.7, 0); group.add(l3);
+    const l4 = makeLabel('方向反过来，速度不变！', {bg:'rgba(77,182,172,0.92)', fg:'#fff', border:'#4DB6AC', size:0.58});
+    l4.position.set(0, 2.45, 0); group.add(l4);
+    setAxis([
+      {from:new THREE.Vector3(L.x,0.1,0), to:new THREE.Vector3(L.x,1.5,0), color:0xFF8A80},
+      {from:new THREE.Vector3(M.x,0.1,0), to:new THREE.Vector3(M.x,1.5,0), color:0x9AA3B2},
+      {from:new THREE.Vector3(R.x,0.1,0), to:new THREE.Vector3(R.x,1.5,0), color:0x4FC3F7},
+    ]);
+    return {
+      group,
+      update(dt){
+        gL.rotation.z += dt*2.0;
+        gM.rotation.z -= dt*2.0;
+        gR.rotation.z += dt*2.0;
+      }
+    };
+  },
+
+  /* ---------- 10 互锁结构 ---------- */
+  interlock: function(){
+    const group = new THREE.Group();
+    const base = makeBase(7.6, 3.2, 0xEFE9F5); base.position.y = -0.15; group.add(base);
+    const LAYERS = 4, BH = 0.6, STEP = 0.62;
+    function brick(c){ return makeBrick({w:0.9, d:0.42, h:BH, color:c}); }
+    // 左墙：砖缝对齐（会裂）
+    const wallBad = new THREE.Group(); wallBad.position.set(-1.9, 0, 0);
+    const badTop = new THREE.Group();
+    for(let L=0; L<LAYERS; L++){
+      const y = 0.3 + L*STEP;
+      const b0 = brick(L%2? 0xFFB74D : 0xFF8A80); b0.position.set(-0.45, y, 0);
+      const b1 = brick(L%2? 0xFFB74D : 0xFF8A80); b1.position.set(0.45, y, 0);
+      (L>=2 ? badTop : wallBad).add(b0, b1);
+    }
+    wallBad.add(badTop);
+    group.add(wallBad);
+    // 右墙：砖缝错开（稳）
+    const wallGood = new THREE.Group(); wallGood.position.set(1.9, 0, 0);
+    for(let L=0; L<LAYERS; L++){
+      const y = 0.3 + L*STEP, off = (L%2) ? 0.45 : 0;
+      const b0 = brick(L%2? 0x4FC3F7 : 0x4DB6AC); b0.position.set(off-0.45, y, 0);
+      const b1 = brick(L%2? 0x4DB6AC : 0x4FC3F7); b1.position.set(off+0.45, y, 0);
+      wallGood.add(b0, b1);
+    }
+    group.add(wallGood);
+    // 推力箭头
+    const push = makeArrow(1.0, 0xFF5252); push.position.set(-3.0, 1.35, 0.5); group.add(push);
+    const l1 = makeLabel('✗ 砖缝对齐，一推就裂', {bg:'rgba(255,82,82,0.92)', fg:'#fff', border:'#FF5252', size:0.55});
+    l1.position.set(-1.9, 3.1, 0); group.add(l1);
+    const l2 = makeLabel('✓ 砖缝错开，稳稳当当', {bg:'rgba(77,182,172,0.92)', fg:'#fff', border:'#4DB6AC', size:0.55});
+    l2.position.set(1.9, 3.1, 0); group.add(l2);
+    return {
+      group,
+      update(dt){
+        const t = performance.now()/1000;
+        badTop.position.x = Math.sin(t*1.6)*0.10;
+        badTop.rotation.z = Math.sin(t*1.6)*0.03;
+      }
+    };
+  },
+
+  /* ---------- 11 两点固定 ---------- */
+  twopoint: function(){
+    const group = new THREE.Group();
+    const base = makeBase(7.2, 3.0, 0xEFE9F5); base.position.y = -0.15; group.add(base);
+    function pin(){
+      const g = new THREE.Group();
+      const p = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.6, 14), mat(0x3A3444));
+      p.position.y = 0.05; g.add(p);
+      const hd = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.17, 0.07, 14), mat(0x5B4A63));
+      hd.position.y = 0.4; g.add(hd);
+      return g;
+    }
+    // 左：1 颗螺丝 → 会转
+    const left = new THREE.Group(); left.position.set(-1.85, 0.72, 0);
+    const bm1 = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.17, 0.4), mat(0xFF8A80, {roughness:0.35}));
+    bm1.castShadow = true; left.add(bm1);
+    const pn1 = pin(); left.add(pn1);
+    const stand1 = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.55, 0.55), mat(0x9AA3B2));
+    stand1.position.set(-1.85, 0.02, 0); group.add(stand1);
+    group.add(left);
+    // 右：2 颗螺丝 → 固定
+    const right = new THREE.Group(); right.position.set(1.85, 0.72, 0);
+    const bm2 = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.17, 0.4), mat(0x4FC3F7, {roughness:0.35}));
+    bm2.castShadow = true; right.add(bm2);
+    const pn2 = pin(); pn2.position.x = -0.6; right.add(pn2);
+    const pn3 = pin(); pn3.position.x = 0.6; right.add(pn3);
+    const stand2 = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.55, 0.55), mat(0x9AA3B2));
+    stand2.position.set(1.85-0.6, 0.02, 0); group.add(stand2);
+    const stand3 = stand2.clone(); stand3.position.set(1.85+0.6, 0.02, 0); group.add(stand3);
+    group.add(right);
+    // 推力箭头
+    const push = makeArrow(0.9, 0xFF5252); push.position.set(-1.2, 1.35, 0.5); push.rotation.z = -Math.PI/2; group.add(push);
+    const l1 = makeLabel('1 颗螺丝 → 还会晃', {border:0xFF8A80, size:0.55}); l1.position.set(-1.85, 1.7, 0); group.add(l1);
+    const l2 = makeLabel('2 颗螺丝 → 稳稳不动', {border:0x4FC3F7, size:0.55}); l2.position.set(1.85, 1.7, 0); group.add(l2);
+    const l3 = makeLabel('两点确定一条直线', {bg:'rgba(255,213,79,0.92)', fg:'#7A5C08', border:'#FFD54F', size:0.55});
+    l3.position.set(0, 2.5, 0); group.add(l3);
+    return {
+      group,
+      update(dt){
+        left.rotation.z = Math.sin(performance.now()/800)*0.45;
+      }
+    };
+  },
+
+  /* ---------- 12 稳定性：三角形 vs 四边形 ---------- */
+  stability: function(){
+    const group = new THREE.Group();
+    const base = makeBase(7.6, 3.2, 0xEFE9F5); base.position.y = -0.15; group.add(base);
+    // 四边形（可剪切变形）
+    const J1 = new THREE.Vector2(-2.5, 0.5), J2 = new THREE.Vector2(-0.95, 0.5), J3 = new THREE.Vector2(-0.95, 1.8), J4 = new THREE.Vector2(-2.5, 1.8);
+    const barB = makeUnitBar(0.06, 0xFFB74D), barR = makeUnitBar(0.06, 0xFF8A80), barT = makeUnitBar(0.06, 0xFFB74D), barL = makeUnitBar(0.06, 0xFF8A80);
+    const joint = () => new THREE.Mesh(new THREE.SphereGeometry(0.12, 14, 14), mat(0x5B4A63));
+    const jq1 = joint(), jq2 = joint(), jq3 = joint(), jq4 = joint();
+    group.add(barB, barR, barT, barL, jq1, jq2, jq3, jq4);
+    // 三角形
+    const t1 = new THREE.Vector2(2.35, 0.5), t2 = new THREE.Vector2(3.9, 0.5), t3 = new THREE.Vector2(3.125, 1.85);
+    const tb1 = makeUnitBar(0.06, 0x4DB6AC), tb2 = makeUnitBar(0.06, 0x4DB6AC), tb3 = makeUnitBar(0.06, 0x4DB6AC);
+    const jt1 = joint(), jt2 = joint(), jt3 = joint();
+    group.add(tb1, tb2, tb3, jt1, jt2, jt3);
+    placeBar(tb1, t1, t2); placeBar(tb2, t2, t3); placeBar(tb3, t3, t1);
+    jt1.position.set(t1.x, t1.y, 0); jt2.position.set(t2.x, t2.y, 0); jt3.position.set(t3.x, t3.y, 0);
+    // 推力箭头
+    const push1 = makeArrow(0.8, 0xFF5252); push1.position.set(-3.15, 1.15, 0.5); group.add(push1);
+    const push2 = makeArrow(0.8, 0xFF5252); push2.position.set(2.0, 1.15, 0.5); group.add(push2);
+    const l1 = makeLabel('四边形 · 一推就歪', {border:0xFF8A80, size:0.55}); l1.position.set(-1.7, 2.6, 0); group.add(l1);
+    const l2 = makeLabel('三角形 · 纹丝不动', {border:0x4DB6AC, size:0.55}); l2.position.set(3.1, 2.6, 0); group.add(l2);
+    function placeQuad(){
+      placeBar(barB, J1, J2); placeBar(barR, J2, J3); placeBar(barT, J3, J4); placeBar(barL, J4, J1);
+      jq1.position.set(J1.x, J1.y, 0); jq2.position.set(J2.x, J2.y, 0);
+      jq3.position.set(J3.x, J3.y, 0); jq4.position.set(J4.x, J4.y, 0);
+    }
+    placeQuad();
+    return {
+      group,
+      update(dt){
+        const s = Math.sin(performance.now()/900)*0.30;
+        J3.x = -0.95 + s; J4.x = -2.5 + s;
+        placeQuad();
+      }
+    };
+  },
+
+  /* ---------- 13 定滑轮 ---------- */
+  pulley: function(){
+    const group = new THREE.Group();
+    const base = makeBase(3.4, 3.0, 0xEFE9F5); base.position.y = -0.15; group.add(base);
+    // 立柱
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.11, 2.0, 14), mat(0x8E9BA8));
+    pole.position.y = 1.1; group.add(pole);
+    // 滑轮（轴 Z）
+    const wheel = new THREE.Group();
+    const disc = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.15, 32), mat(0xB39DDB, {roughness:0.35}));
+    disc.rotation.x = Math.PI/2; disc.castShadow = true; wheel.add(disc);
+    const groove = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.055, 10, 32), mat(0x7C5FB8));
+    groove.rotation.x = Math.PI/2; wheel.add(groove);
+    wheel.position.set(0, 2.05, 0); group.add(wheel);
+    // 绳索
+    const ropeL = makeUnitBar(0.035, 0x5B4A63); group.add(ropeL);
+    const ropeR = makeUnitBar(0.035, 0x5B4A63); group.add(ropeR);
+    // 旗帜
+    const flag = new THREE.Group();
+    const stick = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.5, 0.05), mat(0x5B4A63)); flag.add(stick);
+    const cloth = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.3, 0.03), mat(0xFF5252)); cloth.position.set(0.28, 0.16, 0); flag.add(cloth);
+    group.add(flag);
+    // 拉手
+    const handle = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.035, 8, 18), mat(0xFF8A80)); group.add(handle);
+    // 标签
+    const l1 = makeLabel('定滑轮', {border:0xB39DDB, size:0.55}); l1.position.set(0, 2.85, 0); group.add(l1);
+    const l2 = makeLabel('升 ↑', {bg:'rgba(77,182,172,0.92)', fg:'#fff', border:'#4DB6AC', size:0.5}); l2.position.set(-0.95, 1.5, 0); group.add(l2);
+    const l3 = makeLabel('拉 ↓', {bg:'rgba(255,138,128,0.92)', fg:'#fff', border:'#FF8A80', size:0.5}); l3.position.set(0.95, 1.5, 0); group.add(l3);
+    const l4 = makeLabel('往下拉绳子 → 旗帜往上升', {bg:'rgba(77,182,172,0.92)', fg:'#fff', border:'#4DB6AC', size:0.55});
+    l4.position.set(0, 0.0, 1.2); group.add(l4);
+    let ph = 0;
+    return {
+      group,
+      update(dt){
+        ph += dt*0.4;
+        const k = ph % 1;
+        const flagY = 0.35 + 1.45*k;
+        const handY = 2.35 - 1.45*k;
+        flag.position.set(-0.5, flagY, 0);
+        handle.position.set(0.5, handY, 0);
+        placeBar(ropeL, {x:-0.5, y:2.1}, {x:-0.5, y:flagY+0.28});
+        placeBar(ropeR, {x:0.5, y:2.1}, {x:0.5, y:handY});
+        wheel.rotation.z = -k*Math.PI*4;
+      }
+    };
+  },
+
+  /* ---------- 14 弹性势能（弹弓发射） ---------- */
+  elastic: function(){
+    const group = new THREE.Group();
+    const base = makeBase(5.8, 3.0, 0xEFE9F5); base.position.y = -0.15; group.add(base);
+    // Y 形支架
+    const legL = makeUnitBar(0.07, 0x8E9BA8), legR = makeUnitBar(0.07, 0x8E9BA8);
+    group.add(legL, legR);
+    const forkL = new THREE.Vector2(-0.55, 1.55), forkR = new THREE.Vector2(0.55, 1.55), grip = new THREE.Vector2(0, 0.25);
+    placeBar(legL, grip, forkL); placeBar(legR, grip, forkR);
+    // 橡皮筋（两条）
+    const bandL = makeUnitBar(0.035, 0xFFB74D), bandR = makeUnitBar(0.035, 0xFFB74D);
+    group.add(bandL, bandR);
+    // 弹兜 + 小球
+    const pocket = new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 12), mat(0xFF5252)); group.add(pocket);
+    const ball = new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 16), mat(0x4FC3F7));
+    ball.castShadow = true; group.add(ball);
+    // 射向箭头
+    const arr = makeArrow(1.3, 0x4DB6AC); arr.position.set(1.5, 1.1, 0.5); group.add(arr);
+    const l1 = makeLabel('弹性势能 → 动能', {bg:'rgba(77,182,172,0.92)', fg:'#fff', border:'#4DB6AC', size:0.58});
+    l1.position.set(0, 2.6, 0); group.add(l1);
+    const l2 = makeLabel('拉紧橡皮筋，一松手"砰"！', {bg:'rgba(255,213,79,0.92)', fg:'#7A5C08', border:'#FFD54F', size:0.55});
+    l2.position.set(0, 0.1, 1.3); group.add(l2);
+    let ph = 0;
+    return {
+      group,
+      update(dt){
+        ph += dt*0.5;
+        const cyc = ph % 2;
+        let p;
+        if(cyc < 0.75){
+          p = new THREE.Vector2(0, 1.42 - (cyc/0.75)*0.55);
+          ball.visible = false;
+        } else if(cyc < 1.2){
+          const k = (cyc-0.75)/0.45;
+          p = new THREE.Vector2(0, 0.87);
+          const bx = k*2.6, by = 0.92 + k*1.5 - k*k*2.6;
+          ball.position.set(bx, by, 0);
+          ball.visible = by > 0.18;
+        } else {
+          p = new THREE.Vector2(0, 1.42);
+          ball.visible = false;
+        }
+        pocket.position.set(p.x, p.y, 0);
+        placeBar(bandL, forkL, p); placeBar(bandR, forkR, p);
+      }
+    };
+  },
+};
+
+
+/* ============================================================
+   数据层：8大机构配置 + 搭建小课堂静态卡片
+   ============================================================ */
+const NEG = "禁止人物、文字、字幕、logo、水印、旁白、解说、特效光斑、过度虚化、模糊、畸变、穿模、画面抖动、快速剪辑、镜头炫技。";
+
+const MECHS = {
+  gear: {
+    id:'gear', name:'齿轮传动', icon:'⚙️', cat:'trans', color:'#FF8A80', light:'#FFDAD6',
+    tag:'传动家族', sub:'大轮带小轮跑得快，小轮带大轮力气大',
+    intro:'两个齿轮挨在一起，牙齿互相咬合，一个转起来，另一个就跟着转。大齿轮带动小齿轮时，小齿轮转得飞快（加速）；小齿轮带动大齿轮时，转得慢但力气大（减速）。',
+    kpoints:[
+      ['咬合传动','齿轮的"牙齿"互相咬住，把转动传给下一个齿轮，而且方向相反'],
+      ['加速原理','大齿轮带小齿轮：转得慢的大轮，能让小轮转好几圈——陀螺发射器就是靠它让陀螺飞快旋转！'],
+      ['减速增力','小齿轮带大齿轮：转得快的小轮，带不动大轮快转，但力气变大了——电动晒衣杆、三球仪都用它'],
+      ['二级加速','两个小齿轮接力加速，速度翻倍再翻倍——陀螺发射器的"二级加速"'],
+    ],
+    lessons:['陀螺发射器·加速','换挡风扇·变速','吊扇·加速','三球仪·减速','球球发射器·加速','海盗船·减速'],
+    life:['自行车变速器','时钟里的指针','玩具回力车'],
+    prompt: {
+      pos:"16:9 横屏，固定 3/4 侧前方视角，机位以主体为圆心极缓慢环绕（10 秒约转 15°），匀速丝滑，全程不切镜、不推拉、不抖动。主体为一组少儿编程积木风格的齿轮传动机构三维教学模型，居中占画面六成，纯白中性无限背景配柔和径向渐变，画面干净，无字幕、无旁白。模型以圆角积木件搭建：浅灰积木基板为底座，橙色大齿轮与宝蓝色小齿轮在基板上方水平啮合，由左侧灰色微型电机驱动。运动演示：电机恒速旋转，带动大齿轮转动，小齿轮与它反向啮合并以明显更快的速度旋转，清晰呈现「大轮带小轮 → 加速」的传动关系，两齿轮齿牙逐一咬合、依次交替的细节清晰可见。为讲清原理，运动件以高饱和色区分（电机橙 / 大齿轮柠檬黄 / 小齿轮宝蓝），静止结构用中性灰，色彩编码让观众一眼看懂力的走向。光照为柔光箱主光加顶部补光，塑料积木件呈现干净高光与柔和反光。写实三维 CAD 教学演示风格，边线利落、材质对比清晰、无卡通感。关键诉求：齿轮啮合处的咬合细节与两轮转速差必须清晰可辨，让观众直观读懂齿轮传动的加速原理。演示末轮将转速轻微放缓约 20%，留出半秒从容观察齿牙配合的窗口。整体节奏克制、教学感强，适配即梦 / Kling / Seedance 文生视频直接生成。",
+      neg: NEG
+    },
+    cases:[
+      {t:'变速自行车三维动画展示', bvid:'BV1g44y1F7uv', note:'自行车的变速器就是一组大小不同的齿轮，换挡就是换齿轮：大轮省力爬坡，小轮跑得快！'},
+      {t:'自行车——齿轮', bvid:'BV1Gg411t7w6', note:'看看自行车上齿轮和链条是怎么配合，让轮子转起来的。'},
+      {t:'九种典型齿轮传动 3D 动画', url:'https://www.163.com/v/video/VGV1QLD4M.html', note:'一次看遍九种齿轮传动方式，长长见识！', external:true},
+    ]
+  },
+
+  worm: {
+    id:'worm', name:'蜗轮蜗杆', icon:'🐌', cat:'trans', color:'#4FC3F7', light:'#D6F1FF',
+    tag:'传动家族', sub:'蜗杆转好多圈，蜗轮才转一圈——还会"锁住"自己',
+    intro:'蜗杆长得像一根大螺丝，蜗轮像一个圆盘齿轮。蜗杆转一圈，蜗轮只前进一个齿，所以减速特别厉害！而且蜗轮想反过来推蜗杆可推不动，这叫"自锁"——吊车把重物吊在半空不会掉下来，就是它的功劳。',
+    kpoints:[
+      ['大减速比','蜗杆转 36 圈，蜗轮才转 1 圈（本演示 36:1），力气放大 36 倍'],
+      ['自锁本领','蜗轮不能倒过来推动蜗杆，所以吊车、电梯能把东西稳稳停住'],
+      ['改变方向','蜗杆横着转，蜗轮竖着转，动力方向转了 90°'],
+      ['生活应用','车库门、旋转木马、汽车转向器、电动窗帘里都有它'],
+    ],
+    lessons:['吊车·涡轮箱','高射炮·涡轮箱','叉车·涡轮箱','测量小车·蜗轮蜗杆','车库门·涡轮传动','伸缩门·涡轮传动'],
+    life:['汽车转向器','电动窗帘','旋转木马','车库门'],
+    prompt: {
+      pos:"16:9 横屏，固定 3/4 侧前方视角，机位以主体为圆心极缓慢环绕（10 秒约转 18°），匀速丝滑，全程不切镜、不推拉、不抖动。主体为一套少儿编程积木风格的蜗轮蜗杆传动机构三维教学模型，居中占画面六成，纯白中性无限背景配柔和径向渐变，画面干净，无字幕、无旁白。模型以圆角积木件搭建：浅灰基板为底座，深灰色蜗杆横向水平放置（类似带螺旋齿的长螺丝），橙黄色蜗轮竖向与其 90° 啮合，蜗杆一端连接蓝色微型电机。运动演示：电机恒速旋转，蜗杆快速转动，其螺旋齿逐齿推动蜗轮缓慢转动——蜗杆转多圈蜗轮才转一圈，直观呈现「大减速比」；蜗轮轮缘上贴一个红色小标记，便于观众数出转速差。为讲清原理，运动件以高饱和色区分（电机蓝 / 蜗杆深灰 / 蜗轮橙黄 / 标记红色），静止结构用中性色，色彩编码让观众一眼看懂力的走向。光照为柔光箱主光加顶部补光，塑料积木件呈现干净高光与柔和反光。写实三维 CAD 教学演示风格，边线利落、材质对比清晰、无卡通感。关键诉求：蜗杆螺旋齿与蜗轮齿的啮合细节、蜗轮每转一齿的停顿节奏必须清晰可辨，让观众直观读懂蜗轮蜗杆的减速与自锁原理。演示末轮将转速轻微放缓约 20%，留出半秒从容观察齿牙配合的窗口。整体节奏克制、教学感强，适配即梦 / Kling / Seedance 文生视频直接生成。",
+      neg: NEG
+    },
+    cases:[
+      {t:'啥是蜗轮蜗杆传动？3D 动画直观演示', bvid:'BV1PG4y1R77h', note:'教科书级 3D 演示：蜗杆转很多圈，蜗轮才慢慢转一圈。'},
+      {t:'蜗轮蜗杆减速器特点和原理详细解读', bvid:'BV1mM411u7pR', note:'看看真实的蜗轮蜗杆减速机长什么样，用在哪些机器上。'},
+      {t:'电梯减速机（蜗轮蜗杆的日常应用）', bvid:'BV1UK411w7F7', note:'电梯能稳稳升降、安全停住，蜗轮蜗杆帮了大忙！'},
+    ]
+  },
+
+  bevel: {
+    id:'bevel', name:'垂直传动·锥齿轮', icon:'🔄', cat:'trans', color:'#4DB6AC', light:'#D7F2EE',
+    tag:'传动家族', sub:'把横着的转，变成竖着的转',
+    intro:'锥齿轮（也叫冠状齿轮）的"牙齿"斜斜地长在盘子边上，两个锥齿轮面对面咬合，就能把转动方向拐一个 90° 的弯。扫地车、榨汁机、手电钻里面都有它。',
+    kpoints:[
+      ['直角转向','两个锥齿轮 90° 咬合，动力方向拐弯：横轴 → 竖轴'],
+      ['力气不丢','齿轮传动效率高，转向的同时力量几乎不损失'],
+      ['生活应用','汽车差速器、手电钻、榨汁机、旋转木马、扫地机'],
+    ],
+    lessons:['冰球运动员·冠状齿轮','扫地车·冠状齿轮','旋转杯·冠形齿轮','旋转爱心·垂直传动','榨汁机·垂直传动','测风仪·垂直传动'],
+    life:['汽车差速器','手电钻','榨汁机','旋转咖啡杯'],
+    prompt: {
+      pos:"16:9 横屏，固定 3/4 侧前方视角，机位以主体为圆心极缓慢环绕（10 秒约转 15°），匀速丝滑，全程不切镜、不推拉、不抖动。主体为一组少儿编程积木风格的锥齿轮垂直传动机构三维教学模型，居中占画面六成，纯白中性无限背景配柔和径向渐变，画面干净，无字幕、无旁白。模型以圆角积木件搭建：浅灰基板为底座，一个柠檬黄色锥齿轮水平放置（齿面朝上），一个宝蓝色锥齿轮竖直放置与其 90° 咬合，宝蓝色齿轮轴连接右侧灰色微型电机。运动演示：电机恒速旋转，竖直的蓝色锥齿轮转动，通过 90° 咬合带动水平的黄色锥齿轮旋转，清晰呈现「横向动力 → 垂直转向」的传动关系，两齿轮斜齿咬合的细节清晰可见；黄色锥齿轮边缘贴红色小标记以突出旋转。为讲清原理，运动件以高饱和色区分（电机灰 / 蓝锥齿轮 / 黄锥齿轮 / 红标记），静止结构用中性色，色彩编码让观众一眼看懂力的走向。光照为柔光箱主光加顶部补光，塑料积木件呈现干净高光与柔和反光。写实三维 CAD 教学演示风格，边线利落、材质对比清晰、无卡通感。关键诉求：两锥齿轮 90° 咬合关系与转向后的旋转方向必须清晰可辨，让观众直观读懂垂直传动原理。演示末轮将转速轻微放缓约 20%，留出半秒从容观察咬合配合的窗口。整体节奏克制、教学感强，适配即梦 / Kling / Seedance 文生视频直接生成。",
+      neg: NEG
+    },
+    cases:[
+      {t:'差速器的天才发明，3D 动画演示差速器工作原理', bvid:'BV1ea41157DG', note:'汽车拐弯时左右轮转速不一样，靠的就是差速器里的锥齿轮！'},
+      {t:'汽车差速器工作原理', bvid:'BV1JEtozyExV', note:'再看一遍汽车差速器：里面全是锥齿轮在悄悄转向。'},
+      {t:'AI 生成示例动画 · 玻璃切割机', local:'e7581bc07ef72cf748a3ce2b7bf5c038.mp4', note:'用视频提示词生成的 3D 动画示例：垂直传动驱动切割轮工作。', isLocal:true},
+    ]
+  },
+
+  belt: {
+    id:'belt', name:'皮带传动', icon:'🎀', cat:'trans', color:'#FFD54F', light:'#FFF3C9',
+    tag:'传动家族', sub:'一根皮筋，把转动送到远处',
+    intro:'两个轮子离得比较远，够不着怎么办？用一根皮带把它们连起来！一个轮子转，皮带就带着另一个轮子转。皮带软软的，还能保护机器不受伤。',
+    kpoints:[
+      ['远距离传动','两个轮子离得远也能传动力，还可以隔着障碍物绕弯'],
+      ['方向相同','皮带传动时两个轮子转的方向一样（齿轮传动则是相反）'],
+      ['温柔传动','皮带会打滑缓冲，机器突然卡住时不容易损坏'],
+      ['生活应用','缝纫机、洗衣机、传送带、F1赛车、电风扇'],
+    ],
+    lessons:['双旋翼直升机·皮带传动','F1赛车·皮带传动','交通信号灯·皮带传动'],
+    life:['缝纫机','传送带','洗衣机'],
+    prompt: {
+      pos:"16:9 横屏，固定 3/4 侧前方视角，机位以主体为圆心极缓慢环绕（10 秒约转 15°），匀速丝滑，全程不切镜、不推拉、不抖动。主体为一组少儿编程积木风格的皮带传动机构三维教学模型，居中占画面六成，纯白中性无限背景配柔和径向渐变，画面干净，无字幕、无旁白。模型以圆角积木件搭建：浅灰基板为底座，左侧橙色小带轮连接灰色微型电机，右侧宝蓝色大带轮相距较远，一根黑色橡胶皮带套在两个带轮的凹槽上。运动演示：电机恒速旋转，带动左侧小带轮转动，皮带被带动向右传递运动，右侧大带轮随之同向缓慢旋转，皮带上画有几个白色小标记随皮带移动，清晰呈现「皮带传递运动 → 大轮慢转减速」的传动关系。为讲清原理，运动件以高饱和色区分（电机灰 / 小带轮橙 / 大带轮蓝 / 皮带黑），静止结构用中性色，色彩编码让观众一眼看懂力的走向。光照为柔光箱主光加顶部补光，塑料积木件呈现干净高光与柔和反光。写实三维 CAD 教学演示风格，边线利落、材质对比清晰、无卡通感。关键诉求：皮带贴合的包角、白色标记随皮带的移动、两轮转速差必须清晰可辨，让观众直观读懂皮带传动原理。演示末轮将转速轻微放缓约 20%，留出半秒从容观察皮带运转的窗口。整体节奏克制、教学感强，适配即梦 / Kling / Seedance 文生视频直接生成。",
+      neg: NEG
+    },
+    cases:[
+      {t:'3D 动画直观演示电动缝纫机的工作原理', bvid:'BV1uV4y1M72o', note:'缝纫机的马达通过皮带带动针杆，哒哒哒缝出漂亮针脚！'},
+      {t:'【洛克小课堂】皮带传送带', bvid:'BV137411J7LM', note:'少儿科普：工厂里的传送带就是皮带传动的大个子版本。'},
+      {t:'缝纫机的工作原理，三分钟给你讲明白', bvid:'BV1dDypYVEWg', note:'仔细看：皮带把转动送到缝纫机的各个角落。'},
+    ]
+  },
+
+  lever: {
+    id:'lever', name:'杠杆原理', icon:'🛝', cat:'move', color:'#B39DDB', light:'#EAE2FA',
+    tag:'运动变形师', sub:'给我一个支点，我能撬动地球',
+    intro:'一根硬棒，一个支点，就是杠杆！支点离重物越近越省力。跷跷板两头一样远，所以两边一样重才平衡；开瓶器、钳子、剪刀都是帮我们省力的杠杆。',
+    kpoints:[
+      ['杠杆三要素','支点（转动的中心）、动力点（用力处）、阻力点（重物处）'],
+      ['省力杠杆','支点靠近重物：用一点力就能撬动很重的东西——开瓶器、钳子'],
+      ['费力杠杆','支点靠近用力处：费力但省距离——镊子、钓鱼竿'],
+      ['等臂杠杆','支点在正中间：两边一样远，两边一样重才平衡——天平、跷跷板'],
+    ],
+    lessons:['天平·等臂杠杆','打桩机·杠杆','投篮机·杠杆三要素','投石车·费力杠杆','跷跷板·等臂杠杆','智能垃圾桶·费力杠杆'],
+    life:['跷跷板','天平秤','开瓶器','剪刀','钓鱼竿'],
+    prompt: {
+      pos:"16:9 横屏，固定 3/4 侧前方视角，机位以主体为圆心极缓慢环绕（10 秒约转 15°），匀速丝滑，全程不切镜、不推拉、不抖动。主体为一组少儿编程积木风格的杠杆机构三维教学模型，居中占画面六成，纯白中性无限背景配柔和径向渐变，画面干净，无字幕、无旁白。模型以圆角积木件搭建：浅灰基板为底座，一个黄色三角块作为支点立在中央，一根橙色长梁架在支点上，左端挂一只蓝色积木砝码篮，右端挂一只红色积木砝码篮。运动演示：左侧砝码篮放入一个积木方块，右侧放入两个积木方块，右重左轻，长梁缓缓绕支点向右侧倾斜，直观呈现「重的一边沉下去」的杠杆平衡关系；随后交换砝码数量，长梁再次倾斜，演示平衡条件的改变。为讲清原理，运动件以高饱和色区分（支点黄 / 长梁橙 / 左篮蓝 / 右篮红 / 砝码白），静止结构用中性色，色彩编码让观众一眼看懂力的走向。光照为柔光箱主光加顶部补光，塑料积木件呈现干净高光与柔和反光。写实三维 CAD 教学演示风格，边线利落、材质对比清晰、无卡通感。关键诉求：长梁绕支点的倾斜角度、两侧砝码的增减过程必须清晰可辨，让观众直观读懂杠杆原理与平衡条件。演示末轮将摆动速度轻微放缓约 20%，留出半秒从容观察杠杆平衡的窗口。整体节奏克制、教学感强，适配即梦 / Kling / Seedance 文生视频直接生成。",
+      neg: NEG
+    },
+    cases:[
+      {t:'少儿物理启蒙动画片，利用杠杆原理以小博大', bvid:'BV1nY4y1q7fJ', note:'少儿向动画：小个子用杠杆撬起大石头，直观又有趣！'},
+      {t:'【少儿科普】杠杆原理，给我一个支点我可以撬动地球', bvid:'BV1Mw411Z7qP', note:'阿基米德的名言，就是杠杆原理的豪言壮语！'},
+      {t:'省力杠杆——开瓶器', bvid:'BV1e64y1e7a4', note:'每天都能遇到的省力杠杆：瓶盖轻松就撬开了。'},
+    ]
+  },
+
+  crank: {
+    id:'crank', name:'曲柄连杆', icon:'🔗', cat:'move', color:'#FF8A80', light:'#FFDAD6',
+    tag:'运动变形师', sub:'转圈圈 → 前后摇摆，石油开采机的秘密',
+    intro:'曲柄是一个"偏心"的轮子，它转圈圈时，通过连杆一推一拉，就能把"转圈圈"变成"前后摆动"。石油开采机（磕头机）就是靠它让"驴头"一点一点把石油抽上来的。',
+    kpoints:[
+      ['转动变摆动','曲柄整圈转动，通过连杆带动摇臂来回摆动'],
+      ['四杆配合','曲柄（转动）+ 连杆（连接）+ 摇臂（摆动）+ 机架（固定）= 曲柄摇杆机构'],
+      ['生活应用','石油开采机（磕头机）、蒸汽机车车轮、缝纫机踏板、跳舞的小人'],
+    ],
+    lessons:['跳舞的小人·连杆机构','舞龙·连杆机构','摇头风扇·连杆结构','稻草人·连杆结构','节拍器·曲柄连杆','扫雷车·曲柄连杆'],
+    life:['磕头机抽石油','蒸汽机车','缝纫机踏板'],
+    prompt: {
+      pos:"16:9 横屏，固定 3/4 侧前方视角，机位以主体为圆心极缓慢环绕（10 秒约转 18°），匀速丝滑，全程不切镜、不推拉、不抖动。画面主体为一台少儿编程积木风格的石油开采机（磕头机）三维教学模型，居中占画面六成，纯白中性无限背景配柔和径向渐变，画面干净，无字幕、无旁白。模型以圆角积木件搭建：浅灰塑料拼装基板为底座，立起蓝色立柱支撑黄色游梁，游梁前端是红色驴头，后端经绿色曲柄连杆组连接到底部橙色微型电机与灰色减速器方块，井架与抽油杆以半透明浅银展示。运动演示：橙色电机恒速旋转，经灰色减速器降速后驱动绿色曲柄整周回转，通过连杆推动黄色游梁以支点为中心上下对称做磕头式摆动，前端红色驴头随之缓缓点头，带动半透明抽油杆在井口中往复升降，清晰呈现「旋转运动 → 四连杆 → 游梁点头 → 抽油」的完整动力传递链。为讲清原理，运动件以高饱和色区分（电机橙 / 曲柄连杆绿 / 游梁黄 / 驴头红），静止结构用中性色，色彩编码让观众一眼看懂力的走向。光照为柔光箱主光加顶部补光，塑料积木件呈现干净高光与柔和反光。写实三维 CAD 教学演示风格，边线利落、材质对比清晰、无卡通感。关键诉求：曲柄连杆铰接点的相对滑动、游梁摆角变化、驴头点头幅度、抽油杆升降行程都需被看见，让观众直观读懂石油开采机的搭建与工作原理。演示末轮将游梁点头速度轻微放缓约 20%，留出半秒从容观察搭接配合的窗口。整体节奏克制、教学感强，适配即梦 / Kling / Seedance 文生视频直接生成。",
+      neg: NEG
+    },
+    cases:[
+      {t:'磕头机是怎样把石油从地底抽上来的？', bvid:'BV17f4y1h73i', note:'现实中的"磕头机"就是用曲柄连杆一上一下抽石油。'},
+      {t:'一个视频讲清蒸汽机车连杆原理——华氏阀动装置', bvid:'BV1sw8AzCEoG', note:'老火车的大轮子，就是连杆把蒸汽的力气送过去的。'},
+      {t:'【乐高火车】六动轮蒸汽机车走行部制作教程', bvid:'BV1Bj411n7RD', note:'乐高蒸汽机车：连杆让六个大轮子一起乖乖转动！'},
+    ]
+  },
+
+  slider: {
+    id:'slider', name:'曲柄滑块', icon:'🚂', cat:'move', color:'#4FC3F7', light:'#D6F1FF',
+    tag:'运动变形师', sub:'转圈圈 → 来回直冲，发动机的心脏',
+    intro:'曲柄滑块是"转圈圈"和"直来直去"之间的翻译官：曲柄转一圈，滑块就来回滑一次。汽车发动机里的活塞、打气筒、缝纫机针杆，都是它的杰作。',
+    kpoints:[
+      ['转动→直线','曲柄转动，通过连杆带动滑块在轨道上往返滑动'],
+      ['往复运动','滑块每个来回 = 曲柄转一圈，节奏稳定'],
+      ['生活应用','汽车发动机活塞、打气筒、缝纫机、足球守门员'],
+    ],
+    lessons:['足球守门员·曲柄滑块','守门员·曲柄摇杆','小鸡啄米·曲柄连杆'],
+    life:['汽车发动机','打气筒','缝纫机针'],
+    prompt: {
+      pos:"16:9 横屏，固定 3/4 侧前方视角，机位以主体为圆心极缓慢环绕（10 秒约转 15°），匀速丝滑，全程不切镜、不推拉、不抖动。主体为一套少儿编程积木风格的曲柄滑块机构三维教学模型，居中占画面六成，纯白中性无限背景配柔和径向渐变，画面干净，无字幕、无旁白。模型以圆角积木件搭建：浅灰基板为底座，左侧灰色微型电机带动橙色曲柄整周旋转，曲柄末端经宝蓝色连杆连接一个红色滑块，滑块套在浅灰色直线导轨上。运动演示：电机恒速旋转，曲柄做圆周运动，连杆推动滑块在导轨上来回直线滑动——曲柄转一圈，滑块完成一个来回，清晰呈现「圆周运动 → 往复直线运动」的转换关系；滑块顶部竖一面黄色小旗，让往复运动一目了然。为讲清原理，运动件以高饱和色区分（电机灰 / 曲柄橙 / 连杆蓝 / 滑块红 / 导轨浅灰），静止结构用中性色，色彩编码让观众一眼看懂力的走向。光照为柔光箱主光加顶部补光，塑料积木件呈现干净高光与柔和反光。写实三维 CAD 教学演示风格，边线利落、材质对比清晰、无卡通感。关键诉求：曲柄圆周轨迹、连杆推拉、滑块往复行程三者联动必须清晰可辨，让观众直观读懂曲柄滑块机构原理。演示末轮将运动速度轻微放缓约 20%，留出半秒从容观察滑块换向的窗口。整体节奏克制、教学感强，适配即梦 / Kling / Seedance 文生视频直接生成。",
+      neg: NEG
+    },
+    cases:[
+      {t:'发动机里都有它——曲柄滑块结构（3D 打印剖析）', bvid:'BV1Ew411972F', note:'汽车发动机的活塞就是这样上下往返运动的！'},
+      {t:'打气筒的工作原理', bvid:'BV1ZxyFB6EEn', note:'手动打气筒：手柄一上一下，活塞直来直去给轮胎打气。'},
+      {t:'用了这么久打气筒！它的原理你知道吗？', bvid:'BV1BJ411y7Bw', note:'再看一遍打气筒，曲柄滑块家族的小成员。'},
+    ]
+  },
+
+  cam: {
+    id:'cam', name:'凸轮机构', icon:'🎠', cat:'move', color:'#4DB6AC', light:'#D7F2EE',
+    tag:'运动变形师', sub:'一个"偏心"的轮子，让东西一上一下',
+    intro:'凸轮是一个"偏心"的轮子：它转起来时，边缘一高一低，把上方的杆子顶起来又放下去，于是杆子就一上一下动起来。玉兔捣药、稻草人赶鸟、汽车发动机气门都靠它。',
+    kpoints:[
+      ['偏心凸轮','凸轮转一圈，从动件跟着升、降、停，节奏由凸轮形状决定'],
+      ['转动→升降','凸轮的旋转变成从动杆的上下往复运动'],
+      ['生活应用','发动机气门、玉兔捣药、自动机床、玩具发条'],
+    ],
+    lessons:['稻草人·凸轮结构','玉兔捣药·凸轮机构','敲敲打打·凸轮机构'],
+    life:['发动机气门','自动笔芯','音乐盒'],
+    prompt: {
+      pos:"16:9 横屏，固定 3/4 侧前方视角，机位以主体为圆心极缓慢环绕（10 秒约转 15°），匀速丝滑，全程不切镜、不推拉、不抖动。主体为一套少儿编程积木风格的凸轮机构三维教学模型，居中占画面六成，纯白中性无限背景配柔和径向渐变，画面干净，无字幕、无旁白。模型以圆角积木件搭建：浅灰基板为底座，左侧灰色微型电机带动一个橙色偏心凸轮（圆盘中心偏离转轴）旋转，凸轮上方一根宝蓝色从动杆套在浅灰色导向套筒中，杆底部黄色小滚轮贴着凸轮边缘。运动演示：电机恒速旋转，偏心凸轮转动，其边缘把从动杆缓缓顶起再放下，从动杆随之做有节奏的上下往复运动，清晰呈现「凸轮旋转 → 从动杆升降」的转换关系；杆顶挂一面红色小旗，让升降行程一目了然。为讲清原理，运动件以高饱和色区分（电机灰 / 凸轮橙 / 从动杆蓝 / 滚轮黄 / 小旗红），静止结构用中性色，色彩编码让观众一眼看懂力的走向。光照为柔光箱主光加顶部补光，塑料积木件呈现干净高光与柔和反光。写实三维 CAD 教学演示风格，边线利落、材质对比清晰、无卡通感。关键诉求：凸轮偏心轮廓、从动杆贴合的升降动作、行程节奏必须清晰可辨，让观众直观读懂凸轮机构原理。演示末轮将转速轻微放缓约 20%，留出半秒从容观察从动杆升降的窗口。整体节奏克制、教学感强，适配即梦 / Kling / Seedance 文生视频直接生成。",
+      neg: NEG
+    },
+    cases:[
+      {t:'3D 动画全方位展示小型汽油机凸轮轴', bvid:'BV1JEAxeqEC9', note:'发动机里的凸轮轴：凸轮转一圈，气门就开合一次！'},
+      {t:'发动机凸轮轴与气门之间有什么关系？', bvid:'BV1Hg411s7vx', note:'凸轮把旋转变成气门的升降，发动机才能"呼吸"。'},
+      {t:'全套凸轮机构动画合集', bvid:'BV1Bg411M7UQ', note:'各种各样的凸轮：圆的、桃形的、心形的，长见识！'},
+    ]
+  },
+};
+
+/* ============ 搭建小课堂 5 机构 + 惰轮（全部升级为 3D 演示） ============ */
+const BUILD_MECHS = {
+  idler: { id:'idler', name:'惰齿轮', icon:'🔄', cat:'trans', color:'#4FC3F7', light:'#D6F1FF', tag:'传动家族',
+    sub:'中间的"传话员"：只改方向，不改速度',
+    intro:'两个齿轮一咬合，方向就会相反。想让它们同方向转，就在中间加一个"传话员"齿轮——惰轮！它自己不发力，只把方向翻回来，速度一点不变。',
+    kpoints:[
+      ['传话员','夹在中间的惰轮只改变转动方向，像传话员一样'],
+      ['不改变速度','惰轮不参与变速，从动轮转速和主动轮完全相同'],
+      ['生活应用','汽车倒挡齿轮、机械钟表、螃蟹横着走的机构'],
+    ],
+    lessons:['摇摇车·惰齿轮','舞龙·惰齿轮','螃蟹·惰轮'],
+    life:['汽车变速箱','机械钟表'],
+    svg:'idler',
+    prompt:{pos:"16:9 横屏，固定 3/4 视角，机位极缓慢环绕。少儿编程积木风格的三个齿轮水平啮合三维教学模型：左侧橙色驱动齿轮恒速旋转，中间灰色惰轮随之反转，右侧蓝色齿轮与驱动齿轮同向旋转——惰轮只改变转向、不改变转速，三个齿轮齿牙咬合细节清晰可见。纯白无限背景，高饱和色彩编码，写实三维 CAD 教学演示风格，无字幕无旁白，运动连贯顺滑。", neg:NEG},
+    cases:[{t:'[机械动力]传动元件大科普', bvid:'BV1cyKKefEZZ', note:'游戏里的传动元件科普，惰轮也在其中！'}] },
+
+  interlock: { id:'interlock', name:'互锁结构', icon:'🧱', cat:'build', color:'#FF8A80', light:'#FFDAD6', tag:'搭建小课堂',
+    sub:'砖缝错开，墙才结实',
+    intro:'搭墙的时候，上下两层砖的接缝要错开、互相"咬住"，墙才结实，不会从中间裂开。这就是互锁结构——所有积木建筑的地基功夫！',
+    kpoints:[
+      ['错缝咬合','每层砖缝错开半块砖的位置，上下层互相咬住'],
+      ['受力更均匀','接缝不重叠，力量被分散到整面墙'],
+      ['三大变形','阶梯互锁（上台阶）、转角互锁（拐弯）、外扩互锁（变大）'],
+    ],
+    lessons:['彩虹屋·互锁结构','树屋·阶梯互锁','地球仪·外扩互锁','手推车·互锁结构','船·互锁结构'],
+    life:['砖墙砌法','纸箱交错叠放'],
+    svg:'interlock',
+    prompt:{pos:"16:9 横屏，固定 3/4 视角，机位极缓慢环绕。少儿编程积木风格的两面墙体三维教学模型并排展示：左侧墙体上下砖缝对齐（互锁错误示范），受推力时从接缝处裂开；右侧墙体砖缝错开互锁（正确示范），受推力时纹丝不动。纯白无限背景，彩色积木高饱和，写实三维 CAD 教学演示风格，无字幕无旁白，运动连贯顺滑。", neg:NEG},
+    cases:[{t:'大颗粒常见结构 1《互锁结构》', bvid:'BV1V54y1x7W6', note:'乐高大颗粒系列教程：互锁到底怎么搭？一看就会！'}] },
+
+  twopoint: { id:'twopoint', name:'两点固定', icon:'📌', cat:'build', color:'#FFD54F', light:'#FFF3C9', tag:'搭建小课堂',
+    sub:'两点确定一条直线',
+    intro:'一根梁只用一颗螺丝固定，它还会转来转去；用两颗螺丝固定，它就乖乖不动了。因为"两点确定一条直线"——梁被稳稳"钉死"在正确的位置。',
+    kpoints:[
+      ['一颗螺丝会转','梁可以绕螺丝转圈，位置不稳定'],
+      ['两颗螺丝固定','两个点确定一条直线，梁被锁定'],
+      ['搭建必备','所有结实模型的关节处都靠它'],
+    ],
+    lessons:['小鸡啄米·两点固定','手电钻·两点固定','送快递·两点固定'],
+    life:['门铰链+门锁','螺丝固定的桌椅'],
+    svg:'twopoint',
+    prompt:{pos:"16:9 横屏，固定 3/4 视角，机位极缓慢环绕。少儿编程积木风格的固定结构三维教学模型并排展示：左侧一根橙色梁仅用一颗灰色螺丝固定在基板上，受拨动时绕螺丝旋转晃动；右侧同样的梁用两颗螺丝固定，受拨动时纹丝不动。直观演示「两点确定一条直线」的固定原理。纯白无限背景，高饱和色彩编码，写实三维 CAD 教学演示风格，无字幕无旁白，运动连贯顺滑。", neg:NEG},
+    cases:[{t:'大颗粒常见结构（与互锁同系列搭建技巧）', bvid:'BV1V54y1x7W6', note:'积木搭建基本功系列，两点固定是标配技巧。'}] },
+
+  stability: { id:'stability', name:'三角形 vs 四边形', icon:'📐', cat:'build', color:'#4DB6AC', light:'#D7F2EE', tag:'搭建小课堂',
+    sub:'三角形最稳，四边形爱变形',
+    intro:'三角形三条边锁得死死的，怎么推都不变形；四边形四个角一推就歪。所以大桥、塔吊到处是三角形，而伸缩门、叉车反而"故意"用不稳定的四边形来变形。',
+    kpoints:[
+      ['三角形稳定','三条边互相锁定，形状不可改变'],
+      ['四边形不稳定','四个角可以歪斜，形状会变化'],
+      ['聪明的应用','需要坚固→用三角形；需要伸缩→用四边形'],
+    ],
+    lessons:['叉车·四边形不稳定','升降机·平行四边形','伸缩门·四边形','海盗船·三角形稳定'],
+    life:['大桥钢架','伸缩门','起重机吊臂'],
+    svg:'stability',
+    prompt:{pos:"16:9 横屏，固定 3/4 视角，机位极缓慢环绕。少儿编程积木风格的三维教学模型并排展示：左侧一个由四根杆铰接的四边形框架，受力后歪斜变形；右侧一个由三根杆铰接的三角形框架，受力后纹丝不动。直观对比「四边形不稳定、三角形稳定」的结构原理。纯白无限背景，高饱和色彩编码，写实三维 CAD 教学演示风格，无字幕无旁白，运动连贯顺滑。", neg:NEG},
+    cases:[{t:'伸缩门实验原理（动画版）', bvid:'BV1yf4y1n7L4', note:'伸缩门就是靠四边形的不稳定"伸缩"的！'},
+           {t:'【洛克小课堂】伸缩门', bvid:'BV11741177nQ', note:'少儿科普：看伸缩门怎么用四边形一开一合。'}] },
+
+  pulley: { id:'pulley', name:'定滑轮', icon:'🏳️', cat:'build', color:'#B39DDB', light:'#EAE2FA', tag:'搭建小课堂',
+    sub:'换个方向拉，轻轻松松升国旗',
+    intro:'把绳子绕过固定在高处的轮子，往下拉绳子，重物就往上走。定滑轮不省力，但把"往上拉"变成了"往下拉"——升国旗、吊车都这么干！',
+    kpoints:[
+      ['改变方向','向下拉绳子，重物向上运动'],
+      ['不省力','定滑轮不改变力的大小，只改变方向'],
+      ['生活应用','升旗、吊车、晾衣绳滑轮'],
+    ],
+    lessons:['升国旗·定滑轮'],
+    life:['升国旗','塔吊','晾衣绳'],
+    svg:'pulley',
+    prompt:{pos:"16:9 横屏，固定 3/4 视角，机位极缓慢环绕。少儿编程积木风格的升旗台三维教学模型：顶部一个灰色定滑轮，绳子绕过滑轮，一端系着红色旗帜，另一端由小人往下拉，旗帜沿旗杆缓缓升起。直观演示定滑轮「改变力的方向」原理。纯白无限背景，高饱和色彩编码，写实三维 CAD 教学演示风格，无字幕无旁白，运动连贯顺滑。", neg:NEG},
+    cases:[{t:'动画演示升旗中滑轮的应用', bvid:'BV1Db411T7WR', note:'升旗仪式上，定滑轮悄悄帮了大忙！'},
+           {t:'科学小实验——小小升旗手：定滑轮原理', bvid:'BV1FU4y1M73W', note:'动手实验：自己搭一个升旗台，感受定滑轮。'}] },
+
+  elastic: { id:'elastic', name:'弹性势能', icon:'🏹', cat:'build', color:'#FF8A80', light:'#FFDAD6', tag:'搭建小课堂',
+    sub:'拉紧的橡皮筋，藏着爆发的能量',
+    intro:'拉紧的橡皮筋、压缩的弹簧都偷偷存了力气，一松手就"砰"地放出来！这种存起来的力气叫弹性势能。投石车、弹弓、发条玩具都靠它。',
+    kpoints:[
+      ['储存能量','变形越厉害，存的弹性势能越多'],
+      ['释放能量','松手瞬间弹性势能变成动能，东西弹出去'],
+      ['生活应用','弹弓、回力小车、发条玩具、弹簧'],
+    ],
+    lessons:['老鼠夹·弹性势能','投石车·橡皮筋弹性','导弹车·弹性势能→动能'],
+    life:['弹弓','回力小车','发条玩具'],
+    svg:'elastic',
+    prompt:{pos:"16:9 横屏，固定 3/4 视角，机位极缓慢环绕。少儿编程积木风格的投石车三维教学模型：橙色橡皮筋拉紧蓄力，释放后瞬间回弹，将积木小球抛向空中——直观演示「弹性势能 → 动能」的能量转换。纯白无限背景，高饱和色彩编码，写实三维 CAD 教学演示风格，无字幕无旁白，运动连贯顺滑。", neg:NEG},
+    cases:[{t:'爆笑物理动画：什么是弹性势能', bvid:'BV1xt4y1H7ik', note:'爆笑物理：用搞笑动画讲清楚弹性势能！'},
+           {t:'发明回拉式玩具车的人绝对是个天才', bvid:'BV168411S7qp', note:'回力小车就是弹性势能存能量、放能量的典型！'}] },
+};
+Object.assign(MECHS, BUILD_MECHS);
+
+/* 首页分区顺序 */
+const ORDER = {
+  trans:['gear','worm','bevel','belt','idler'],
+  move:['lever','crank','slider','cam'],
+  build:['interlock','twopoint','stability','pulley','elastic'],
+};
+
+/* ============================================================
+   搭建小课堂 SVG 图解（展示在原理面板）
+   ============================================================ */
+const SVGS = {
+  idler: `<svg viewBox="0 0 300 150" xmlns="http://www.w3.org/2000/svg">
+    <defs><marker id="ar1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#4DB6AC"/></marker></defs>
+    <circle cx="70" cy="78" r="28" fill="#FF8A80" stroke="#5B4A63" stroke-width="2"/>
+    <circle cx="70" cy="78" r="32" fill="none" stroke="#5B4A63" stroke-width="3" stroke-dasharray="6 5"/>
+    <circle cx="150" cy="78" r="28" fill="#B9C4D0" stroke="#5B4A63" stroke-width="2"/>
+    <circle cx="150" cy="78" r="32" fill="none" stroke="#5B4A63" stroke-width="3" stroke-dasharray="6 5"/>
+    <circle cx="230" cy="78" r="28" fill="#4FC3F7" stroke="#5B4A63" stroke-width="2"/>
+    <circle cx="230" cy="78" r="32" fill="none" stroke="#5B4A63" stroke-width="3" stroke-dasharray="6 5"/>
+    <circle cx="70" cy="78" r="5" fill="#5B4A63"/><circle cx="150" cy="78" r="5" fill="#5B4A63"/><circle cx="230" cy="78" r="5" fill="#5B4A63"/>
+    <path d="M42 52 A 30 30 0 0 1 98 52" fill="none" stroke="#4DB6AC" stroke-width="3" marker-end="url(#ar1)"/>
+    <path d="M122 52 A 30 30 0 0 0 178 52" fill="none" stroke="#4DB6AC" stroke-width="3" marker-end="url(#ar1)"/>
+    <path d="M202 52 A 30 30 0 0 1 258 52" fill="none" stroke="#4DB6AC" stroke-width="3" marker-end="url(#ar1)"/>
+    <text x="70" y="130" font-size="14" font-weight="700" fill="#5B4A63" text-anchor="middle">主动轮</text>
+    <text x="150" y="130" font-size="14" font-weight="700" fill="#5B4A63" text-anchor="middle">惰轮</text>
+    <text x="230" y="130" font-size="14" font-weight="700" fill="#5B4A63" text-anchor="middle">从动轮</text>
+    <text x="150" y="25" font-size="13" fill="#2E8B80" text-anchor="middle" font-weight="700">方向反过来，速度不变</text>
+  </svg>`,
+  interlock: `<svg viewBox="0 0 300 160" xmlns="http://www.w3.org/2000/svg">
+    <g stroke="#5B4A63" stroke-width="1.5">
+      <rect x="30"  y="18" width="52" height="20" rx="4" fill="#FFB74D"/><rect x="30" y="42" width="52" height="20" rx="4" fill="#FF8A80"/>
+      <rect x="30" y="66" width="52" height="20" rx="4" fill="#FFB74D"/><rect x="30" y="90" width="52" height="20" rx="4" fill="#FF8A80"/>
+      <rect x="86" y="18" width="52" height="20" rx="4" fill="#FFB74D"/><rect x="86" y="42" width="52" height="20" rx="4" fill="#FF8A80"/>
+      <rect x="86" y="66" width="52" height="20" rx="4" fill="#FFB74D"/><rect x="86" y="90" width="52" height="20" rx="4" fill="#FF8A80"/>
+    </g>
+    <path d="M78 14 L78 116" stroke="#FF5252" stroke-width="3" stroke-dasharray="7 5"/>
+    <text x="84" y="135" font-size="13" fill="#D9554C" font-weight="700">✗ 砖缝对齐，一推就裂</text>
+    <g stroke="#5B4A63" stroke-width="1.5">
+      <rect x="170" y="18" width="52" height="20" rx="4" fill="#4FC3F7"/><rect x="170" y="42" width="52" height="20" rx="4" fill="#4DB6AC"/>
+      <rect x="226" y="18" width="52" height="20" rx="4" fill="#4DB6AC"/><rect x="226" y="42" width="52" height="20" rx="4" fill="#4FC3F7"/>
+      <rect x="170" y="66" width="52" height="20" rx="4" fill="#4FC3F7"/><rect x="170" y="90" width="52" height="20" rx="4" fill="#4DB6AC"/>
+      <rect x="226" y="66" width="52" height="20" rx="4" fill="#4DB6AC"/><rect x="226" y="90" width="52" height="20" rx="4" fill="#4FC3F7"/>
+    </g>
+    <text x="224" y="135" font-size="13" fill="#2E8B80" font-weight="700">✓ 砖缝错开，稳稳当当</text>
+  </svg>`,
+  twopoint: `<svg viewBox="0 0 300 150" xmlns="http://www.w3.org/2000/svg">
+    <defs><marker id="ar2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#FF8A80"/></marker></defs>
+    <g transform="translate(78,78) rotate(18)">
+      <rect x="-42" y="-8" width="84" height="16" rx="6" fill="#FFD54F" stroke="#5B4A63" stroke-width="1.5"/>
+    </g>
+    <circle cx="78" cy="78" r="7" fill="#5B4A63"/><circle cx="78" cy="78" r="2.5" fill="#fff"/>
+    <path d="M118 42 A 42 42 0 0 1 128 108" fill="none" stroke="#FF8A80" stroke-width="3" stroke-dasharray="6 4" marker-end="url(#ar2)"/>
+    <text x="78" y="128" font-size="13" fill="#D9554C" font-weight="700" text-anchor="middle">1 颗螺丝 → 还会晃</text>
+    <g>
+      <rect x="168" y="70" width="100" height="16" rx="6" fill="#4FC3F7" stroke="#5B4A63" stroke-width="1.5"/>
+      <circle cx="192" cy="78" r="7" fill="#5B4A63"/><circle cx="192" cy="78" r="2.5" fill="#fff"/>
+      <circle cx="244" cy="78" r="7" fill="#5B4A63"/><circle cx="244" cy="78" r="2.5" fill="#fff"/>
+    </g>
+    <text x="218" y="128" font-size="13" fill="#2E8B80" font-weight="700" text-anchor="middle">2 颗螺丝 → 稳稳不动</text>
+  </svg>`,
+  stability: `<svg viewBox="0 0 300 150" xmlns="http://www.w3.org/2000/svg">
+    <defs><marker id="ar3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#FF8A80"/></marker></defs>
+    <g stroke="#5B4A63" stroke-width="3.5" stroke-linecap="round">
+      <path d="M70 108 L70 40 L128 40 L128 108 Z" fill="none" stroke-dasharray="5 4"/>
+    </g>
+    <g fill="#5B4A63"><circle cx="70" cy="40" r="5"/><circle cx="70" cy="108" r="5"/><circle cx="128" cy="40" r="5"/><circle cx="128" cy="108" r="5"/></g>
+    <path d="M38 74 L20 74" stroke="#FF8A80" stroke-width="3.5" marker-end="url(#ar3)"/>
+    <text x="99" y="132" font-size="13" fill="#D9554C" font-weight="700" text-anchor="middle">四边形 · 一推就歪</text>
+    <g stroke="#4DB6AC" stroke-width="3.5" stroke-linecap="round">
+      <path d="M215 108 L215 42 L262 108 Z"/>
+    </g>
+    <g fill="#4DB6AC"><circle cx="215" cy="42" r="5"/><circle cx="215" cy="108" r="5"/><circle cx="262" cy="108" r="5"/></g>
+    <path d="M178 74 L198 74" stroke="#FF8A80" stroke-width="3.5" marker-end="url(#ar3)"/>
+    <text x="238" y="132" font-size="13" fill="#2E8B80" font-weight="700" text-anchor="middle">三角形 · 怎么推都不动</text>
+  </svg>`,
+  pulley: `<svg viewBox="0 0 300 150" xmlns="http://www.w3.org/2000/svg">
+    <defs><marker id="ar4" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#4DB6AC"/></marker></defs>
+    <rect x="145" y="6" width="10" height="40" rx="4" fill="#8E9BA8"/>
+    <circle cx="150" cy="52" r="20" fill="#B39DDB" stroke="#5B4A63" stroke-width="2.5"/>
+    <circle cx="150" cy="52" r="7" fill="#5B4A63"/>
+    <path d="M132 58 L132 128" stroke="#5B4A63" stroke-width="3"/>
+    <path d="M168 58 L168 128" stroke="#5B4A63" stroke-width="3"/>
+    <rect x="122" y="96" width="20" height="14" rx="3" fill="#FF5252"/>
+    <path d="M132 82 L132 94" stroke="#4DB6AC" stroke-width="3.5" marker-end="url(#ar4)"/>
+    <text x="132" y="84" font-size="12" fill="#2E8B80" font-weight="700" text-anchor="middle">升↑</text>
+    <path d="M168 70 L168 58" stroke="#4DB6AC" stroke-width="3.5" marker-end="url(#ar4)"/>
+    <text x="184" y="74" font-size="12" fill="#2E8B80" font-weight="700">拉↓</text>
+    <text x="150" y="144" font-size="13" fill="#5B4A63" font-weight="700" text-anchor="middle">往下拉绳子，旗帜往上升</text>
+  </svg>`,
+  elastic: `<svg viewBox="0 0 300 150" xmlns="http://www.w3.org/2000/svg">
+    <defs><marker id="ar5" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#FF8A80"/></marker></defs>
+    <rect x="138" y="120" width="24" height="12" rx="4" fill="#8E9BA8"/>
+    <path d="M150 120 L138 78 M150 120 L162 78" stroke="#5B4A63" stroke-width="4" stroke-linecap="round"/>
+    <path d="M138 78 L128 50 M162 78 L172 50" stroke="#FFB74D" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="150" cy="46" r="10" fill="#FF5252"/>
+    <path d="M140 26 A 44 30 0 0 1 244 26" fill="none" stroke="#4DB6AC" stroke-width="3" stroke-dasharray="6 4" marker-end="url(#ar5)"/>
+    <text x="150" y="145" font-size="13" fill="#5B4A63" font-weight="700" text-anchor="middle">拉紧橡皮筋 → 一松手"砰"地弹出去！</text>
+  </svg>`,
+};
+
+/* ============================================================
+   H5 UI 胶水层
+   ============================================================ */
+const $ = id => document.getElementById(id);
+let currentId = null;
+
+function renderHome(){
+  const buckets = { trans:$('grid-trans'), move:$('grid-move'), build:$('grid-build') };
+  for(const cat of ['trans','move','build']){
+    for(const id of ORDER[cat]){
+      const M = MECHS[id];
+      buckets[cat].insertAdjacentHTML('beforeend', `
+        <div class="mcard" data-id="${id}" style="border-color:${M.light}">
+          <span class="tag" style="background:${M.light};color:${M.color}">${M.tag}</span>
+          <div class="ic" style="background:${M.light}">${M.icon}</div>
+          <h3>${M.name}</h3><p>${M.sub}</p>
+          <span class="go" style="background:${M.color}">进入 3D 乐园 →</span>
+        </div>`);
+    }
+  }
+  document.querySelectorAll('.mcard').forEach(c=>c.onclick=()=>loadMech(c.dataset.id));
+}
+
+function showHome(){
+  $('view-home').style.display = 'block';
+  $('view-demo').classList.remove('on');
+  $('bnav').style.display = 'flex';
+  $('nav-home').classList.add('on');
+  $('nav-demo').classList.remove('on');
+  $('nav-statics').classList.remove('on');
+}
+function showDemo(){
+  $('view-home').style.display = 'none';
+  $('view-demo').classList.add('on');
+  $('bnav').style.display = 'none';
+}
+$('nav-home').onclick = ()=>{ showHome(); $('view-home').scrollTo({top:0}); };
+$('nav-demo').onclick = ()=>{ showHome(); setTimeout(()=>$('view-home').scrollTo({top:$('grid-trans').offsetTop-60, behavior:'smooth'}),60); };
+$('nav-statics').onclick = ()=>{ showHome(); setTimeout(()=>$('view-home').scrollTo({top:$('grid-build').offsetTop-60, behavior:'smooth'}),60); };
+$('demo-back').onclick = ()=>showHome();
+
+/* ---- 抽屉页签 ---- */
+document.querySelectorAll('#sheet .tabs button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#sheet .tabs button').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');
+  ['principle','prompt','cases'].forEach(p=>{
+    const el = $('panel-'+p);
+    el.classList.toggle('on', p===b.dataset.tab);
+    if(p===b.dataset.tab) el.style.display='block'; else el.style.display='none';
+  });
+  expandSheet();   // 点页签自动展开
+});
+/* 面板初始只显示 principle */
+['prompt','cases'].forEach(p=>$('panel-'+p).style.display='none');
+
+/* ---- 抽屉：收起/展开/关闭/重开 ---- */
+function expandSheet(){
+  $('sheet').classList.remove('collapsed','closed');
+  $('sheet-chev').textContent = '▾';
+  $('reopen').classList.remove('show');
+}
+function collapseSheet(){
+  $('sheet').classList.add('collapsed');
+  $('sheet-chev').textContent = '▴';
+}
+$('sheet-head').onclick = ()=>{
+  $('sheet').classList.contains('collapsed') ? expandSheet() : collapseSheet();
+};
+$('sheet-close').onclick = (e)=>{
+  e.stopPropagation();
+  $('sheet').classList.add('closed');
+  $('reopen').classList.add('show');
+};
+$('reopen').onclick = ()=>{ expandSheet(); };
+
+/* ---- 案例卡片 ---- */
+function caseHTML(c){
+  if(c.isLocal){
+    return `<div class="case"><h5>🎬 ${c.t}</h5><div class="note">${c.note}</div>
+      <video class="local-video" controls preload="metadata" src="${c.local}"></video>
+      <div class="fallback">提示：把本页面和 MP4 动画放在同一文件夹打开，才能播放示例动画。</div></div>`;
+  }
+  if(c.bvid){
+    const emb = `https://player.bilibili.com/player.html?bvid=${c.bvid}&page=1&high_quality=1&danmaku=0&autoplay=0`;
+    const link = `https://www.bilibili.com/video/${c.bvid}`;
+    return `<div class="case"><h5>📺 ${c.t}</h5><div class="note">${c.note}</div>
+      <iframe src="${emb}" loading="lazy" scrolling="no" allowfullscreen></iframe>
+      <div class="links"><a href="${link}" target="_blank" rel="noopener">在 B 站打开 ↗</a></div>
+      <div class="fallback">如果上方视频无法播放，点击按钮去 B 站直接观看。</div></div>`;
+  }
+  if(c.url){
+    return `<div class="case"><h5>📺 ${c.t}</h5><div class="note">${c.note}</div>
+      <div class="links"><a href="${c.url}" target="_blank" rel="noopener">打开视频 ↗</a></div></div>`;
+  }
+  return '';
+}
+
+/* ---- 加载机构 ---- */
+function loadMech(id){
+  const M = MECHS[id];
+  currentId = id;
+  clearActive();
+  $('demo-title').textContent = M.icon+' '+M.name;
+  $('demo-sub').textContent = M.sub;
+  $('panel-principle').innerHTML = `
+    <h3>📖 ${M.name}是什么？</h3>
+    <div class="intro">${M.intro}</div>
+    ${M.svg?`<div class="ssvg">${SVGS[M.svg]}</div>`:''}
+    <div class="kbox"><h4>🔑 关键知识点</h4><ul>${M.kpoints.map(k=>`<li><b>${k[0]}：</b>${k[1]}</li>`).join('')}</ul></div>
+    <div class="kbox"><h4>🧩 对应积木课程</h4><div class="lessons-chips">${M.lessons.map(l=>`<span>${l}</span>`).join('')}</div></div>
+    <div class="kbox"><h4>🌱 生活中的它</h4><div class="lifelist">${M.life.map(l=>`<span>${l}</span>`).join('')}</div></div>
+    <div class="pr-tip">🖱 <b>试试这样玩：</b>单指拖动转视角、双指缩放；下方控制条可暂停、调速度、分解、开 X 光！</div>`;
+  $('panel-prompt').innerHTML = `
+    <h3>🎬 视频魔法棒</h3>
+    <div class="intro">把"魔法咒语"复制到文生视频平台（即梦 / Kling / Seedance），就能生成 ${M.name}的 3D 原理动画！</div>
+    <div class="pr-box">
+      <div class="pr-label">✨ 正向提示词</div>
+      <button class="copy-btn" data-i="0">复制</button>
+      <div class="pr-text">${M.prompt.pos}</div>
+    </div>
+    <div class="pr-box" style="border-color:var(--coral-l)">
+      <div class="pr-label">🚫 负向提示词</div>
+      <button class="copy-btn" data-i="1">复制</button>
+      <div class="pr-text">${M.prompt.neg}</div>
+    </div>
+    <div class="pr-tip">📌 <b>使用步骤：</b>① 打开即梦 / Kling / Seedance → ② 选"文生视频" 16:9 → ③ 粘贴正向 + 负向提示词 → ④ 生成。目录里的 MP4 就是这样生成的！</div>`;
+  $('panel-cases').innerHTML = `
+    <h3>🌍 生活大发现</h3>
+    <div class="intro">现实世界里，${M.name}藏在这些地方！看完想一想：你还能找到它吗？</div>
+    ${M.cases.map(c=>caseHTML(c)).join('')}
+    <div class="pr-tip">💡 <b>小任务：</b>在教室或家里找一找用到了这个原理的东西，下次上课讲给大家听！</div>`;
+  wireCopies();
+  // 3D 场景
+  const d = DEMOS[id]();
+  G.active = d;
+  applyExplodeTo(d);
+  G.scene.add(d.group);
+  G.camera.position.copy(VIEWS.iso.pos);
+  G.controls.target.copy(VIEWS.iso.t);
+  G.playing = true; G.speed = 1;
+  $('ctl-play').textContent = '⏸'; $('ctl-play').classList.remove('on');
+  $('ctl-speed').value = 100; $('ctl-speedv').textContent = '100%';
+  setXray(false); $('ctl-xray').classList.remove('on');
+  setLabels(true); $('ctl-labels').classList.add('on');
+  G.showAxis = false; G.axisGroup.visible = false; $('ctl-axis').classList.remove('on');
+  G.exploded = false; G.expAnim = null; $('ctl-explode').classList.remove('on');
+  $('ctl-explode').style.display = G.active.explode ? '' : 'none';
+  buildExtra(id);
+  // 重置页签到原理
+  document.querySelectorAll('#sheet .tabs button').forEach(x=>x.classList.remove('on'));
+  document.querySelector('#sheet .tabs button[data-tab=principle]').classList.add('on');
+  ['principle','prompt','cases'].forEach(p=>{
+    const el = $('panel-'+p);
+    el.style.display = p==='principle' ? 'block' : 'none';
+    el.classList.toggle('on', p==='principle');
+  });
+  $('sheet').scrollTop = 0;
+  expandSheet();   // 每次进入新机构自动展开面板
+  showDemo();
+}
+
+function wireCopies(){
+  const M = MECHS[currentId];
+  document.querySelectorAll('#panel-prompt .copy-btn').forEach(btn=>{
+    btn.onclick = ()=>{
+      const txt = M.prompt[btn.dataset.i==='0' ? 'pos' : 'neg'];
+      copyText(txt, btn);
+    };
+  });
+}
+function copyText(t, btn){
+  const done = ()=>{
+    btn.textContent = '✓ 已复制'; btn.classList.add('ok');
+    const pop = $('pop');
+    pop.classList.add('show');
+    setTimeout(()=>{ btn.textContent = '复制'; btn.classList.remove('ok'); pop.classList.remove('show'); }, 1600);
+  };
+  let settled = false, usedFallback = false;
+  const finish = ()=>{ if(settled) return; settled = true; done(); };
+  const fallback = ()=>{
+    if(usedFallback) return; usedFallback = true;
+    const ta = document.createElement('textarea');
+    ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); }catch(e){}
+    ta.remove();
+    finish();
+  };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(t).then(finish).catch(fallback);
+    setTimeout(fallback, 700);
+  } else fallback();
+}
+
+/* ---- 悬浮控制条 ---- */
+function buildDock(){
+  $('dock').innerHTML = `
+    <button class="chip p" id="ctl-play">⏸</button>
+    <div class="spd">⚡<input type="range" id="ctl-speed" min="10" max="220" value="100"><b id="ctl-speedv">100%</b></div>
+    <button class="chip m" id="ctl-explode">💥 分解</button>
+    <button class="chip y" id="ctl-xray">🔍 X光</button>
+    <button class="chip v" id="ctl-labels">🏷 标签</button>
+    <button class="chip v" id="ctl-axis">〰 轴线</button>
+    <span id="ctl-extra"></span>
+    <button class="chip v" id="ctl-v0">🎥 斜视</button>
+    <button class="chip v" id="ctl-v1">正面</button>
+    <button class="chip v" id="ctl-v2">侧面</button>
+    <button class="chip v" id="ctl-v3">俯视</button>`;
+  $('ctl-play').onclick = ()=>{
+    G.playing = !G.playing;
+    $('ctl-play').textContent = G.playing ? '⏸' : '▶';
+    $('ctl-play').classList.toggle('on', !G.playing);
+  };
+  $('ctl-speed').oninput = e=>{ G.speed = e.target.value/100; $('ctl-speedv').textContent = e.target.value+'%'; };
+  $('ctl-explode').onclick = e=>{ toggleExplode(); e.target.classList.toggle('on', G.exploded); };
+  $('ctl-xray').onclick = e=>{ setXray(!G.xray); e.target.classList.toggle('on', G.xray); };
+  $('ctl-labels').onclick = e=>{ setLabels(!G.labels); e.target.classList.toggle('on', G.labels); };
+  $('ctl-axis').onclick = e=>{ G.showAxis = !G.showAxis; G.axisGroup.visible = G.showAxis; e.target.classList.toggle('on', G.showAxis); };
+  $('ctl-v0').onclick = ()=>animateCamera(VIEWS.iso.pos, VIEWS.iso.t);
+  $('ctl-v1').onclick = ()=>animateCamera(VIEWS.front.pos, VIEWS.front.t);
+  $('ctl-v2').onclick = ()=>animateCamera(VIEWS.side.pos, VIEWS.side.t);
+  $('ctl-v3').onclick = ()=>animateCamera(VIEWS.top.pos, VIEWS.top.t);
+}
+
+/* ---- 机构专属控件 ---- */
+function buildExtra(id){
+  const box = $('ctl-extra');
+  box.innerHTML = '';
+  if(id === 'gear'){
+    box.innerHTML = `
+      <button class="chip y on" id="mode-a">🚀 加速</button>
+      <button class="chip y" id="mode-b">🐢 减速</button>`;
+    $('mode-a').onclick = ()=>{ G.active.group.userData.setMode('speedup'); $('mode-a').classList.add('on'); $('mode-b').classList.remove('on'); };
+    $('mode-b').onclick = ()=>{ G.active.group.userData.setMode('slowdown'); $('mode-b').classList.add('on'); $('mode-a').classList.remove('on'); };
+  }
+  if(id === 'lever'){
+    box.innerHTML = `
+      <button class="chip m" id="lv-e">⚖️ 等臂</button>
+      <button class="chip m" id="lv-s">💪 省力</button>
+      <button class="chip m" id="lv-f">🦯 费力</button>
+      <div class="spd">支点<select id="lv-fx">
+        <option value="-1.1">左</option><option value="0" selected>中</option><option value="1.1">右</option></select></div>
+      <div class="spd">左砝码<select id="lv-wl">
+        <option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select></div>
+      <div class="spd">右砝码<select id="lv-wr">
+        <option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select></div>`;
+    const set = (k,v)=>G.active.group.userData.set(k, parseFloat(v));
+    $('lv-e').onclick = ()=>{ set('fx',0); set('wL',3); set('wR',3); $('lv-fx').value=0; $('lv-wl').value=3; $('lv-wr').value=3; };
+    $('lv-s').onclick = ()=>{ set('fx',1.1); set('wL',1); set('wR',3); $('lv-fx').value=1.1; $('lv-wl').value=1; $('lv-wr').value=3; };
+    $('lv-f').onclick = ()=>{ set('fx',-1.1); set('wL',3); set('wR',1); $('lv-fx').value=-1.1; $('lv-wl').value=3; $('lv-wr').value=1; };
+    $('lv-fx').onchange = e=>set('fx', e.target.value);
+    $('lv-wl').onchange = e=>set('wL', e.target.value);
+    $('lv-wr').onchange = e=>set('wR', e.target.value);
+  }
+}
+
+/* ---- 启动 ---- */
+initEngine();
+buildDock();
+renderHome();
+showHome();
+
+let last = performance.now();
+function loop(){
+  requestAnimationFrame(loop);
+  const now = performance.now();
+  const dt = Math.min((now-last)/1000, 0.05);
+  last = now;
+  stepExplode();
+  if(G.active && G.playing && G.active.update) G.active.update(dt*G.speed);
+  G.controls.update();
+  G.renderer.render(G.scene, G.camera);
+}
+loop();
+document.getElementById('loading').style.display = 'none';
+</script>
+</body>
+</html>
