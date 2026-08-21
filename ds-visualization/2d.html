@@ -1,0 +1,1812 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#F5F7FA">
+<title>数据结构 2D 可视化 · 平面交互演示平台</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  :root{
+    --navy:#1F3A5F; --navy2:#33507A; --teal:#2BB3A3; --orange:#FF8C42;
+    --ink:#24303F; --ink2:#6B7A8D; --bg:#F5F7FA; --card:#FFFFFF;
+    --line:rgba(31,58,95,.10); --sh:0 8px 24px rgba(31,58,95,.10);
+    --code:#1B2A41; --code-line:#22354F; --hl:#FFB300;
+  }
+  html,body{ width:100%; height:100%; overflow:hidden; overscroll-behavior:none; }
+  body{
+    font-family:"PingFang SC","Microsoft YaHei","Hiragino Sans GB",sans-serif;
+    background:linear-gradient(160deg,#F5F7FA 0%,#EDF2F8 100%);
+    color:var(--ink); user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; font-size:15px;
+  }
+  .appbar{
+    position:fixed; top:0; left:0; right:0; z-index:60; display:flex; align-items:center; gap:10px;
+    padding:calc(env(safe-area-inset-top) + 8px) 16px 8px;
+    background:rgba(255,255,255,.88); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--line);
+  }
+  .appbar .logo{ font-size:18px; font-weight:800; color:var(--navy); white-space:nowrap; display:flex; align-items:center; gap:8px; }
+  .appbar .logo .dot{ width:10px; height:10px; border-radius:50%; background:var(--teal); display:inline-block; }
+  .appbar .logo small{ font-size:10.5px; font-weight:600; color:#fff; background:var(--orange); border-radius:999px; padding:2px 8px; }
+  .appbar .st{ font-size:12px; color:var(--ink2); margin-left:auto; white-space:nowrap; }
+  @media (max-width:640px){ .appbar .st{ display:none; } }
+
+  #view-home{ position:fixed; top:calc(env(safe-area-inset-top) + 52px); bottom:calc(env(safe-area-inset-bottom) + 60px); left:0; right:0; overflow-y:auto; -webkit-overflow-scrolling:touch; padding-bottom:20px; }
+  .hero{ padding:22px 18px 8px; }
+  .hero h1{ font-size:26px; font-weight:900; letter-spacing:.5px; color:var(--navy); }
+  .hero h1 em{ font-style:normal; color:var(--teal); }
+  .hero p{ margin-top:8px; font-size:13.5px; line-height:1.8; color:var(--ink2); max-width:760px; }
+  .hero .badges span{ font-size:11px; font-weight:700; background:#E8F7F4; color:#1B7F72; padding:4px 10px; border-radius:999px; margin-right:6px; }
+  .hero .badges span.b{ background:#FFF3E0; color:#B26A00; }
+  .sec{ margin-top:22px; }
+  .sec h2{ display:flex; align-items:baseline; gap:8px; padding:0 18px; font-size:17px; font-weight:800; color:var(--navy); }
+  .sec h2 small{ font-size:12px; font-weight:600; color:var(--ink2); }
+  .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:14px; padding:14px 18px; }
+  .mcard{
+    position:relative; display:flex; flex-direction:column;
+    background:var(--card); border-radius:16px; padding:18px 16px 16px;
+    box-shadow:var(--sh); cursor:pointer; border:2px solid transparent; transition:transform .18s ease, border-color .18s ease;
+  }
+  .mcard:hover{ transform:translateY(-3px); border-color:var(--teal); }
+  .mcard:active{ transform:scale(.98); }
+  .mcard .ic{ width:46px; height:46px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:24px; margin-bottom:10px; }
+  .mcard h3{ font-size:16px; font-weight:800; color:var(--navy); margin-bottom:5px; }
+  .mcard p{ font-size:12.5px; color:var(--ink2); line-height:1.6; flex:1; }
+  .mcard .go{ margin-top:12px; font-size:12px; font-weight:700; color:#fff; background:var(--teal); border-radius:999px; padding:6px 14px; display:inline-block; width:fit-content; }
+  .mcard .ops{ margin-top:8px; font-size:11px; color:var(--ink2); }
+  .mcard .tag{ position:absolute; top:10px; right:10px; font-size:10px; font-weight:700; background:#EEF2F7; color:var(--ink2); border-radius:999px; padding:2px 8px; }
+  @media (max-width:640px){ .grid{ grid-template-columns:1fr 1fr; gap:10px; padding:12px 14px; } .mcard{padding:14px 12px;} .mcard h3{font-size:14px;} .hero h1{font-size:21px;} }
+
+  .bnav{ position:fixed; left:0; right:0; bottom:0; z-index:70; display:flex; background:rgba(255,255,255,.95); backdrop-filter:blur(14px); border-top:1px solid var(--line); padding-bottom:env(safe-area-inset-bottom); }
+  .bnav button{ flex:1; border:none; background:none; font-family:inherit; font-size:11px; font-weight:700; color:var(--ink2); padding:7px 0 9px; display:flex; flex-direction:column; align-items:center; gap:2px; }
+  .bnav button .i{ font-size:20px; line-height:1.1; }
+  .bnav button.on{ color:var(--teal); }
+
+  #view-demo{ position:fixed; inset:0; display:none; }
+  #view-demo.on{ display:block; }
+  #demo-head{
+    position:absolute; top:calc(env(safe-area-inset-top) + 8px); left:16px; right:16px; z-index:40;
+    display:flex; align-items:center; gap:10px; pointer-events:none;
+  }
+  #demo-head .back{ pointer-events:auto; border:none; cursor:pointer; font-family:inherit; font-size:12px; font-weight:700; color:var(--navy); background:rgba(255,255,255,.9); border:1px solid var(--line); padding:7px 12px; border-radius:999px; box-shadow:0 2px 10px rgba(31,58,95,.10); }
+  #demo-head h2{ font-size:16px; font-weight:800; color:var(--navy); text-shadow:0 1px 2px #fff; }
+  #demo-head .st{ font-size:11px; color:var(--ink2); font-weight:500; max-width:38vw; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+  /* ---- 2D 舞台 ---- */
+  #stage-wrap{ position:absolute; inset:0; }
+  #stage{
+    position:absolute; top:calc(env(safe-area-inset-top) + 52px); bottom:calc(env(safe-area-inset-bottom) + 148px);
+    left:0; right:0; overflow:hidden;
+  }
+  @media (min-width:900px){ #stage{ right:400px; } }
+  .stage-title{
+    position:absolute; top:14px; left:50%; transform:translateX(-50%); z-index:10;
+    font-size:15px; font-weight:800; color:#fff; background:var(--navy); padding:6px 16px; border-radius:999px;
+    white-space:nowrap; box-shadow:0 4px 14px rgba(31,58,95,.25);
+  }
+  .stage-sub{
+    position:absolute; top:50px; left:50%; transform:translateX(-50%); z-index:9;
+    font-size:12px; font-weight:600; color:var(--ink2); background:rgba(255,255,255,.9); padding:4px 12px; border-radius:999px;
+    white-space:nowrap;
+  }
+  .stage-body{
+    position:absolute; top:84px; left:16px; right:16px; bottom:16px;
+    display:flex; align-items:center; justify-content:center;
+  }
+
+  /* 通用 2D 元素 */
+  .node{ display:flex; flex-direction:column; align-items:center; transition:all .35s cubic-bezier(.4,.0,.2,1); }
+  .cell{
+    min-width:56px; height:56px; display:flex; align-items:center; justify-content:center;
+    font-size:24px; font-weight:800; border-radius:12px; color:#fff;
+    box-shadow:0 3px 10px rgba(0,0,0,.18); transition:all .35s cubic-bezier(.4,.0,.2,1);
+  }
+  .cell.idx{ font-size:12px; color:var(--ink2); margin-top:4px; font-weight:700; }
+  .cell.dim{ opacity:.25; }
+  .cell.hot{ box-shadow:0 0 0 3px var(--orange), 0 5px 16px rgba(255,140,66,.5); transform:translateY(-4px); }
+  .cell.done{ box-shadow:0 0 0 3px #2EA06C, 0 5px 16px rgba(46,160,108,.5); }
+  .cell.pick{ box-shadow:0 0 0 3px #E5484D, 0 5px 16px rgba(229,72,77,.5); }
+  .arrow{ font-size:22px; color:#9FB4CC; font-weight:800; align-self:center; margin:0 6px; }
+  .pointer{ font-size:12px; font-weight:800; color:#fff; background:var(--orange); border-radius:6px; padding:2px 8px; margin-bottom:4px; white-space:nowrap; }
+
+  /* 柱状图（排序） */
+  .bars{ display:flex; align-items:flex-end; gap:8px; height:100%; }
+  .bar{ display:flex; flex-direction:column; align-items:center; justify-content:flex-end; transition:all .35s cubic-bezier(.4,.0,.2,1); }
+  .bar .v{ font-size:20px; font-weight:800; color:var(--navy); margin-bottom:4px; }
+  .bar .stick{ width:42px; border-radius:8px 8px 0 0; background:var(--navy2); box-shadow:0 3px 10px rgba(0,0,0,.15); transition:all .35s cubic-bezier(.4,.0,.2,1); }
+  .bar .pos{ font-size:11px; color:var(--ink2); margin-top:4px; font-weight:700; }
+
+  /* 状态表 */
+  .stage-panel{
+    position:absolute; bottom:16px; left:16px; right:16px; z-index:12;
+    background:rgba(255,255,255,.96); border-radius:12px; box-shadow:0 6px 20px rgba(31,58,95,.14);
+    padding:10px 14px; font-size:13px; color:#3D4C5E; line-height:1.8; max-height:34%;
+    overflow-y:auto; border:1px solid var(--line);
+  }
+  .stage-panel b{ color:var(--navy); }
+  .pill{ display:inline-block; padding:1px 10px; border-radius:999px; font-size:12px; font-weight:800; color:#fff; background:var(--navy2); margin:1px 2px; }
+  .pill.hd{ background:var(--orange); }
+
+  /* ---- 讲解面板 ---- */
+  #sheet{
+    position:fixed; right:0; top:calc(env(safe-area-inset-top) + 52px); bottom:calc(env(safe-area-inset-bottom) + 76px);
+    width:400px; max-width:92vw; z-index:50;
+    background:rgba(255,255,255,.98); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+    border-radius:16px 0 0 16px; box-shadow:-8px 0 30px rgba(31,58,95,.14);
+    display:flex; flex-direction:column; transition:transform .3s ease; overflow:hidden;
+  }
+  @media (max-width:899px){
+    #sheet{ position:fixed; right:0; left:0; top:auto; bottom:calc(env(safe-area-inset-bottom) + 64px); width:100%; max-width:100vw; height:46vh; border-radius:16px 16px 0 0; transform:translateY(0); }
+    #sheet.closed{ display:none; }
+  }
+  #sheet.closed{ display:none; }
+  .sheet-head{ display:flex; align-items:center; gap:8px; padding:10px 12px 6px; border-bottom:1px solid var(--line); cursor:pointer; }
+  .sheet-head .chev{ font-size:12px; color:var(--ink2); transition:transform .3s; }
+  .sheet-head .sclose{ margin-left:auto; border:none; cursor:pointer; font-family:inherit; font-size:14px; font-weight:800; color:var(--ink2); background:#EEF2F7; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+  #sheet .tabs{ display:flex; gap:6px; padding:8px 12px; border-bottom:1px solid var(--line); }
+  #sheet .tabs button{ flex:1; border:none; cursor:pointer; font-family:inherit; font-size:12px; font-weight:700; padding:7px 4px; border-radius:999px; color:var(--ink2); background:#EEF2F7; white-space:nowrap; }
+  #sheet .tabs button.on{ color:#fff; background:var(--teal); box-shadow:0 3px 10px rgba(43,179,163,.4); }
+  /* 内容区：绝对定位填充，保证滚动可靠（flex 压缩在 fixed 容器有兼容性问题） */
+  #sheet .body{ position:absolute; left:0; right:0; top:86px; bottom:0; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+  #sheet .page{ padding:12px 14px 20px; }
+  #sheet .body::-webkit-scrollbar{ width:5px; } #sheet .body::-webkit-scrollbar-thumb{ background:rgba(31,58,95,.25); border-radius:3px; }
+  #reopen{
+    display:none; position:fixed; right:12px; bottom:calc(env(safe-area-inset-bottom) + 74px); z-index:45;
+    border:none; cursor:pointer; font-family:inherit; font-size:13px; font-weight:800; color:#fff; background:var(--teal);
+    border-radius:999px; padding:10px 16px; box-shadow:0 6px 20px rgba(43,179,163,.45);
+  }
+
+  .intro{ font-size:13px; line-height:1.8; color:var(--ink2); }
+  .kbox{ margin-top:12px; }
+  .kbox h4{ font-size:13px; font-weight:800; color:var(--navy); margin-bottom:6px; }
+  .kbox ul{ list-style:none; }
+  .kbox li{ font-size:12.5px; line-height:1.7; color:#3D4C5E; padding-left:14px; position:relative; }
+  .kbox li::before{ content:""; position:absolute; left:0; top:8px; width:6px; height:6px; border-radius:50%; background:var(--teal); }
+  .kbox li b{ color:var(--navy); }
+  .formula{ background:#F0F4FA; border-left:3px solid var(--teal); padding:8px 12px; border-radius:0 8px 8px 0; font-size:12.5px; color:var(--navy); font-weight:700; margin-top:8px; line-height:1.7; }
+  .lifelist span{ display:inline-block; background:#E8F7F4; color:#1B7F72; font-size:11.5px; font-weight:700; border-radius:999px; padding:3px 10px; margin:3px 3px 0 0; }
+  .pr-tip{ margin-top:10px; font-size:12px; color:var(--ink2); line-height:1.7; background:#FFF6DE; border-radius:8px; padding:8px 10px; }
+  .pr-box{ margin-top:12px; border:1px solid var(--line); border-radius:12px; padding:10px 12px; position:relative; }
+  .pr-label{ font-size:12px; font-weight:800; color:var(--navy); margin-bottom:6px; }
+  .pr-text{ font-size:12px; line-height:1.7; color:#3D4C5E; }
+  .copy-btn{ position:absolute; top:10px; right:10px; border:none; cursor:pointer; font-family:inherit; font-size:11px; font-weight:700; color:#fff; background:var(--navy); border-radius:6px; padding:3px 10px; }
+
+  .case{ border:1px solid var(--line); border-radius:12px; padding:10px 12px; margin-top:10px; }
+  .case b{ font-size:12.5px; color:var(--navy); display:block; }
+  .case .note{ font-size:11.5px; color:var(--ink2); margin-top:4px; line-height:1.6; }
+  .case iframe{ width:100%; height:170px; border:none; border-radius:10px; background:#E9EDF3; margin-top:8px; display:block; }
+  .case .links{ display:flex; gap:8px; margin-top:8px; }
+  .case .links a{ flex:1; text-align:center; font-size:12px; font-weight:700; text-decoration:none; color:#fff; background:var(--navy2); border-radius:999px; padding:7px 10px; }
+  .case .fallback{ font-size:11px; color:var(--ink2); margin-top:6px; line-height:1.6; }
+
+  /* ---- 控制条 ---- */
+  #ctl{
+    position:fixed; left:50%; transform:translateX(-50%); bottom:calc(env(safe-area-inset-bottom) + 12px);
+    z-index:80; display:flex; align-items:center; gap:4px;
+    background:rgba(255,255,255,.96); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+    border-radius:999px; box-shadow:0 6px 24px rgba(31,58,95,.18); padding:6px 10px;
+  }
+  @media (min-width:900px){ #ctl{ right:412px; left:auto; transform:none; } }
+  @media (max-width:640px){ #ctl{ left:8px; right:8px; transform:none; justify-content:space-around; } }
+  .chip{ flex:0 0 auto; border:none; cursor:pointer; font-family:inherit; font-size:12px; font-weight:700; color:var(--ink); background:#EEF2F7; border-radius:999px; padding:8px 12px; white-space:nowrap; display:flex; align-items:center; gap:4px; transition:transform .12s; }
+  .chip.on{ color:#fff; }
+  .chip.p{ background:var(--navy); color:#fff; min-width:54px; justify-content:center; }
+  .chip.p.on{ background:#fff; color:var(--navy); box-shadow:inset 0 0 0 2px var(--navy); }
+  .chip.v{ background:var(--teal); color:#fff; } .chip.v.on{ background:var(--orange); }
+  .chip.m{ background:var(--orange); color:#fff; } .chip.m.on{ background:var(--navy); }
+  .chip.g{ background:#E9F7F0; color:#1B7F72; } .chip.g.on{ background:#2EA06C; color:#fff; }
+  .sep{ flex:0 0 auto; width:1px; height:22px; background:var(--line); margin:0 2px; }
+  .spd{ flex:0 0 auto; display:flex; align-items:center; gap:5px; font-size:11px; font-weight:700; color:var(--ink2); background:#EEF2F7; border-radius:999px; padding:6px 10px; }
+  .spd input{ width:70px; accent-color:var(--teal); }
+  @media (max-width:640px){ .spd{ display:none; } }
+
+  /* ============ 教学面板（代码/状态/日志，与 3D 版一致） ============ */
+  #teach-panel{
+    position:fixed; left:10px; right:10px; bottom:calc(env(safe-area-inset-bottom) + 62px);
+    z-index:41; height:42vh; display:flex; flex-direction:column;
+    background:rgba(255,255,255,.98); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+    border-radius:20px; box-shadow:0 -6px 30px rgba(31,58,95,.18); border:1px solid var(--line);
+    animation:sheetIn .28s ease;
+  }
+  #teach-panel.closed{ display:none; }
+  #teach-panel.collapsed{ height:44px; overflow:hidden; }
+  #teach-panel.collapsed .p2-body{ display:none; }
+  #teach-panel .p2-head{ cursor:pointer; }
+  @keyframes sheetIn{ from{ transform:translateY(40px); opacity:0; } to{ transform:none; opacity:1; } }
+  .p2-head{ flex:0 0 auto; display:flex; align-items:center; gap:6px; padding:8px 12px 6px; border-bottom:1px solid var(--line); }
+  .p2-title{ font-size:13px; font-weight:800; color:var(--navy); white-space:nowrap; }
+  .p2-tabs{ display:flex; gap:5px; flex:1; }
+  .p2-tabs button{ flex:1; border:none; cursor:pointer; font-family:inherit; font-size:11.5px; font-weight:700; padding:6px 4px; border-radius:999px; color:var(--ink2); background:#EEF2F7; white-space:nowrap; }
+  .p2-tabs button.on{ color:#fff; background:var(--navy); }
+  .p2-close{ border:none; cursor:pointer; font-family:inherit; font-size:12px; font-weight:800; color:var(--ink2); background:#EEF2F7; width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex:0 0 auto; }
+  .p2-body{ position:absolute; left:0; right:0; top:44px; bottom:0; overflow:hidden; display:flex; }
+  .p2-page{ flex:1; overflow-y:auto; display:none; -webkit-overflow-scrolling:touch; }
+  .p2-page.on{ display:block; }
+  .p2-page::-webkit-scrollbar{ width:5px; } .p2-page::-webkit-scrollbar-thumb{ background:rgba(31,58,95,.25); border-radius:3px; }
+  .code-title{ font-size:11px; font-weight:700; color:#9FB4CC; background:var(--code-line); padding:6px 12px; display:flex; justify-content:space-between; }
+  .code-title b{ color:#fff; }
+  #code-view{ margin:0; padding:8px 0; background:var(--code); font-family:"Consolas","Menlo","Courier New",monospace; font-size:12.5px; line-height:1.95; min-height:100%; }
+  #code-view .cl{ display:flex; color:#C7D6E8; padding:0 12px 0 0; white-space:pre; }
+  #code-view .cl .ln{ flex:0 0 34px; text-align:right; padding-right:10px; color:#5B7A9A; user-select:none; }
+  #code-view .cl .ct{ white-space:pre-wrap; word-break:break-all; }
+  #code-view .cl.hl{ background:rgba(255,179,0,.16); }
+  #code-view .cl.hl .ln{ color:var(--hl); font-weight:800; }
+  #code-view .cl.hl .ct{ color:#FFE2A3; font-weight:700; box-shadow:inset 3px 0 0 var(--hl); padding-left:6px; }
+  #status-view{ padding:10px 12px 16px; }
+  .stab{ width:100%; border-collapse:collapse; margin-top:8px; font-size:12.5px; }
+  .stab th{ background:#F0F4FA; color:var(--navy); font-weight:800; padding:5px 8px; border:1px solid var(--line); text-align:center; }
+  .stab td{ padding:5px 8px; border:1px solid var(--line); text-align:center; color:#3D4C5E; font-weight:700; }
+  .stab td.done{ background:#E9F7F0; color:#1B7F72; }
+  .st-line{ font-size:13px; color:#3D4C5E; line-height:1.9; font-weight:700; }
+  .st-line b{ color:var(--navy); }
+  .st-box{ background:#F7F9FC; border:1px solid var(--line); border-radius:12px; padding:10px 12px; margin-top:8px; font-size:12.5px; line-height:1.9; color:#3D4C5E; }
+  .st-box b{ color:var(--navy); }
+  .pill{ display:inline-block; font-weight:800; border-radius:6px; padding:1px 8px; margin:0 2px; font-size:12px; background:#EEF2F7; color:var(--navy2); }
+  .pill.hd{ background:var(--orange); color:#fff; }
+  .pill.tl{ background:var(--teal); color:#fff; }
+  #log-view{ padding:8px 12px 16px; }
+  .log-item{ display:flex; gap:8px; font-size:12.5px; line-height:1.7; padding:4px 0; border-bottom:1px dashed rgba(31,58,95,.08); color:#3D4C5E; }
+  .log-item b{ flex:0 0 30px; color:var(--teal); font-weight:800; text-align:right; }
+  .log-item .op{ font-weight:800; color:var(--navy); }
+  .log-empty{ color:var(--ink2); font-size:12.5px; padding:12px; line-height:1.8; }
+  #teach-reopen{ display:none; position:fixed; left:12px; bottom:calc(env(safe-area-inset-bottom) + 74px); z-index:45; border:none; cursor:pointer; font-family:inherit; font-size:13px; font-weight:800; color:#fff; background:var(--navy); border-radius:999px; padding:10px 16px; box-shadow:0 6px 20px rgba(31,58,95,.45); }
+  #teach-reopen.show{ display:block; animation:sheetIn .25s ease; }
+  .mode-tag{ position:fixed; right:14px; bottom:calc(env(safe-area-inset-bottom) + 74px); z-index:44; font-size:11px; font-weight:800; color:#fff; background:var(--navy); border-radius:999px; padding:5px 12px; box-shadow:0 4px 14px rgba(31,58,95,.35); }
+  .mode-tag.sim{ background:var(--orange); }
+
+  /* ============ 讲解面板四态（与 3D 版一致） ============ */
+  #sheet.collapsed{ height:auto; } #sheet.collapsed .tabs, #sheet.collapsed .body{ display:none; }
+
+  @media (min-width:900px){
+    #teach-panel{ left:auto; right:16px; top:calc(env(safe-area-inset-top) + 72px); bottom:auto; width:min(420px,44vw); height:44vh; border-radius:20px; animation:none; }
+    /* 讲解面板在下方，避免与教学面板重叠（对齐 3D 版双栏布局） */
+    #sheet{ right:16px; left:auto; top:calc(env(safe-area-inset-top) + 72px + 44vh + 10px); bottom:calc(env(safe-area-inset-bottom) + 64px); width:min(420px,44vw); border-radius:16px; }
+    #stage{ right:452px; }
+  }
+
+  #loading{ position:fixed; inset:0; z-index:999; display:flex; align-items:center; justify-content:center; background:var(--bg); font-size:15px; font-weight:700; color:var(--ink2); }
+</style>
+</head>
+<body>
+<div id="loading">🦞 加载中…</div>
+
+<div class="appbar">
+  <div class="logo"><span class="dot"></span>数据结构 <b style="color:var(--orange)">2D</b> 可视化 <small>平面版</small></div>
+  <div class="st">13 大结构算法 · 大字号平面演示</div>
+</div>
+
+<!-- 首页 -->
+<div id="view-home">
+  <div class="hero">
+    <h1>数据结构与算法 <em>2D 平面可视化</em></h1>
+    <p>用最直白的平面图形讲清楚 13 个经典数据结构与算法——大字号、高对比、步骤可回放。点击卡片进入对应演示。</p>
+    <div class="badges" style="margin-top:10px"><span>零依赖</span><span class="b">双击即开</span><span>步骤状态机</span><span class="b">伪代码同步高亮</span></div>
+  </div>
+  <div class="sec"><h2>线性结构 <small>Linear</small></h2><div class="grid" id="grid-linear"></div></div>
+  <div class="sec"><h2>树结构 <small>Tree</small></h2><div class="grid" id="grid-tree"></div></div>
+  <div class="sec"><h2>图结构 <small>Graph</small></h2><div class="grid" id="grid-graph"></div></div>
+  <div class="sec"><h2>排序算法 <small>Sorting</small></h2><div class="grid" id="grid-algo"></div></div>
+</div>
+
+<!-- 演示页 -->
+<div id="view-demo">
+  <div id="demo-head">
+    <button class="back" id="btn-back">← 首页</button>
+    <h2 id="demo-title"></h2>
+    <div class="st" id="demo-sub"></div>
+  </div>
+  <div id="stage-wrap">
+    <div id="stage">
+      <div class="stage-title" id="stage-title"></div>
+      <div class="stage-sub" id="stage-sub"></div>
+      <div class="stage-body" id="stage-body"></div>
+      <div class="stage-panel" id="stage-panel" style="display:none"></div>
+    </div>
+  </div>
+
+  <!-- 教学面板：代码 / 状态 / 日志 -->
+  <div id="teach-panel">
+    <div class="p2-head">
+      <span class="p2-title">🧩 教学面板</span>
+      <div class="p2-tabs">
+        <button class="on" data-p2="code">🧾 代码</button>
+        <button data-p2="status">📊 状态</button>
+        <button data-p2="log">📋 日志</button>
+      </div>
+      <button class="p2-close" id="teach-close" title="收起教学面板">✕</button>
+    </div>
+    <div class="p2-body">
+      <div class="p2-page on" id="p2-code">
+        <div class="code-title"><span id="code-title">伪代码</span><b>动画同步高亮</b></div>
+        <pre id="code-view"></pre>
+      </div>
+      <div class="p2-page" id="p2-status"><div id="status-view"></div></div>
+      <div class="p2-page" id="p2-log"><div id="log-view"></div></div>
+    </div>
+  </div>
+  <button id="teach-reopen">🧩 教学面板</button>
+
+  <!-- 讲解面板 -->
+  <div id="sheet">
+    <div class="sheet-head" id="sheet-head">
+      <span class="chev" id="sheet-chev">▾</span>
+      <b style="font-size:13px;color:var(--navy)">📖 讲解面板</b>
+      <button class="sclose" id="sheet-close">✕</button>
+    </div>
+    <div class="tabs">
+      <button data-tab="principle" class="on">📖 原理</button>
+      <button data-tab="prompt">🎬 魔法棒</button>
+      <button data-tab="cases">🌍 案例</button>
+    </div>
+    <div class="body">
+      <div class="page" id="panel-principle"></div>
+      <div class="page" id="panel-prompt" style="display:none"></div>
+      <div class="page" id="panel-cases" style="display:none"></div>
+    </div>
+  </div>
+  <button id="reopen">📖 打开讲解</button>
+  <div class="mode-tag" id="mode-tag">🎞 动画模式</div>
+
+  <!-- 控制条 -->
+  <div id="ctl">
+    <button class="chip p" id="ctl-play">▶ 播放</button>
+    <button class="chip" id="ctl-step">⏭ 单步</button>
+    <button class="chip" id="ctl-reset">↺ 重置</button>
+    <span class="sep"></span>
+    <button class="chip v" id="ctl-auto">✨ 自动演示</button>
+    <span class="sep"></span>
+    <button class="chip m" id="ctl-mode">⚡ 模拟</button>
+    <span class="sep"></span>
+    <span class="spd">速度 <input type="range" id="ctl-speed" min="10" max="220" value="100"> <span id="ctl-speedv">100%</span></span>
+    <span class="sep"></span>
+    <button class="chip v" id="ctl-teach">🧩 教学</button>
+    <button class="chip v" id="ctl-sheet">📖 讲解</button>
+  </div>
+</div>
+
+<button class="bnav" id="bnav" style="display:none">
+  <button class="on" id="bnav-home"><span class="i">🏠</span>首页</button>
+  <button id="bnav-sheet"><span class="i">🧩</span>讲解</button>
+</button>
+
+<script>
+"use strict";
+
+const PSEUDO = {
+  queue: { title:'队列 Queue', lines:[
+    'enqueue(x)              // 入队：队尾插入',
+    '  if 队满: 报错          // (rear+1)%MAX == front',
+    '  rear = (rear+1) % MAX // 队尾指针后移',
+    '  data[rear] = x        // 元素写入队尾',
+    'dequeue()               // 出队：队头删除',
+    '  if 队空: 报错          // front == rear',
+    '  x = data[front]       // 取队头元素',
+    '  front = (front+1) % MAX',
+    '  return x',
+  ]},
+  stack: { title:'栈 Stack', lines:[
+    'push(x)                 // 压栈：栈顶插入',
+    '  if top == MAX-1: 栈溢出',
+    '  top = top + 1         // 栈顶指针上移',
+    '  data[top] = x         // 元素写入栈顶',
+    'pop()                   // 弹栈：栈顶删除',
+    '  if top == -1: 栈下溢',
+    '  x = data[top]         // 取栈顶元素',
+    '  top = top - 1         // 栈顶指针下移',
+    '  return x',
+  ]},
+  linkedlist: { title:'单链表 Linked List', lines:[
+    'insertHead(x)           // 头插法',
+    '  newNode.val = x       // 创建新节点',
+    '  newNode.next = head   // 新节点指向原头',
+    '  head = newNode        // 更新头指针',
+    'insertTail(x)           // 尾插法',
+    '  cur = head; while cur.next: cur = cur.next',
+    '  cur.next = newNode    // 挂到链表末尾',
+    'deleteHead()            // 删除头节点',
+    '  head = head.next      // 头指针后移',
+    'search(x)               // 按值查找',
+    '  cur = head; while cur:',
+    '    if cur.val == x: return cur',
+    '    cur = cur.next',
+  ]},
+  heap: { title:'最大堆 Max-Heap', lines:[
+    'insert(x)               // 插入',
+    '  heap[n] = x; n++      // 放到数组末尾',
+    '  siftUp(n-1)           // 上浮调整',
+    'siftUp(i)               // 上浮',
+    '  while i>0 且 heap[父] < heap[i]:',
+    '    swap(heap[i], heap[父])',
+    '    i = 父(i)',
+    'extractMax()            // 取最大值',
+    '  max = heap[0]',
+    '  heap[0] = heap[n-1]; n--  // 末位顶上',
+    '  siftDown(0)           // 下沉调整',
+    'siftDown(i)             // 下沉',
+    '  while 有孩子 且 孩子 > heap[i]:',
+    '    与较大的孩子交换; i = 孩子',
+  ]},
+  tree: { title:'二叉树遍历 Traversal', lines:[
+    'BFS 层序 (队列实现)',
+    '  enqueue(根)',
+    '  while 队列非空:',
+    '    v = dequeue(); visit(v)',
+    '    if v.left:  enqueue(v.left)',
+    '    if v.right: enqueue(v.right)',
+    'DFS 前序 (递归, 根-左-右)',
+    '  if v == null: return',
+    '  visit(v); pre(v.left); pre(v.right)',
+    'DFS 中序 (递归, 左-根-右)',
+    '  if v == null: return',
+    '  in(v.left); visit(v); in(v.right)',
+    'DFS 后序 (递归, 左-右-根)',
+    '  if v == null: return',
+    '  post(v.left); post(v.right); visit(v)',
+  ]},
+  bst: { title:'二叉搜索树 BST', lines:[
+    'insert(x)               // 插入',
+    '  cur = 根',
+    '  while 未到空位:',
+    '    if x < cur.val: cur = cur.left   // 小→左',
+    '    else:           cur = cur.right  // 大→右',
+    '  挂载新节点到空位',
+    'search(x)               // 查找',
+    '  cur = 根; while cur:',
+    '    if x==cur.val: return true',
+    '    cur = x<cur.val ? cur.left : cur.right',
+    'delete(x)               // 删除',
+    '  叶子: 直接删除',
+    '  单孩子: 孩子顶替',
+    '  双孩子: 右子树最小者顶替',
+  ]},
+  dijkstra: { title:'Dijkstra 最短路径', lines:[
+    'Dijkstra(s)             // 单源最短路径',
+    '  for v∈V: dist[v]=∞; prev[v]=∅',
+    '  dist[s] = 0           // 源点距离为 0',
+    '  while 存在未确定顶点:',
+    '    u = 未确定中 dist 最小者   // 贪心',
+    '    标记 u 为已确定',
+    '    for (v,w) ∈ u 的邻接边:   // 松弛',
+    '      if dist[u]+w < dist[v]:',
+    '        dist[v] = dist[u]+w',
+    '        prev[v] = u',
+    '  从终点沿 prev 回溯得最短路径',
+  ]},
+  graphtraversal: { title:'图遍历 BFS / DFS', lines:[
+    'BFS(s)                  // 广度优先（队列）',
+    '  visited[s]=true; 入队 s',
+    '  while 队列非空:',
+    '    u = 出队; visit(u)',
+    '    for v ∈ adj[u]:',
+    '      if !visited[v]: visited[v]=true; 入队 v',
+    'DFS(s)                  // 深度优先（递归/栈）',
+    '  visited[s]=true; visit(s)',
+    '  for v ∈ adj[s]:',
+    '    if !visited[v]: DFS(v)',
+  ]},
+  mst: { title:'最小生成树 MST', lines:[
+    'Prim(s)                 // 普里姆：加点法',
+    '  key[s]=0; 其余 key=∞',
+    '  while 未选顶点存在:',
+    '    u = 未选中 key 最小者',
+    '    for (v,w) ∈ adj[u]:',
+    '      if v未选 且 w<key[v]: key[v]=w; parent[v]=u',
+    'Kruskal()               // 克鲁斯卡尔：加边法',
+    '  按边权升序排序',
+    '  并查集初始化（每点独立）',
+    '  for (u,v,w) ∈ 边序:',
+    '    if find(u) ≠ find(v): 选入MST; union(u,v)',
+  ]},
+  bubble: { title:'冒泡排序 Bubble Sort', lines:[
+    'for i = 0 .. n-2:       // 轮数',
+    '  for j = 0 .. n-2-i:   // 未排序区',
+    '    if a[j] > a[j+1]:   // 逆序',
+    '      swap(a[j], a[j+1]) // 交换',
+    '  // 本轮最大者已冒泡到末尾',
+  ]},
+  selection: { title:'选择排序 Selection Sort', lines:[
+    'for i = 0 .. n-2:       // 第 i 轮',
+    '  minIdx = i            // 假设 i 最小',
+    '  for j = i+1 .. n-1:   // 扫描未排序区',
+    '    if a[j] < a[minIdx]:',
+    '      minIdx = j        // 记录最小位置',
+    '  swap(a[i], a[minIdx]) // 最小者归位',
+  ]},
+  insertion: { title:'插入排序 Insertion Sort', lines:[
+    'for i = 1 .. n-1:       // 从第 2 个开始',
+    '  key = a[i]; j = i-1   // 取牌',
+    '  while j>=0 且 a[j] > key:',
+    '    a[j+1] = a[j]; j--  // 大牌后移腾位',
+    '  a[j+1] = key          // 落位',
+  ]},
+  merge: { title:'归并排序 Merge Sort', lines:[
+    'MergeSort(l, r)         // 分治',
+    '  if l >= r: return     // 递归出口',
+    '  m = (l+r)/2           // 中间点',
+    '  MergeSort(l, m)       // 排序左半',
+    '  MergeSort(m+1, r)     // 排序右半',
+    '  合并两段有序序列       // 双指针归并',
+    '  // 依次取两段较小者放入辅助数组',
+    '  // 再回写到原数组',
+  ]},
+};
+
+/* ============================================================
+   13 大演示模块（步骤状态机 + 教学面板接口）
+   统一契约：{ group, reset(), update(dt), _running, _runStep(),
+               teach:{ pseudo, status }, userData }
+   ============================================================ */
+
+const NEG = "禁止人物、文字、字幕、logo、水印、旁白、解说、特效光斑、过度虚化、模糊、畸变、穿模、画面抖动、快速剪辑、镜头炫技。";
+
+
+const ORDER = {
+  linear:['queue','stack','linkedlist'],
+  tree:['tree','heap','bst'],
+  graph:['dijkstra','graphtraversal','mst'],
+  algo:['bubble','selection','insertion','merge'],
+};
+
+
+const DS_MECHS = {
+  queue: { id:'queue', name:'队列 Queue', icon:'🚶', cat:'linear', color:'#2BB3A3', light:'#E8F7F4',
+    sub:'先进先出 FIFO · 代码高亮',
+    intro:'队列是一种受限的线性表：只允许在表的一端（队尾）插入、另一端（队头）删除，遵循先进先出（FIFO）。就像排队买票——先到的人先离开。本演示同步高亮 enqueue/dequeue 伪代码。',
+    kpoints:[
+      ['定义','线性表 + 一端插入一端删除，FIFO 顺序'],
+      ['操作','enqueue 入队 O(1)：队尾插入；dequeue 出队 O(1)：队头删除'],
+      ['变体','循环队列（队满判定 (rear+1)%n==front）、双端队列 deque、优先队列（堆实现）'],
+      ['复杂度','顺序表实现：入队/出队均摊 O(1)'],
+    ],
+    formula:'操作：push_rear(x) / pop_front() ｜ 队满：(rear+1) mod MaxSize == front',
+    life:['银行/医院叫号系统','打印机任务队列','CPU 进程调度','消息队列 MQ'],
+    prompt: {
+      pos:"16:9 横屏，固定 3/4 侧前方视角，机位以主体为圆心极缓慢环绕（10 秒约转 15°）。主体为一组科技风格三维演示模型：一条半透明蓝色流水线轨道上排列着多个彩色数据方块（标有 1、2、3 序号），左侧为队头、右侧为队尾。运动演示：一个新方块从右侧队尾滑入队列，最左侧方块滑出轨道并淡出，清晰呈现「先进先出 FIFO」。入队方块橙色高亮、出队方块红色高亮，轨道标注队头/队尾箭头。深蓝渐变背景，写实三维 CAD 教学演示风格，无字幕无旁白。演示末轮放缓 20%，节奏克制。",
+      neg: NEG
+    },
+    cases:[
+      {t:'队列、数组队列、链表队列，完整代码动画解析', bvid:'BV12C411G7LR', note:'代码级动画解析队列三种实现，数据结构经典课。'},
+      {t:'看动画，5 分钟学会五个经典线性数据结构', bvid:'BV18o4y1o7xa', note:'栈、队列、双向链表、跳表、双端队列一次看全。'},
+      {t:'【队列&循环队列】手动实现循环队列', bvid:'BV1CC4y1m7Bu', note:'循环队列的每一处细节，含队满/队空判断。'},
+    ]
+  },
+
+  stack: { id:'stack', name:'栈 Stack', icon:'📚', cat:'linear', color:'#FF8C42', light:'#FFF3E0',
+    sub:'后进先出 LIFO · 代码高亮',
+    intro:'栈是一种受限的线性表：所有插入和删除都只能在栈顶进行，遵循后进先出（LIFO）。就像叠盘子——最后放上去的盘子最先拿走。本演示同步高亮 push/pop 伪代码。',
+    kpoints:[
+      ['定义','线性表 + 栈顶操作，LIFO 顺序'],
+      ['操作','push 压栈 O(1)：栈顶插入；pop 弹栈 O(1)：栈顶删除'],
+      ['变体','共享栈（两栈共用一个数组）、链栈、单调栈（求下一个更大元素）'],
+      ['复杂度','push/pop O(1)；顺序栈需防栈溢出'],
+    ],
+    formula:'操作：push(x) / pop() / peek() ｜ 栈空：top == -1',
+    life:['函数调用栈（递归）','浏览器前进后退','括号匹配/表达式求值','撤销操作 Ctrl+Z'],
+    prompt: {
+      pos:"16:9 横屏，固定 3/4 侧前方视角，机位以主体为圆心极缓慢环绕（10 秒约转 15°）。主体为一组科技风格三维演示模型：一根半透明竖直井筒内堆叠着多个彩色数据方块（标有序号），底部为栈底、上方为栈顶。运动演示：新方块从井口上方落下压入栈顶（push），随后栈顶方块上升飞出（pop），清晰呈现「后进先出 LIFO」。压栈方块橙色高亮、弹栈方块红色高亮上升淡出，井壁标注栈顶/栈底箭头。深蓝渐变背景，写实三维 CAD 教学演示风格，无字幕无旁白。演示末轮放缓 20%，节奏克制。",
+      neg: NEG
+    },
+    cases:[
+      {t:'进栈和出栈', bvid:'BV1Mc411q7hD', note:'经典进栈出栈动画，理解 LIFO 核心。'},
+      {t:'【数据结构】栈→链栈的进栈和出栈', bvid:'BV1Xz4y1d71k', note:'链式实现与顺序实现对比。'},
+      {t:'《数据结构》栈-共享栈-动画演示', bvid:'BV1BMWxzjEgp', note:'共享栈两端生长的巧妙设计。'},
+    ]
+  },
+
+  linkedlist: { id:'linkedlist', name:'单链表 Linked List', icon:'🔗', cat:'linear', color:'#7A5CC9', light:'#F0EBFA',
+    sub:'链式存储 · 头插/尾插/删除/查找',
+    intro:'链表由节点依次链接而成，每个节点存数据 + 后继指针，突破顺序表"必须连续空间"的限制。本演示展示头插法、尾插法、删除头节点与按值查找的完整过程。',
+    kpoints:[
+      ['结构','节点 = 数据域 + 指针域；头指针 head 指向首节点'],
+      ['插入','头插 O(1)；尾插 O(n)（需遍历找尾）'],
+      ['删除','删除头 O(1)；删除指定节点需先找到其前驱'],
+      ['查找','按值查找需从头遍历，平均 O(n)'],
+    ],
+    formula:'节点：data | next ｜ 头插：new.next = head; head = new',
+    life:['浏览器前进/后退（双向链表）','LRU 缓存淘汰','音乐播放列表','内存空闲块管理'],
+    prompt: {
+      pos:"16:9 横屏，固定 3/4 侧前方视角，机位以主体为圆心极缓慢环绕（10 秒约转 15°）。主体为一组科技风格三维演示模型：一条水平链式排列的彩色数据方块节点（标有 5、2、8 序号），节点间以发光箭头连接，最左端标注 head 指针、最右端标注 null。运动演示：一个新节点从上方飞入成为新的头节点（头插法），随后一个节点从链尾挂上（尾插法），再演示头指针后移删除头节点，最后橙色光标沿链逐个移动查找目标值。深蓝渐变背景，写实三维 CAD 教学演示风格，无字幕无旁白。演示末轮放缓 20%，节奏克制。",
+      neg: NEG
+    },
+    cases:[
+      {t:'链表到底是为了解决什么问题而发明的？', bvid:'BV1kS4y1e7Wj', note:'链式存储的动机与适用场景。'},
+      {t:'25分钟带你彻底搞懂所有数据结构！', bvid:'BV18eo4BPE4G', note:'含链表在内的全结构速览。'},
+      {t:'为什么要避免链表', bvid:'BV1Bw41147qv', note:'链表 vs 数组的权衡，理解"为什么不用链表"同样重要。'},
+    ]
+  },
+
+  tree: { id:'tree', name:'二叉树遍历 Tree', icon:'🌳', cat:'tree', color:'#2EA06C', light:'#E9F7F0',
+    sub:'层次结构 · BFS / DFS 前中后序',
+    intro:'二叉树是每个结点至多有两个子树的树结构，是"层次关系"的抽象。本演示在 7 结点完全二叉树上对比四种遍历：BFS 层序（队列）与 DFS 前序/中序/后序（递归栈），每个结点点亮时同步高亮对应代码。',
+    kpoints:[
+      ['定义','每个结点最多两个子树；左子树/右子树有序'],
+      ['BFS 层序','用队列逐层访问：根 → 第 2 层 → 第 3 层…'],
+      ['DFS 三序','前序 根-左-右；中序 左-根-右；后序 左-右-根'],
+      ['复杂度','遍历 O(n)；完全二叉树结点 i 的孩子为 2i、2i+1'],
+    ],
+    formula:'第 k 层最多 2^(k-1) 个结点 ｜ 高度 h 的二叉树最多 2^h - 1 个结点',
+    life:['文件系统目录','HTML DOM 树','二叉搜索树/堆','表达式树'],
+    prompt: {
+      pos:"16:9 横屏，固定 3/4 侧前方视角，机位以主体为圆心极缓慢环绕（10 秒约转 15°）。主体为一棵科技风格的三维二叉树演示模型：深蓝色节点球体按层次立体分布（根在上，向下逐层展开），节点间浅灰色细杆连接，节点标有序号。运动演示：遍历算法依次访问结点，被访问结点变为橙色并弹出访问序号角标，先根后子逐层点亮，清晰呈现「广度优先遍历」的层次顺序。深蓝渐变背景，写实三维 CAD 教学演示风格，无字幕无旁白。演示末轮放缓 20%，节奏克制。",
+      neg: NEG
+    },
+    cases:[
+      {t:'【纯干货】三分钟教会你遍历二叉树', bvid:'BV1Ub4y147Zv', note:'极速入门：前/中/后序 + 层序遍历一次讲清。'},
+      {t:'前端数据结构之二叉树 深度/广度优先遍历', bvid:'BV1Lu41117oG', note:'BFS 与 DFS 对照演示，配代码实现。'},
+      {t:'数据结构合集 - 二叉树&完全二叉树', bvid:'BV1eQ3RzxEoS', note:'定义与性质系统梳理。'},
+    ]
+  },
+
+  heap: { id:'heap', name:'二叉堆 Binary Heap', icon:'🏔️', cat:'tree', color:'#2EA06C', light:'#E9F7F0',
+    sub:'最大堆 · 插入上浮 / 取出下沉',
+    intro:'二叉堆是"完全二叉树 + 父 ≥ 子（最大堆）"的顺序结构，用数组紧凑存储，是优先队列的经典实现。本演示展示 insert 上浮调整与 extractMax 下沉调整全过程，树形与数组两种视图同步。',
+    kpoints:[
+      ['结构','完全二叉树用数组存储：i 的父为 ⌊(i-1)/2⌋，孩子为 2i+1、2i+2'],
+      ['插入','放到末尾 → siftUp 上浮，O(log n)'],
+      ['取最大','堆顶出 → 末位顶上 → siftDown 下沉，O(log n)'],
+      ['应用','优先队列、堆排序、Top-K 问题、Dijkstra 堆优化'],
+    ],
+    formula:'父节点 ⌊(i-1)/2⌋ ｜ 左孩子 2i+1 ｜ 右孩子 2i+2',
+    life:['操作系统任务调度','医院急诊分级','优先队列（Top-K）','Dijkstra 堆优化'],
+    prompt: {
+      pos:"16:9 横屏，固定 3/4 侧前方视角，机位以主体为圆心极缓慢环绕（10 秒约转 15°）。主体为一棵科技风格的三维完全二叉树演示模型：彩色节点球按层排列（父在上子在下），节点间细杆连接，底部一排数组格子同步显示堆数组。运动演示：新节点从底部飞入末尾位置后逐级上浮交换（橙色高亮），随后堆顶最大节点飞出、末尾节点顶上并逐级下沉交换，清晰呈现「上浮/下沉」调整过程。深蓝渐变背景，写实三维 CAD 教学演示风格，无字幕无旁白。演示末轮放缓 20%，节奏克制。",
+      neg: NEG
+    },
+    cases:[
+      {t:'4分钟学堆排序(手机动画版)', bvid:'BV1sek9YBELe', note:'堆结构与堆排序动画一体讲清。'},
+      {t:'数据结构(印度传奇程序员Harsha Suryanarayana）中文语音', bvid:'BV1iBuw6xEgL', note:'体系化数据结构讲解，堆章节深入。'},
+      {t:'【搬运】50种排序算法可视化演示', bvid:'BV1zT4y1c71q', note:'其中堆排序部分直观可见。'},
+    ]
+  },
+
+  bst: { id:'bst', name:'二叉搜索树 BST', icon:'🔍', cat:'tree', color:'#2EA06C', light:'#E9F7F0',
+    sub:'左小右大 · 插入/查找/删除',
+    intro:'二叉搜索树满足"左子树全部 < 根 < 右子树"，插入、查找、删除平均 O(log n)。本演示初始为 7 结点 BST，可插入 45/30、查找 60、删除叶子 12，橙色光标沿路径逐结点比较。',
+    kpoints:[
+      ['性质','左 < 根 < 右（中序遍历即有序序列）'],
+      ['插入','从根向下找空位：小向左、大向右'],
+      ['查找','每步剪掉一半子树，平均 O(log n)'],
+      ['删除','叶子直接删；单孩子顶替；双孩子用右子树最小者顶替'],
+    ],
+    formula:'插入/查找/删除 ｜ 平均 O(log n) · 退化链 O(n)',
+    life:['数据库索引（B+树是 BST 的推广）','词典/字典序存储','C++ map / Python dict 底层','游戏排行榜'],
+    prompt: {
+      pos:"16:9 横屏，固定 3/4 侧前方视角，机位以主体为圆心极缓慢环绕（10 秒约转 15°）。主体为一棵科技风格的三维二叉搜索树演示模型：深蓝色节点球按大小关系立体分布（左小右大），节点间细杆连接，节点标数值。运动演示：一个新节点沿路径从根开始逐结点比较（橙色轨迹下探），比根小向左、比根大向右，最终挂到空位；随后演示查找目标值沿路径点亮命中节点。深蓝渐变背景，写实三维 CAD 教学演示风格，无字幕无旁白。演示末轮放缓 20%，节奏克制。",
+      neg: NEG
+    },
+    cases:[
+      {t:'【数据结构|查找】二叉排序树的创建、插入、删除', bvid:'BV1fr4y1j7su', note:'BST 三种操作的完整示例讲解。'},
+      {t:'25分钟带你彻底搞懂所有数据结构！', bvid:'BV18eo4BPE4G', note:'含查找树体系的全结构速览。'},
+      {t:'通过动画的方式正确理解递归', bvid:'BV1sV41167zL', note:'BST 递归实现的底层思维。'},
+    ]
+  },
+
+  dijkstra: { id:'dijkstra', name:'图·最短路径 Dijkstra', icon:'🕸️', cat:'graph', color:'#33507A', light:'#E9EDF5',
+    sub:'贪心 + 松弛 · dist 表实时更新',
+    intro:'Dijkstra 求单源最短路径：每轮贪心选取"未确定顶点中 dist 最小"者标记确定，再松弛其邻接边。本演示实时显示 dist/prev 状态表，最终 A→F 最短路径金色回溯（总权 13）。',
+    kpoints:[
+      ['思想','维护 dist[]；每轮选未确定最小 dist 顶点 u，标记确定，松弛邻接边'],
+      ['松弛','if dist[u]+w(u,v) < dist[v] → 更新 dist[v] 并记录 prev[v]=u'],
+      ['本演示','A→F 最短路径 A-C-B-D-E-F，总权 13'],
+      ['复杂度','邻接矩阵 O(V²)；二叉堆优化 O((V+E)logV)；负权边失效'],
+    ],
+    formula:'松弛：if dist[u] + w(u,v) < dist[v] → dist[v] = dist[u] + w(u,v)',
+    life:['地图导航最短路径','社交网络好友关系','铁路/地铁线路规划','网络路由协议 OSPF'],
+    prompt: {
+      pos:"16:9 横屏，固定 3/4 侧前方视角，机位以主体为圆心极缓慢环绕（10 秒约转 18°）。主体为一张科技风格的三维无向带权图演示模型：六个深蓝色节点球体（标 A~F）散布在三维空间中，浅灰色细杆连接成网，每条边标注权值。运动演示：Dijkstra 算法从源点 A 逐轮运行——当前处理节点橙色，被松弛的边红色闪烁，已确定最短距离的节点变绿并更新距离标签，最终 A 到 F 最短路径金色高亮回溯，清晰呈现「贪心 + 松弛」。深蓝渐变背景，写实三维 CAD 教学演示风格，无字幕无旁白。节奏克制。",
+      neg: NEG
+    },
+    cases:[
+      {t:'图-最短路径-Dijkstra(迪杰斯特拉)算法', bvid:'BV1uT4y1p7Jy', note:'算法全程动画演示，配表格逐步推演。'},
+      {t:'最短路径 迪杰斯特拉 dijkstra算法', bvid:'BV1QESyYGE55', note:'数据结构课标准讲解，含复杂度分析。'},
+      {t:'【算法】最短路径查找—Dijkstra算法', bvid:'BV1zz4y1m7Nq', note:'不同图例多轮演示，加深理解。'},
+    ]
+  },
+
+  graphtraversal: { id:'graphtraversal', name:'图遍历 BFS/DFS', icon:'🕸️', cat:'graph', color:'#33507A', light:'#E9EDF5',
+    sub:'广度优先（队列）vs 深度优先（递归栈）',
+    intro:'图遍历是从某顶点出发访问全图每个顶点一次：BFS 用队列逐层扩散，DFS 用栈/递归一路深入再回溯。本演示同一张 7 顶点图切换两种算法，对比访问顺序差异。',
+    kpoints:[
+      ['BFS','队列实现：先访问起点，再逐层扩散邻接点，天然给出最短步数'],
+      ['DFS','栈/递归实现：沿一条路径走到底，回溯后再探索下一条'],
+      ['标记','visited[] 防止重复访问（图可能成环）'],
+      ['复杂度','邻接表 O(V+E)；可判连通性、找连通分量、拓扑排序基础'],
+    ],
+    formula:'BFS：queue + visited ｜ DFS：stack/递归 + visited ｜ O(V+E)',
+    life:['社交网络"六度分隔"（BFS）','迷宫寻路','爬虫网页抓取','地图区域填充'],
+    prompt: {
+      pos:"16:9 横屏，固定 3/4 侧前方视角，机位以主体为圆心极缓慢环绕（10 秒约转 18°）。主体为一张科技风格的三维无向图演示模型：七个深蓝色节点球体（标 A~G）散布三维空间，浅灰色细杆连接成网。运动演示：从 A 出发进行图遍历——BFS 时未访问邻接节点依次点亮紫色（入队）再变橙（访问），逐层扩散；DFS 时沿一条路径橙色深入到底部再回溯。两种模式对比访问顺序。深蓝渐变背景，写实三维 CAD 教学演示风格，无字幕无旁白。节奏克制。",
+      neg: NEG
+    },
+    cases:[
+      {t:'洛谷 普及组试炼场 - 广度优先搜索（BFS）', bvid:'BV1AE411a7Wp', note:'BFS 实战入门，配合例题理解。'},
+      {t:'DFS，BFS，并查集 新生集训', bvid:'BV1tyzyBBEXh', note:'图遍历三大基础武器一次串讲。'},
+      {t:'图论 - 哈尔滨工业大学', bvid:'BV1Fb411M7d9', note:'哈工大系统化图论课程。'},
+    ]
+  },
+
+  mst: { id:'mst', name:'最小生成树 MST', icon:'🌐', cat:'graph', color:'#33507A', light:'#E9EDF5',
+    sub:'Prim 加点 vs Kruskal 加边',
+    intro:'最小生成树用总权最小的边集连通全部顶点。Prim 从一点出发逐次加入最近顶点（加点法）；Kruskal 按边权升序逐条加边、成环则跳过（加边法）。两者在本图上都得到总权 13 的生成树。',
+    kpoints:[
+      ['定义','连通图的极小连通子图，n 个顶点 n-1 条边，总权最小'],
+      ['Prim','从起点出发，每轮选"到已选集合最近"的顶点加入，O(V²)'],
+      ['Kruskal','按边权升序，用并查集判环，选 V-1 条边，O(E·logE)'],
+      ['应用','通信网络布线、电力网设计、聚类（Single-Linkage）'],
+    ],
+    formula:'n 个顶点选 n-1 条边 ｜ Prim 加点 / Kruskal 加边 + 并查集判环',
+    life:['城市光纤布线','电网设计','道路网规划','聚类分析'],
+    prompt: {
+      pos:"16:9 横屏，固定 3/4 侧前方视角，机位以主体为圆心极缓慢环绕（10 秒约转 18°）。主体为一张科技风格的三维无向带权图演示模型：六个深蓝色节点球体（标 A~F）散布三维空间，浅灰色细杆连接成网，每条边标注权值。运动演示：Prim 算法从 A 出发——已选节点变绿、候选边红色闪烁、入选边金色点亮，逐点生长成树；Kruskal 算法按边权从小到大考察——入选边金色点亮、成环边灰色跳过。两种算法最终得到同一棵金色最小生成树。深蓝渐变背景，写实三维 CAD 教学演示风格，无字幕无旁白。节奏克制。",
+      neg: NEG
+    },
+    cases:[
+      {t:'C/C++上机-最小生成树kruskal算法', bvid:'BV1Pm6PYfErb', note:'Kruskal 并查集判环的实现要点。'},
+      {t:'25分钟带你彻底搞懂所有数据结构！', bvid:'BV18eo4BPE4G', note:'含图与生成树体系速览。'},
+      {t:'图论 - 哈尔滨工业大学', bvid:'BV1Fb411M7d9', note:'MST 在系统化图论中的位置。'},
+    ]
+  },
+
+  bubble: { id:'bubble', name:'冒泡排序 Sort', icon:'📊', cat:'algo', color:'#E5484D', light:'#FDEBEC',
+    sub:'相邻比较 + 交换 · 稳定',
+    intro:'冒泡排序反复扫描序列，相邻元素逆序则交换；每轮结束最大元素"冒泡"到末尾。本演示在 3D 柱状图上逐对比较高亮、交换滑动、绿色归位，并同步高亮伪代码。',
+    kpoints:[
+      ['思想','相邻比较 + 逆序交换，每轮确定一个最大值归位'],
+      ['稳定','相等元素不交换，相对顺序保持'],
+      ['复杂度','最好 O(n)（已有序提前结束）；平均/最坏 O(n²)'],
+      ['适用','数据量小或基本有序的场合；教学入门首选'],
+    ],
+    formula:'for j in 0..n-2-i: if a[j] > a[j+1]: swap(a[j], a[j+1])',
+    life:['学生成绩排名（小样本）','运动会名次整理','扑克牌手动整理','冒泡思想用于"最小最大"扫描'],
+    prompt: {
+      pos:"16:9 横屏，固定 3/4 侧前方视角，机位以主体为圆心极缓慢环绕（10 秒约转 15°）。主体为一组科技风格的三维柱状图演示模型：八根不同高度的彩色数据柱并排立在深蓝色底座上，柱顶标注数值。运动演示：冒泡排序运行过程——相邻两根柱被比较时分别以红色和青色高亮，逆序时两根柱左右滑动换位，每轮结束最大的一根柱变绿（已就位），直至全部变绿。深蓝渐变背景，写实三维 CAD 教学演示风格，无字幕无旁白。演示末轮放缓 20%，节奏克制。",
+      neg: NEG
+    },
+    cases:[
+      {t:'冒泡排序动画演示', bvid:'BV1qY4y1h7Lz', note:'纯动画演示，直观看见交换过程。'},
+      {t:'冒泡排序动画讲解', bvid:'BV1JA4y1R78q', note:'动画+讲解结合，含优化分析。'},
+      {t:'趣学算法-冒泡排序', bvid:'BV1TD4y1Q7RB', note:'趣味化讲解，适合入门。'},
+    ]
+  },
+
+  selection: { id:'selection', name:'选择排序 Sort', icon:'📊', cat:'algo', color:'#E5484D', light:'#FDEBEC',
+    sub:'每轮选最小 · 交换 O(n)',
+    intro:'选择排序每轮在未排序区扫描找出最小值，与开头元素交换；共 n-1 轮。比较次数固定 O(n²)，但交换次数仅 O(n)。本演示青柱扫描、橙柱记录当前最小。',
+    kpoints:[
+      ['思想','每轮选未排序区最小值放到已排序区末尾'],
+      ['不稳定','交换可能越过相等元素，破坏相对顺序'],
+      ['复杂度','比较 O(n²) 固定；交换 O(n)；原地排序'],
+      ['对比','交换少→适合"写操作昂贵"场景（如 EEPROM 写入）'],
+    ],
+    formula:'每轮：minIdx=i; 扫描 j>i 找更小; swap(a[i], a[minIdx])',
+    life:['闪存/EEPROM 写入优化','手写排序（选最小放最前）','扑克牌从小到大理牌','竞赛成绩录入'],
+    prompt: {
+      pos:"16:9 横屏，固定 3/4 侧前方视角，机位以主体为圆心极缓慢环绕（10 秒约转 15°）。主体为一组科技风格的三维柱状图演示模型：八根不同高度的彩色数据柱并排立在深蓝色底座上，柱顶标注数值。运动演示：选择排序运行过程——青色指针从当前位置向右扫描未排序区，遇到更小值橙色高亮记录，扫描完一轮后最小柱与开头柱交换位置并变绿归位，重复至全部变绿。深蓝渐变背景，写实三维 CAD 教学演示风格，无字幕无旁白。演示末轮放缓 20%，节奏克制。",
+      neg: NEG
+    },
+    cases:[
+      {t:'详解每一种排序算法（第一部分）', bvid:'BV1ckKW6WEa4', note:'选择/插入/冒泡对比讲解。'},
+      {t:'【搬运】50种排序算法可视化演示', bvid:'BV1zT4y1c71q', note:'海量算法同台对比。'},
+      {t:'11大排序的原理讲解和Python源码剖析', bvid:'BV1Zs4y1X7mN', note:'原理 + 代码双重理解。'},
+    ]
+  },
+
+  insertion: { id:'insertion', name:'插入排序 Sort', icon:'📊', cat:'algo', color:'#E5484D', light:'#FDEBEC',
+    sub:'打扑克插牌 · 最好 O(n)',
+    intro:'插入排序像整理扑克牌：从左到右，把当前"牌"插入到左侧已有序部分的正确定位。对基本有序的数据极快（最好 O(n)），且稳定。',
+    kpoints:[
+      ['思想','第 i 个元素与其左侧有序区比较，大牌后移腾位后插入'],
+      ['稳定','相等元素不越过，相对顺序保持'],
+      ['复杂度','最好 O(n)（已有序）；平均/最坏 O(n²)'],
+      ['适用','小规模或近似有序数据（如增量排序）'],
+    ],
+    formula:'key = a[i]; while a[j] > key: a[j+1] = a[j]; a[j+1] = key',
+    life:['打扑克理牌','在线数据边到边排（流式）','小数组排序','Java Arrays.sort 小规模分支'],
+    prompt: {
+      pos:"16:9 横屏，固定 3/4 侧前方视角，机位以主体为圆心极缓慢环绕（10 秒约转 15°）。主体为一组科技风格的三维柱状图演示模型：八根不同高度的彩色数据柱并排立在深蓝色底座上，柱顶标注数值。运动演示：插入排序运行过程——当前柱被「取出」橙色高亮上浮，其左侧较大柱子依次向右后移腾位（青色滑动），空位出现后橙色柱落下插入正确位置变绿，左侧有序区逐步变绿。深蓝渐变背景，写实三维 CAD 教学演示风格，无字幕无旁白。演示末轮放缓 20%，节奏克制。",
+      neg: NEG
+    },
+    cases:[
+      {t:'插入排序动画演示', bvid:'BV1er4y1b7o4', note:'纯动画展示插入过程。'},
+      {t:'永雏塔菲教你数据结构与算法01：插入排序', bvid:'BV1zQ4y1x7es', note:'轻松入门向讲解。'},
+      {t:'详解每一种排序算法（第一部分）', bvid:'BV1ckKW6WEa4', note:'与选择/冒泡对比。'},
+    ]
+  },
+
+  merge: { id:'merge', name:'归并排序 Sort', icon:'📊', cat:'algo', color:'#E5484D', light:'#FDEBEC',
+    sub:'分治 · O(n·log n) 稳定',
+    intro:'归并排序采用分治：把序列一分为二，分别排序后双指针归并。任何情况都是 O(n·log n)，代价是需要 O(n) 辅助空间。本演示在 3D 柱状图旁显示辅助数组的归并过程。',
+    kpoints:[
+      ['分治','拆分到底（单元素自然有序）→ 两两归并 → 整体有序'],
+      ['归并','双指针比较两段，较小者写入辅助数组，再回写'],
+      ['复杂度','时间 O(n·log n)（任何情况）；空间 O(n)'],
+      ['稳定','归并时相等元素取左段，保持相对顺序'],
+    ],
+    formula:'T(n) = 2·T(n/2) + O(n) → O(n·log n)',
+    life:['外部排序（内存放不下的大文件）','链表排序','稳定排序需求','TimSort 的组成部分'],
+    prompt: {
+      pos:"16:9 横屏，固定 3/4 侧前方视角，机位以主体为圆心极缓慢环绕（10 秒约转 15°）。主体为一组科技风格的三维柱状图演示模型：八根不同高度的彩色数据柱并排立在深蓝色底座上，柱顶标注数值，柱后方有一排辅助数组格子。运动演示：归并排序运行过程——紫色区间不断对半拆分，到底后开始归并：红/青两根指针分别指向两段头部，较小柱被「取出」填入辅助格子（绿色点亮），两段归并完再整体回写，柱子高度随之更新，区间逐步变绿有序。深蓝渐变背景，写实三维 CAD 教学演示风格，无字幕无旁白。演示末轮放缓 20%，节奏克制。",
+      neg: NEG
+    },
+    cases:[
+      {t:'6分钟学归并排序(手机动画版)', bvid:'BV1d4zRYnEgz', note:'动画直观展示分治归并全过程。'},
+      {t:'详解每一种排序算法（第一部分）', bvid:'BV1ckKW6WEa4', note:'归并与 O(n log n) 家族。'},
+      {t:'【搬运】50种排序算法可视化演示', bvid:'BV1zT4y1c71q', note:'归并在海量算法中的表现。'},
+    ]
+  },
+};
+
+/* ============================================================
+   门户胶水层（首页 / 教学面板 / 控制条 / 启动）
+   ============================================================ */
+
+/* ============================================================
+   2D 渲染引擎：工具 / 伪代码高亮 / 步骤驱动
+   ============================================================ */
+const DS_COLORS = ['#2BB3A3','#FF8C42','#33507A','#2EA06C','#E5484D','#7A5CC9','#E0A800','#1F3A5F'];
+const colorOf = v => DS_COLORS[Math.abs(v) % DS_COLORS.length];
+const $ = id => document.getElementById(id);
+const stageBody = () => $('stage-body');
+const G = { active:null, playing:false, speed:1, mode:'anim', timer:null };
+
+// 补充动画关键帧
+(function(){
+  const s = document.createElement('style');
+  s.textContent = `
+  @keyframes popIn{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
+  @keyframes slideOutL{from{transform:translateX(0);opacity:1}to{transform:translateX(-90px);opacity:0}}
+  @keyframes slideOutR{from{transform:translateX(0);opacity:1}to{transform:translateX(90px);opacity:0}}
+  @keyframes riseIn{from{transform:translateY(-40px);opacity:0}to{transform:translateY(0);opacity:1}}
+  @keyframes dropOut{from{transform:translateY(0);opacity:1}to{transform:translateY(90px);opacity:0}}
+  .cell.enter{animation:popIn .35s}
+  .cell.leaveL{animation:slideOutL .35s forwards}
+  .cell.leaveR{animation:slideOutR .35s forwards}
+  .cell.leaveU{animation:dropOut .35s forwards}
+  .node.enter{animation:riseIn .35s}
+  .bar.enter{animation:popIn .35s}
+  `;
+  document.head.appendChild(s);
+})();
+
+function el(tag, cls, html){
+  const e = document.createElement(tag);
+  if(cls) e.className = cls;
+  if(html != null) e.innerHTML = html;
+  return e;
+}
+function escapeHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+/* 教学面板核心：代码高亮 / 状态表 / 操作日志（与 3D 版一致） */
+const TEACH = { mode:'anim', codeIdx:-1, log:[], logN:0 };
+function setPanel(html, asStatus){
+  const p = $('stage-panel');
+  if(html){ p.style.display='block'; p.innerHTML = html; } else p.style.display='none';
+  if(asStatus){ $('status-view').innerHTML = html || ''; }
+  else if(html){ appendLog(stripTags(html)); }
+}
+function stripTags(s){ return s.replace(/<[^>]*>/g,''); }
+function appendLog(txt){
+  TEACH.log.push({ i:++TEACH.logN, t:txt });
+  if(TEACH.log.length > 300) TEACH.log.shift();
+  renderLogTail();
+}
+function renderLogTail(){
+  const v = $('log-view');
+  v.innerHTML = TEACH.log.slice(-60).map(x=>`<div class="log-item"><b>${String(x.i).padStart(2,'0')}</b><span>${x.t}</span></div>`).join('');
+  v.scrollTop = v.scrollHeight;
+}
+function clearLog(){ TEACH.log=[]; TEACH.logN=0; $('log-view').innerHTML = '<div class="log-empty">点击 ▶ 播放 / ⏭ 单步，这里会记录每一步操作。<br>切换到 ⚡ 模拟模式可一键跑完全部步骤。</div>'; }
+// 伪代码高亮（渲染到教学面板）
+function setPseudo(id){
+  const P = PSEUDO[id];
+  const code = $('code-view');
+  if(!P || !code) return;
+  $('code-title').textContent = P.title || '伪代码';
+  code.innerHTML = P.lines.map((l,i)=>`<div class="cl" data-i="${i}"><span class="ln">${i+1}</span><span class="ct">${escapeHtml(l)}</span></div>`).join('');
+  TEACH.codeIdx = -1;
+}
+function highlightCode(i){
+  const els = document.querySelectorAll('#code-view .cl');
+  els.forEach(c=>c.classList.toggle('hl', +c.dataset.i === i));
+  TEACH.codeIdx = i;
+}
+// 通用：数字方块
+function cellDiv(v){
+  const c = el('div','cell', String(v));
+  c.style.background = colorOf(v);
+  return c;
+}
+
+/* ============================================================
+   13 大演示模块（2D 步骤状态机）
+   统一契约：{ build(), auto(), step()->bool, reset(), status(), title() }
+   ============================================================ */
+const DS_DEMOS = {
+
+  /* ---------- 1 队列 Queue ---------- */
+  queue: function(){
+    const st = { vals:[], steps:[], idx:0 };
+    const SEQ = [3,7,2,9,1];
+    function build(){
+      const root = stageBody(); root.innerHTML='';
+      const wrap = el('div',''); wrap.style.cssText='display:flex;align-items:center;gap:8px;flex-wrap:nowrap;';
+      wrap.appendChild(el('span','pointer','队头 ←'));
+      const cells = el('div','cells'); cells.style.cssText='display:flex;align-items:center;gap:8px;';
+      wrap.appendChild(cells);
+      wrap.appendChild(el('span','pointer','→ 队尾'));
+      root.appendChild(wrap);
+      st.vals=[]; st.cells=cells; st.idx=0; st.steps=[];
+    }
+    function enq(v){ st.vals.push(v); const c=cellDiv(v); c.classList.add('enter'); st.cells.appendChild(c); }
+    function deq(){ st.vals.shift(); const c=st.cells.firstChild; if(c){ c.classList.add('leaveL'); setTimeout(()=>c.remove(),320); } }
+    function auto(){
+      st.steps = [];
+      SEQ.forEach(v=>st.steps.push({t:'enq', v, code:0}));
+      st.steps.push({t:'deq', code:5}); st.steps.push({t:'deq', code:5});
+      st.idx=0;
+    }
+    function step(){
+      if(st.idx>=st.steps.length) return false;
+      const s = st.steps[st.idx++];
+      if(s.t==='enq'){ enq(s.v); setPanel(`入队 <b>${s.v}</b> → 队尾插入 ｜ 队列 [${st.vals.join(', ')}]`); highlightCode(s.code); }
+      else { deq(); setPanel(`出队队头元素 ｜ 队列 [${st.vals.join(', ')}]`); highlightCode(s.code); }
+      return st.idx<st.steps.length;
+    }
+    function reset(){ build(); }
+    function status(){ return `<div class="st-line">队列：[${st.vals.length?st.vals.map(v=>`<span class="pill">${v}</span>`).join(' '):'空'}]</div><div class="st-box">队头（前）出队 <b>O(1)</b> ｜ 队尾（后）入队 <b>O(1)</b> ｜ 先进先出 FIFO。</div>`; }
+    function title(){ return '队列 Queue · 先进先出'; }
+    return { build, auto, step, reset, status, title };
+  },
+
+  /* ---------- 2 栈 Stack ---------- */
+  stack: function(){
+    const st = { vals:[], steps:[], idx:0 };
+    const SEQ = [4,8,3,6];
+    function build(){
+      const root = stageBody(); root.innerHTML='';
+      const wrap = el('div',''); wrap.style.cssText='display:flex;flex-direction:column;align-items:center;gap:6px;';
+      wrap.appendChild(el('span','pointer','栈顶 ↑'));
+      const cells = el('div','cells'); cells.style.cssText='display:flex;flex-direction:column-reverse;align-items:center;gap:6px;';
+      wrap.appendChild(cells);
+      wrap.appendChild(el('span','pointer','栈底 ↓'));
+      root.appendChild(wrap);
+      st.vals=[]; st.cells=cells; st.idx=0; st.steps=[];
+    }
+    function push(v){ st.vals.push(v); const c=cellDiv(v); c.classList.add('enter'); st.cells.insertBefore(c, st.cells.firstChild); }
+    function pop(){ st.vals.pop(); const c=st.cells.firstChild; if(c){ c.classList.add('leaveU'); setTimeout(()=>c.remove(),320); } }
+    function auto(){
+      st.steps=[];
+      SEQ.forEach(v=>st.steps.push({t:'push', v, code:0}));
+      st.steps.push({t:'pop', code:5}); st.steps.push({t:'pop', code:5});
+      st.idx=0;
+    }
+    function step(){
+      if(st.idx>=st.steps.length) return false;
+      const s = st.steps[st.idx++];
+      if(s.t==='push'){ push(s.v); setPanel(`压栈 <b>${s.v}</b> → 栈顶插入 ｜ 栈 [${st.vals.join(', ')}]（顶→底）`); highlightCode(s.code); }
+      else { pop(); setPanel(`弹栈栈顶元素 ｜ 栈 [${st.vals.join(', ')}]（顶→底）`); highlightCode(s.code); }
+      return st.idx<st.steps.length;
+    }
+    function reset(){ build(); }
+    function status(){ return `<div class="st-line">栈（顶→底）：[${st.vals.length?st.vals.map(v=>`<span class="pill">${v}</span>`).join(' '):'空'}]</div><div class="st-box">push/pop 均 <b>O(1)</b> ｜ 后进先出 LIFO，栈顶即数组末端。</div>`; }
+    function title(){ return '栈 Stack · 后进先出'; }
+    return { build, auto, step, reset, status, title };
+  },
+
+  /* ---------- 3 单链表 Linked List ---------- */
+  linkedlist: function(){
+    const st = { vals:[], steps:[], idx:0, cursor:-1 };
+    function build(){
+      const root = stageBody(); root.innerHTML='';
+      const wrap = el('div',''); wrap.style.cssText='display:flex;align-items:center;gap:0;overflow-x:auto;padding:0 8px;max-width:100%;';
+      root.appendChild(wrap);
+      st.vals=[3,8,5]; st.wrap=wrap; st.idx=0; st.steps=[]; st.cursor=-1;
+      render();
+    }
+    function render(){
+      st.wrap.innerHTML='';
+      st.wrap.appendChild(el('span','pointer','head'));
+      st.wrap.appendChild(el('span','arrow','→'));
+      st.vals.forEach((v,i)=>{
+        const n = el('div','node'); n.style.cssText='display:flex;align-items:center;';
+        const c = cellDiv(v); if(i===st.cursor) c.classList.add('hot');
+        n.appendChild(c);
+        n.appendChild(el('span','arrow','→'));
+        st.wrap.appendChild(n);
+      });
+      st.wrap.appendChild(el('span','pointer','null'));
+    }
+    function auto(){
+      st.steps=[
+        {t:'insHead', v:9, code:0},
+        {t:'insTail', v:2, code:4},
+        {t:'delHead', code:9},
+        {t:'search', v:8, code:11},
+      ];
+      st.idx=0;
+    }
+    function step(){
+      if(st.idx>=st.steps.length) return false;
+      const s = st.steps[st.idx++]; st.cursor=-1;
+      if(s.t==='insHead'){ st.vals.unshift(s.v); setPanel(`头插 <b>${s.v}</b>：new.next=head, head=new ｜ 链表 [${st.vals.join(' → ')}]`); highlightCode(s.code); }
+      else if(s.t==='insTail'){ st.vals.push(s.v); setPanel(`尾插 <b>${s.v}</b>：遍历到末尾，cur.next=new ｜ 链表 [${st.vals.join(' → ')}]`); highlightCode(s.code); }
+      else if(s.t==='delHead'){ const d=st.vals.shift(); setPanel(`删除头节点 <b>${d}</b>：head=head.next ｜ 链表 [${st.vals.join(' → ')}]`); highlightCode(s.code); }
+      else if(s.t==='search'){ st.cursor=st.vals.indexOf(s.v); setPanel(`查找 <b>${s.v}</b>：沿链逐个比较，${st.cursor>=0?`命中第 ${st.cursor+1} 个节点`:'未找到'} ｜ 链表 [${st.vals.join(' → ')}]`); highlightCode(s.code); }
+      render();
+      return st.idx<st.steps.length;
+    }
+    function reset(){ build(); }
+    function status(){ return `<div class="st-line">链表：[${st.vals.length?st.vals.map(v=>`<span class="pill">${v}</span>`).join(' → '):'空'}]</div><div class="st-box">头插 <b>O(1)</b> ｜ 尾插/删除/查找需遍历，平均 <b>O(n)</b> ｜ 节点 = 数据域 + 指针域。</div>`; }
+    function title(){ return '单链表 Linked List'; }
+    return { build, auto, step, reset, status, title };
+  },
+
+  /* ---------- 4 二叉树遍历 Tree ---------- */
+  tree: function(){
+    const st = { mode:'bfs', idx:0, order:[] };
+    const MODES = {
+      bfs:{t:'BFS 层序', order:[1,2,3,4,5,6,7]},
+      pre:{t:'前序 根-左-右', order:[1,2,4,5,3,6,7]},
+      in:{t:'中序 左-根-右', order:[4,2,5,1,6,3,7]},
+      post:{t:'后序 左-右-根', order:[4,5,2,6,7,3,1]},
+    };
+    const NODES=[{id:1,val:1,x:300,y:42},{id:2,val:2,x:168,y:148},{id:3,val:3,x:432,y:148},{id:4,val:4,x:84,y:262},{id:5,val:5,x:252,y:262},{id:6,val:6,x:348,y:262},{id:7,val:7,x:516,y:262}];
+    const EDGES=[[1,2],[1,3],[2,4],[2,5],[3,6],[3,7]];
+    let nodeMap={};
+    function resetColors(){ NODES.forEach(n=>setNodeColor(nodeMap,n.id,'#1F3A5F')); }
+    function build(){
+      const root=stageBody(); root.innerHTML='';
+      const wrap=el('div',''); wrap.style.cssText='width:100%;height:100%;max-width:640px;';
+      const bar=el('div',''); bar.style.cssText='display:flex;gap:6px;justify-content:center;margin-bottom:8px;';
+      Object.keys(MODES).forEach(k=>{ const b=el('button','chip',MODES[k].t.split(' ')[0]); if(k===st.mode)b.classList.add('on'); b.onclick=()=>{st.mode=k; bar.querySelectorAll('.chip').forEach(x=>x.classList.remove('on')); b.classList.add('on'); play();}; bar.appendChild(b); });
+      wrap.appendChild(bar);
+      const tv=treeSVG(NODES,EDGES,600,300); nodeMap=tv.nodeMap;
+      tv.svg.style.cssText='width:100%;max-height:calc(100% - 44px);';
+      wrap.appendChild(tv.svg);
+      root.appendChild(wrap);
+      play();
+    }
+    function play(){ resetColors(); st.order=MODES[st.mode].order; st.idx=0; }
+    function auto(){ play(); }
+    function step(){
+      if(st.idx>=st.order.length) return false;
+      const id=st.order[st.idx++];
+      setNodeColor(nodeMap,id,'#FF8C42');
+      const seq=st.order.slice(0,st.idx);
+      setPanel(`${MODES[st.mode].t}：访问顺序 <b>${seq.join(' → ')}</b>`);
+      highlightCode(-1);
+      return st.idx<st.order.length;
+    }
+    function reset(){ build(); }
+    function status(){ return `<div class="st-line">模式：<b>${MODES[st.mode].t}</b></div><div class="st-box">已访问 <b>${st.idx}</b>/${st.order.length} 个节点，顺序：${st.order.slice(0,st.idx).join(' → ') || '—'}。</div>`; }
+    function title(){ return '二叉树遍历 · '+MODES[st.mode].t; }
+    return { build, auto, step, reset, status, title };
+  },
+
+  /* ---------- 5 二叉堆 Heap ---------- */
+  heap: function(){
+    const st = { heap:[], steps:[], idx:0, hot:-1 };
+    const MAX=8;
+    function heapPos(i){ const d=Math.floor(Math.log2(i+1)); const w=600/Math.pow(2,d); const off=i-(Math.pow(2,d)-1); return {x:w/2+off*w, y:38+d*95}; }
+    function build(){
+      const root=stageBody(); root.innerHTML='';
+      const wrap=el('div',''); wrap.style.cssText='width:100%;height:100%;max-width:640px;display:flex;flex-direction:column;';
+      st.svgBox=el('div',''); st.svgBox.style.cssText='flex:1;min-height:0;';
+      st.arrBox=el('div',''); st.arrBox.style.cssText='display:flex;gap:6px;justify-content:center;padding:10px 0;flex-wrap:nowrap;';
+      wrap.appendChild(st.svgBox); wrap.appendChild(st.arrBox);
+      root.appendChild(wrap);
+      st.heap=[]; st.idx=0; st.steps=[]; st.hot=-1;
+      render();
+    }
+    function render(){
+      const nodes=st.heap.map((v,i)=>({id:i,val:v,x:heapPos(i).x,y:heapPos(i).y}));
+      const edges=[]; for(let i=1;i<st.heap.length;i++) edges.push([Math.floor((i-1)/2),i]);
+      const tv=treeSVG(nodes,edges,600,320);
+      st.svgBox.innerHTML=''; st.svgBox.appendChild(tv.svg);
+      st.arrBox.innerHTML='';
+      for(let i=0;i<MAX;i++){
+        const v=st.heap[i];
+        const c=el('div','cell', v!==undefined?String(v):'·');
+        if(v===undefined){ c.style.background='#E3E8F0'; c.style.color='#9AA5B5'; c.style.opacity='.35'; }
+        else { c.style.background=colorOf(v); if(i===st.hot) c.classList.add('hot'); }
+        const w=el('div',''); w.style.cssText='display:flex;flex-direction:column;align-items:center;';
+        w.appendChild(c); w.appendChild(el('div','idx',String(i)));
+        st.arrBox.appendChild(w);
+      }
+    }
+    function buildSteps(){
+      const steps=[]; const ins=[5,3,8,1,6,7]; const h=[];
+      for(const v of ins){
+        h.push(v); steps.push({t:'ins',v});
+        let i=h.length-1;
+        while(i>0){ const p=Math.floor((i-1)/2); if(h[p]>=h[i])break; steps.push({t:'up',i,p}); [h[i],h[p]]=[h[p],h[i]]; i=p; }
+      }
+      for(let e=0;e<2;e++){
+        steps.push({t:'ext'});
+        h[0]=h[h.length-1]; h.pop();
+        let i=0;
+        while(true){ const l=2*i+1,r=2*i+2; let c=-1; if(l<h.length&&h[l]>h[i])c=l; if(r<h.length&&h[r]>(c>=0?h[c]:h[i]))c=r; if(c<0)break; steps.push({t:'down',i,c}); [h[i],h[c]]=[h[c],h[i]]; i=c; }
+      }
+      return steps;
+    }
+    function auto(){ st.steps=buildSteps(); st.idx=0; }
+    function step(){
+      if(st.idx>=st.steps.length) return false;
+      const s=st.steps[st.idx++]; st.hot=-1;
+      if(s.t==='ins'){ st.heap.push(s.v); st.hot=st.heap.length-1; setPanel(`插入 <b>${s.v}</b> 到末尾 → 准备上浮 ｜ 堆 [${st.heap.join(', ')}]`); highlightCode(0); }
+      else if(s.t==='up'){ const t=st.heap[s.i]; st.heap[s.i]=st.heap[s.p]; st.heap[s.p]=t; st.hot=s.p; setPanel(`${st.heap[s.i]} 大于父节点 → 上浮交换（${s.i}↔${s.p}）`); highlightCode(4); }
+      else if(s.t==='ext'){ const mx=st.heap[0]; if(st.heap.length===1){ st.heap.pop(); setPanel(`取出最大值 <b>${mx}</b>，堆已清空`); highlightCode(7); } else { st.heap[0]=st.heap[st.heap.length-1]; st.heap.pop(); setPanel(`取出最大值 <b>${mx}</b>，末位顶上 → 下沉`); highlightCode(7); } }
+      else if(s.t==='down'){ const t=st.heap[s.i]; st.heap[s.i]=st.heap[s.c]; st.heap[s.c]=t; st.hot=s.c; setPanel(`父小于较大孩子 → 下沉交换（${s.i}↔${s.c}）`); highlightCode(11); }
+      render();
+      return st.idx<st.steps.length;
+    }
+    function reset(){ build(); }
+    function status(){ return `<div class="st-line">堆数组：[${st.heap.length?st.heap.map((v,i)=>`<span class="pill ${i===0?'hd':''}">${v}</span>`).join(' '):'空堆'}]</div><div class="st-box">堆顶（最大值）<b>${st.heap[0] ?? '∅'}</b> ｜ 父 ≥ 子，插入上浮 / 取出下沉，均 <b>O(log n)</b>。</div>`; }
+    function title(){ return '最大堆 Max-Heap · 父 ≥ 子'; }
+    return { build, auto, step, reset, status, title };
+  },
+
+  /* ---------- 6 二叉搜索树 BST ---------- */
+  bst: function(){
+    const st = { nodes:[], steps:[], idx:0, path:[] };
+    // 初始 BST 节点：id, val, x, y
+    const INIT=[{id:50,val:50,x:300,y:42},{id:25,val:25,x:168,y:148},{id:75,val:75,x:432,y:148},{id:12,val:12,x:84,y:262},{id:40,val:40,x:252,y:262},{id:60,val:60,x:348,y:262},{id:90,val:90,x:516,y:262}];
+    const EDGES=[[50,25],[50,75],[25,12],[25,40],[75,60],[75,90]];
+    let nodeMap={}, edgeMap={};
+    function build(){
+      const root=stageBody(); root.innerHTML='';
+      const wrap=el('div',''); wrap.style.cssText='width:100%;height:100%;max-width:640px;';
+      const tv=treeSVG(INIT,EDGES,600,300); nodeMap=tv.nodeMap; edgeMap=tv.edgeMap;
+      tv.svg.style.cssText='width:100%;height:100%;';
+      wrap.appendChild(tv.svg);
+      root.appendChild(wrap);
+      st.nodes=INIT.map(n=>({...n})); st.idx=0; st.steps=[]; st.path=[];
+    }
+    function clearPath(){ st.path.forEach(id=>setNodeColor(nodeMap,id,'#1F3A5F')); st.path=[]; }
+    function auto(){
+      st.steps=[
+        {t:'ins', v:45, path:[50,25,40], code:0},
+        {t:'ins', v:30, path:[50,25,40], code:0},
+        {t:'find', v:60, path:[50,75,60], code:6},
+        {t:'del', v:12, code:13},
+      ];
+      st.idx=0;
+    }
+    function step(){
+      if(st.idx>=st.steps.length) return false;
+      clearPath();
+      const s=st.steps[st.idx++];
+      if(s.t==='ins'){
+        // 高亮路径 + 在末尾追加节点
+        s.path.forEach(id=>{ setNodeColor(nodeMap,id,'#FF8C42'); st.path.push(id); });
+        // 动态插入节点（简化：追加新节点 + 边）
+        addBSTNode(s.v);
+        setPanel(`插入 <b>${s.v}</b>：小向左、大向右，挂到空位 ｜ 路径 ${s.path.join('→')}→${s.v}`); highlightCode(s.code);
+      } else if(s.t==='find'){
+        s.path.forEach(id=>{ setNodeColor(nodeMap,id,'#FF8C42'); st.path.push(id); });
+        setPanel(`查找 <b>${s.v}</b>：路径 ${s.path.join('→')}，命中！`); highlightCode(s.code);
+      } else if(s.t==='del'){
+        delBSTNode(s.v);
+        setPanel(`删除叶子节点 <b>${s.v}</b>：直接删除`); highlightCode(s.code);
+      }
+      return st.idx<st.steps.length;
+    }
+    function addBSTNode(v){ /* 演示用：预置插入后坐标 */
+      const pos = {45:{x:252,y:262}, 30:{x:210,y:262}}[v];
+      if(pos){ st.nodes.push({id:v,val:v,x:pos.x,y:pos.y}); }
+    }
+    function delBSTNode(v){ const i=st.nodes.findIndex(n=>n.id===v); if(i>=0) st.nodes.splice(i,1); }
+    function reset(){ build(); }
+    function status(){ return `<div class="st-line">BST 性质：<b>左 &lt; 根 &lt; 右</b>（中序遍历即有序）</div><div class="st-box">插入/查找/删除平均 <b>O(log n)</b>，退化成链 <b>O(n)</b>。</div>`; }
+    function title(){ return '二叉搜索树 BST · 左小右大'; }
+    return { build, auto, step, reset, status, title };
+  },
+
+  /* ---------- 7 图·最短路径 Dijkstra ---------- */
+  dijkstra: function(){
+    const st = { dist:{}, prev:{}, done:new Set(), steps:[], idx:0 };
+    const KEYS=['A','B','C','D','E','F'];
+    const POS={A:{x:80,y:200},B:{x:210,y:90},C:{x:230,y:300},D:{x:380,y:100},E:{x:400,y:290},F:{x:520,y:190}};
+    const EDGES=[['A','B',4],['A','C',2],['B','C',1],['B','D',5],['C','D',8],['C','E',10],['D','E',2],['D','F',6],['E','F',3]];
+    const adj={};
+    for(const [a,b,w] of EDGES){ (adj[a]=adj[a]||[]).push([b,w]); (adj[b]=adj[b]||[]).push([a,w]); }
+    let graph;
+    function build(){
+      const root=stageBody(); root.innerHTML='';
+      graph=graphSVG(KEYS.map(k=>({id:k,x:POS[k].x,y:POS[k].y})), EDGES, 600, 340);
+      graph.svg.style.cssText='width:100%;height:100%;max-width:640px;';
+      root.appendChild(graph.svg);
+      resetState();
+    }
+    function resetState(){ st.dist={}; st.prev={}; st.done=new Set(); st.idx=0; st.steps=[]; KEYS.forEach(k=>{setNodeColor(graph.nodeMap,k,'#1F3A5F'); setDistText(graph.distMap,k,k==='A'?'0':'∞');}); }
+    function buildSteps(){
+      const steps=[]; const dist={},prev={},done=new Set();
+      for(const k of KEYS)dist[k]=Infinity; dist.A=0;
+      steps.push({t:'init'});
+      for(let r=0;r<KEYS.length;r++){
+        let u=null,best=Infinity;
+        for(const k of KEYS)if(!done.has(k)&&dist[k]<best){best=dist[k];u=k;}
+        if(u===null)break;
+        steps.push({t:'pick',u}); done.add(u); steps.push({t:'done',u});
+        for(const [v,w] of adj[u]||[]) if(dist[u]+w<dist[v]){ steps.push({t:'relax',u,v,w}); steps.push({t:'dist',v,d:dist[u]+w,from:u}); dist[v]=dist[u]+w; prev[v]=u; }
+      }
+      const path=[]; let cur='F'; while(cur){path.push(cur);cur=prev[cur];} path.reverse();
+      steps.push({t:'path',path});
+      return steps;
+    }
+    function auto(){ st.steps=buildSteps(); st.idx=0; }
+    function step(){
+      if(st.idx>=st.steps.length) return false;
+      const s=st.steps[st.idx++];
+      if(s.t==='init'){ KEYS.forEach(k=>setDistText(graph.distMap,k,k==='A'?'0':'∞')); st.dist={A:0}; setPanel('初始化 dist[A]=0，其余=∞'); highlightCode(1); }
+      else if(s.t==='pick'){ setNodeColor(graph.nodeMap,s.u,'#FF8C42'); setPanel(`贪心：未确定中 dist 最小 → 选 <b>${s.u}</b>`); highlightCode(4); }
+      else if(s.t==='done'){ setNodeColor(graph.nodeMap,s.u,'#2EA06C'); st.done.add(s.u); setPanel(`确定 <b>${s.u}</b> 的最短距离，永久标记`); highlightCode(5); }
+      else if(s.t==='relax'){ setEdgeColor(graph.edgeMap,s.u+'-'+s.v,'#E5484D'); setPanel(`松弛边 ${s.u}-${s.v}（权 ${s.w}）：dist[${s.u}]+${s.w} < dist[${s.v}] → 更新`); highlightCode(6); }
+      else if(s.t==='dist'){ st.dist[s.v]=s.d; st.prev[s.v]=s.from; setDistText(graph.distMap,s.v,String(s.d)); setPanel(`更新 dist[${s.v}] = <b>${s.d}</b> ｜ prev[${s.v}]=${s.from}`); highlightCode(8); }
+      else if(s.t==='path'){ for(let i=0;i<s.path.length-1;i++) setEdgeColor(graph.edgeMap,s.path[i]+'-'+s.path[i+1],'#E0A800'); setPanel(`最短路径 A→F：<b>${s.path.join(' → ')}</b>（总权 13）`); highlightCode(10); }
+      return st.idx<st.steps.length;
+    }
+    function reset(){ build(); }
+    function status(){ return `<table class="stab" style="width:100%;border-collapse:collapse;font-size:12px;"><tr><th style="background:#F0F4FA;padding:4px">顶点</th><th style="background:#F0F4FA;padding:4px">dist</th><th style="background:#F0F4FA;padding:4px">prev</th></tr>${KEYS.map(k=>`<tr><td style="padding:4px;text-align:center">${k}</td><td style="padding:4px;text-align:center;font-weight:800;color:${st.done.has(k)?'#2EA06C':'inherit'}">${st.dist[k]===undefined?'∞':st.dist[k]}</td><td style="padding:4px;text-align:center">${st.prev[k]??'—'}</td></tr>`).join('')}</table>`; }
+    function title(){ return 'Dijkstra 最短路径 · 源点 A'; }
+    return { build, auto, step, reset, status, title };
+  },
+
+  /* ---------- 8 图遍历 BFS / DFS ---------- */
+  graphtraversal: function(){
+    const st = { mode:'bfs', idx:0, order:[] };
+    const KEYS=['A','B','C','D','E','F','G'];
+    const POS={A:{x:100,y:160},B:{x:230,y:80},C:{x:230,y:240},D:{x:360,y:60},E:{x:360,y:160},F:{x:360,y:260},G:{x:500,y:160}};
+    const EDGES=[['A','B'],['A','C'],['B','D'],['B','E'],['C','E'],['C','F'],['E','G'],['F','G']];
+    const ORD={ bfs:{t:'BFS 广度优先（队列）',order:['A','B','C','D','E','F','G']}, dfs:{t:'DFS 深度优先（栈）',order:['A','B','D','E','G','F','C']} };
+    let graph;
+    function build(){
+      const root=stageBody(); root.innerHTML='';
+      const wrap=el('div',''); wrap.style.cssText='width:100%;height:100%;max-width:640px;';
+      const bar=el('div',''); bar.style.cssText='display:flex;gap:6px;justify-content:center;margin-bottom:8px;';
+      Object.keys(ORD).forEach(k=>{ const b=el('button','chip',k.toUpperCase()); if(k===st.mode)b.classList.add('on'); b.onclick=()=>{st.mode=k; bar.querySelectorAll('.chip').forEach(x=>x.classList.remove('on')); b.classList.add('on'); play();}; bar.appendChild(b); });
+      wrap.appendChild(bar);
+      graph=graphSVG(KEYS.map(k=>({id:k,x:POS[k].x,y:POS[k].y})), EDGES.map(e=>[e[0],e[1]]), 600, 320, {noW:true});
+      graph.svg.style.cssText='width:100%;max-height:calc(100% - 44px);';
+      wrap.appendChild(graph.svg);
+      root.appendChild(wrap);
+      play();
+    }
+    function play(){ KEYS.forEach(k=>setNodeColor(graph.nodeMap,k,'#1F3A5F')); st.order=ORD[st.mode].order; st.idx=0; }
+    function auto(){ play(); }
+    function step(){
+      if(st.idx>=st.order.length) return false;
+      const k=st.order[st.idx++];
+      setNodeColor(graph.nodeMap,k,'#FF8C42');
+      setPanel(`${ORD[st.mode].t}：访问顺序 <b>${st.order.slice(0,st.idx).join(' → ')}</b>`);
+      highlightCode(-1);
+      return st.idx<st.order.length;
+    }
+    function reset(){ build(); }
+    function status(){ return `<div class="st-line">模式：<b>${ORD[st.mode].t}</b></div><div class="st-box">已访问 <b>${st.idx}</b>/${st.order.length} 个顶点，顺序：${st.order.slice(0,st.idx).join(' → ') || '—'}。</div>`; }
+    function title(){ return '图遍历 · '+ORD[st.mode].t; }
+    return { build, auto, step, reset, status, title };
+  },
+
+  /* ---------- 9 最小生成树 MST ---------- */
+  mst: function(){
+    const st = { mode:'prim', idx:0, steps:[], sel:new Set() };
+    const KEYS=['A','B','C','D','E','F'];
+    const POS={A:{x:80,y:200},B:{x:210,y:90},C:{x:230,y:300},D:{x:380,y:100},E:{x:400,y:290},F:{x:520,y:190}};
+    const EDGES=[['A','B',4],['A','C',2],['B','C',1],['B','D',5],['C','D',8],['C','E',10],['D','E',2],['D','F',6],['E','F',3]];
+    let graph;
+    function build(){
+      const root=stageBody(); root.innerHTML='';
+      const wrap=el('div',''); wrap.style.cssText='width:100%;height:100%;max-width:640px;';
+      const bar=el('div',''); bar.style.cssText='display:flex;gap:6px;justify-content:center;margin-bottom:8px;';
+      [['prim','Prim 加点'],['kruskal','Kruskal 加边']].forEach(([k,t])=>{ const b=el('button','chip',t.split(' ')[0]); if(k===st.mode)b.classList.add('on'); b.onclick=()=>{st.mode=k; bar.querySelectorAll('.chip').forEach(x=>x.classList.remove('on')); b.classList.add('on'); play();}; bar.appendChild(b); });
+      wrap.appendChild(bar);
+      graph=graphSVG(KEYS.map(k=>({id:k,x:POS[k].x,y:POS[k].y})), EDGES, 600, 320);
+      graph.svg.style.cssText='width:100%;max-height:calc(100% - 44px);';
+      wrap.appendChild(graph.svg);
+      root.appendChild(wrap);
+      play();
+    }
+    function resetAll(){ KEYS.forEach(k=>setNodeColor(graph.nodeMap,k,'#1F3A5F')); EDGES.forEach(e=>setEdgeColor(graph.edgeMap,e[0]+'-'+e[1],'#9FB4CC')); st.sel=new Set(); }
+    function play(){ resetAll(); st.idx=0; st.steps=buildSteps(); }
+    function buildSteps(){
+      if(st.mode==='prim'){
+        // Prim 依次选边 A-C(2), C-B(1), B-D(5), D-E(2), D-F(6) 总 13
+        return [{t:'pick',v:'A'},{t:'edge',a:'A',b:'C',w:2},{t:'pick',v:'C'},{t:'edge',a:'C',b:'B',w:1},{t:'pick',v:'B'},{t:'edge',a:'B',b:'D',w:5},{t:'pick',v:'D'},{t:'edge',a:'D',b:'E',w:2},{t:'pick',v:'E'},{t:'edge',a:'D',b:'F',w:6},{t:'pick',v:'F'},{t:'done',w:13}];
+      } else {
+        // Kruskal 按边权升序：B-C(1), A-C(2), D-E(2), E-F(3), A-B(4 成环跳过), B-D(5)
+        return [{t:'edge',a:'B',b:'C',w:1},{t:'edge',a:'A',b:'C',w:2},{t:'edge',a:'D',b:'E',w:2},{t:'edge',a:'E',b:'F',w:3},{t:'skip',a:'A',b:'B',w:4},{t:'edge',a:'B',b:'D',w:5},{t:'done',w:13}];
+      }
+    }
+    function auto(){ play(); }
+    function step(){
+      if(st.idx>=st.steps.length) return false;
+      const s=st.steps[st.idx++];
+      if(s.t==='pick'){ setNodeColor(graph.nodeMap,s.v,'#2EA06C'); st.sel.add(s.v); setPanel(`Prim：加入顶点 <b>${s.v}</b>（已选 ${[...st.sel].join(',')}）`); highlightCode(2); }
+      else if(s.t==='edge'){ setNodeColor(graph.nodeMap,s.a,'#2EA06C'); setNodeColor(graph.nodeMap,s.b,'#2EA06C'); st.sel.add(s.a); st.sel.add(s.b); setEdgeColor(graph.edgeMap,s.a+'-'+s.b,'#E0A800'); setPanel(`入选边 <b>${s.a}-${s.b}</b>（权 ${s.w}）→ 金色点亮`); highlightCode(st.mode==='prim'?5:4); }
+      else if(s.t==='skip'){ setEdgeColor(graph.edgeMap,s.a+'-'+s.b,'#C9D4E0'); setPanel(`边 <b>${s.a}-${s.b}</b>（权 ${s.w}）会成环 → 跳过`); highlightCode(5); }
+      else if(s.t==='done'){ setPanel(`✅ 最小生成树完成，总权 <b>${s.w}</b>（${KEYS.length} 顶点 ${KEYS.length-1} 条边）`); highlightCode(-1); }
+      return st.idx<st.steps.length;
+    }
+    function reset(){ build(); }
+    function status(){ return `<div class="st-line">模式：<b>${st.mode==='prim'?'Prim（加点法）':'Kruskal（加边法）'}</b></div><div class="st-box">n 顶点选 <b>n-1</b> 条边 ｜ Prim O(V²) ｜ Kruskal O(E·logE) ｜ 本图总权 13。</div>`; }
+    function title(){ return '最小生成树 · '+(st.mode==='prim'?'Prim 加点':'Kruskal 加边'); }
+    return { build, auto, step, reset, status, title };
+  },
+
+  /* ---------- 10 冒泡排序 Bubble ---------- */
+  bubble: function(){
+    const st = { arr:[], steps:[], idx:0 };
+    const INIT=[6,3,8,2,9,1,5,4];
+    let chart;
+    function build(){ const root=stageBody(); root.innerHTML=''; st.arr=INIT.slice(); chart=barChart(st.arr); root.appendChild(chart.root); st.idx=0; st.steps=[]; }
+    function auto(){ st.steps=bubbleSteps(INIT); st.idx=0; }
+    function step(){
+      if(st.idx>=st.steps.length) return false;
+      const s=st.steps[st.idx++]; resetBarColors();
+      if(s.t==='cmp'){ setBarColor(chart,s.j,'#E5484D'); setBarColor(chart,s.j1,'#2BB3A3'); setPanel(`比较 a[${s.j}]=${st.arr[s.j]} 与 a[${s.j1}]=${st.arr[s.j1]}`); highlightCode(3); }
+      else if(s.t==='swap'){ const t=st.arr[s.j]; st.arr[s.j]=st.arr[s.j1]; st.arr[s.j1]=t; swapBar(chart,s.j,s.j1); setPanel(`逆序 → 交换 a[${s.j}]↔a[${s.j1}] ｜ [${st.arr.join(', ')}]`); highlightCode(4); }
+      else if(s.t==='done'){ setBarColor(chart,s.i,'#2EA06C'); setPanel(`本轮最大值「冒泡」到末尾 ${s.i} ｜ [${st.arr.join(', ')}]`); highlightCode(-1); }
+      return st.idx<st.steps.length;
+    }
+    function reset(){ build(); }
+    function status(){ return `<div class="st-line">数组：[${st.arr.join(', ')}]</div><div class="st-box">相邻比较 + 逆序交换 ｜ 稳定 ｜ 最好 <b>O(n)</b>，平均/最坏 <b>O(n²)</b>。</div>`; }
+    function title(){ return '冒泡排序 Bubble Sort'; }
+    return { build, auto, step, reset, status, title };
+  },
+
+  /* ---------- 11 选择排序 Selection ---------- */
+  selection: function(){
+    const st = { arr:[], steps:[], idx:0 };
+    const INIT=[6,3,8,2,9,1,5,4];
+    let chart;
+    function build(){ const root=stageBody(); root.innerHTML=''; st.arr=INIT.slice(); chart=barChart(st.arr); root.appendChild(chart.root); st.idx=0; st.steps=[]; }
+    function auto(){ st.steps=selectionSteps(INIT); st.idx=0; }
+    function step(){
+      if(st.idx>=st.steps.length) return false;
+      const s=st.steps[st.idx++]; resetBarColors();
+      if(s.t==='scan'){ setBarColor(chart,s.i,'#2BB3A3'); setBarColor(chart,s.j,'#FF8C42'); setPanel(`扫描 a[${s.j}]=${st.arr[s.j]}，当前最小 a[${s.i}]=${st.arr[s.i]}`); highlightCode(3); }
+      else if(s.t==='min'){ setBarColor(chart,s.j,'#FF8C42'); setPanel(`找到更小值 a[${s.j}]=${st.arr[s.j]} → 记录 minIdx=${s.j}`); highlightCode(5); }
+      else if(s.t==='swap'){ const t=st.arr[s.i]; st.arr[s.i]=st.arr[s.j]; st.arr[s.j]=t; swapBar(chart,s.i,s.j); setPanel(`本轮最小 a[${s.i}]=${st.arr[s.i]} 归位 ｜ [${st.arr.join(', ')}]`); highlightCode(6); }
+      else if(s.t==='done'){ setBarColor(chart,s.i,'#2EA06C'); setPanel(`a[${s.i}] 已就位 ｜ [${st.arr.join(', ')}]`); highlightCode(-1); }
+      return st.idx<st.steps.length;
+    }
+    function reset(){ build(); }
+    function status(){ return `<div class="st-line">数组：[${st.arr.join(', ')}]</div><div class="st-box">每轮选最小放最前 ｜ 不稳定 ｜ 比较 <b>O(n²)</b>，交换 <b>O(n)</b>。</div>`; }
+    function title(){ return '选择排序 Selection Sort'; }
+    return { build, auto, step, reset, status, title };
+  },
+
+  /* ---------- 12 插入排序 Insertion ---------- */
+  insertion: function(){
+    const st = { arr:[], steps:[], idx:0 };
+    const INIT=[6,3,8,2,9,1,5,4];
+    let chart;
+    function build(){ const root=stageBody(); root.innerHTML=''; st.arr=INIT.slice(); chart=barChart(st.arr); root.appendChild(chart.root); st.idx=0; st.steps=[]; }
+    function auto(){ st.steps=insertionSteps(INIT); st.idx=0; }
+    function step(){
+      if(st.idx>=st.steps.length) return false;
+      const s=st.steps[st.idx++]; resetBarColors();
+      if(s.t==='key'){ setBarColor(chart,s.i,'#FF8C42'); setPanel(`取出 key=a[${s.i}]=${st.arr[s.i]} ｜ [${st.arr.join(', ')}]`); highlightCode(1); }
+      else if(s.t==='shift'){ st.arr[s.j+1]=st.arr[s.j]; shiftBar(chart,s.j,s.j+1); setPanel(`a[${s.j}]=${st.arr[s.j]}>key → 右移腾位 ｜ [${st.arr.join(', ')}]`); highlightCode(3); }
+      else if(s.t==='put'){ st.arr[s.j+1]=s.key; setBarVal(chart,s.j+1,s.key); setPanel(`插入 key=${s.key} 到 a[${s.j+1}] ｜ [${st.arr.join(', ')}]`); highlightCode(4); }
+      else if(s.t==='done'){ setBarColor(chart,s.i,'#2EA06C'); setPanel(`左侧有序区增长到 ${s.i+1} ｜ [${st.arr.join(', ')}]`); highlightCode(-1); }
+      return st.idx<st.steps.length;
+    }
+    function reset(){ build(); }
+    function status(){ return `<div class="st-line">数组：[${st.arr.join(', ')}]</div><div class="st-box">像整理扑克牌 ｜ 稳定 ｜ 最好 <b>O(n)</b>，平均/最坏 <b>O(n²)</b>。</div>`; }
+    function title(){ return '插入排序 Insertion Sort'; }
+    return { build, auto, step, reset, status, title };
+  },
+
+  /* ---------- 13 归并排序 Merge ---------- */
+  merge: function(){
+    const st = { arr:[], steps:[], idx:0, range:[] };
+    const INIT=[6,3,8,2,9,1,5,4];
+    let chart;
+    function build(){ const root=stageBody(); root.innerHTML=''; st.arr=INIT.slice(); chart=barChart(st.arr); root.appendChild(chart.root); st.idx=0; st.steps=[]; st.range=[]; }
+    function auto(){ st.steps=mergeSteps(INIT); st.idx=0; }
+    function highlightRange(l,r,color){ for(let i=l;i<=r;i++) setBarColor(chart,i,color); }
+    function step(){
+      if(st.idx>=st.steps.length) return false;
+      const s=st.steps[st.idx++]; resetBarColors();
+      if(s.t==='split'){ highlightRange(s.l,s.r,'#7A5CC9'); setPanel(`拆分区间 [${s.l},${s.r}]，中点 ${s.m}`); highlightCode(1); }
+      else if(s.t==='merge'){ highlightRange(s.l,s.m,'#E5484D'); highlightRange(s.m+1,s.r,'#2BB3A3'); setPanel(`归并两段 [${s.l},${s.m}] 与 [${s.m+1},${s.r}]（双指针）`); highlightCode(5); }
+      else if(s.t==='apply'){ for(let i=s.l;i<=s.r;i++){ st.arr[i]=s.arr[i]; setBarVal(chart,i,s.arr[i]); } setPanel(`回写：区间 [${s.l},${s.r}] 变有序 ｜ [${st.arr.join(', ')}]`); highlightCode(7); }
+      return st.idx<st.steps.length;
+    }
+    function reset(){ build(); }
+    function status(){ return `<div class="st-line">数组：[${st.arr.join(', ')}]</div><div class="st-box">分治：T(n)=2T(n/2)+O(n) → <b>O(n·log n)</b>，空间 O(n)，稳定。</div>`; }
+    function title(){ return '归并排序 Merge Sort'; }
+    return { build, auto, step, reset, status, title };
+  },
+
+};
+
+/* ============================================================
+   SVG 辅助函数（树 / 图 / 柱状图）
+   ============================================================ */
+const SVGNS = 'http://www.w3.org/2000/svg';
+function svgEl(tag, attrs){
+  const e = document.createElementNS(SVGNS, tag);
+  for(const k in attrs) e.setAttribute(k, attrs[k]);
+  return e;
+}
+// 树：nodes [{id,val,x,y}]，edges [[a,b]]
+function treeSVG(nodes, edges, w, h){
+  const svg = svgEl('svg', {viewBox:`0 0 ${w} ${h}`, preserveAspectRatio:'xMidYMid meet'});
+  svg.style.cssText = 'width:100%;height:100%;';
+  const nodeMap={}, edgeMap={};
+  edges.forEach(([a,b])=>{
+    const na=nodes.find(n=>n.id===a), nb=nodes.find(n=>n.id===b);
+    const line=svgEl('line',{x1:na.x,y1:na.y,x2:nb.x,y2:nb.y,stroke:'#9FB4CC','stroke-width':2.5});
+    svg.appendChild(line); edgeMap[a+'-'+b]=line;
+  });
+  nodes.forEach(n=>{
+    const g=svgEl('g',{});
+    const c=svgEl('circle',{cx:n.x,cy:n.y,r:22,fill:'#1F3A5F',stroke:'#fff','stroke-width':2});
+    const t=svgEl('text',{x:n.x,y:n.y,fill:'#fff','font-size':18,'font-weight':800,'text-anchor':'middle','dominant-baseline':'central'});
+    t.textContent=n.val;
+    g.appendChild(c); g.appendChild(t);
+    svg.appendChild(g); nodeMap[n.id]=g;
+  });
+  return { svg, nodeMap, edgeMap };
+}
+function setNodeColor(nodeMap, id, color){
+  const g=nodeMap[id]; if(!g) return;
+  const c=g.querySelector('circle'); if(c) c.setAttribute('fill', color);
+}
+// 图：nodes [{id,x,y}]，edges [[a,b,w]]，opts.noW 无边权
+function graphSVG(nodes, edges, w, h, opts={}){
+  const svg=svgEl('svg',{viewBox:`0 0 ${w} ${h}`, preserveAspectRatio:'xMidYMid meet'});
+  svg.style.cssText='width:100%;height:100%;';
+  const nodeMap={}, edgeMap={}, wLabelMap={}, distMap={};
+  edges.forEach(([a,b,wt])=>{
+    const na=nodes.find(n=>n.id===a), nb=nodes.find(n=>n.id===b);
+    const line=svgEl('line',{x1:na.x,y1:na.y,x2:nb.x,y2:nb.y,stroke:'#9FB4CC','stroke-width':2.5});
+    svg.appendChild(line); edgeMap[a+'-'+b]=line; edgeMap[b+'-'+a]=line;
+    if(wt!==undefined && !opts.noW){
+      const mx=(na.x+nb.x)/2, my=(na.y+nb.y)/2;
+      const tb=svgEl('rect',{x:mx-13,y:my-22,width:26,height:18,rx:9,fill:'#1F3A5F'});
+      const tt=svgEl('text',{x:mx,y:my-13,fill:'#FFD54F','font-size':13,'font-weight':800,'text-anchor':'middle'});
+      tt.textContent=wt;
+      svg.appendChild(tb); svg.appendChild(tt); wLabelMap[a+'-'+b]=tt;
+    }
+  });
+  nodes.forEach(n=>{
+    const g=svgEl('g',{});
+    const c=svgEl('circle',{cx:n.x,cy:n.y,r:22,fill:'#1F3A5F',stroke:'#fff','stroke-width':2});
+    const t=svgEl('text',{x:n.x,y:n.y,fill:'#fff','font-size':18,'font-weight':800,'text-anchor':'middle','dominant-baseline':'central'});
+    t.textContent=n.id;
+    g.appendChild(c); g.appendChild(t); svg.appendChild(g); nodeMap[n.id]=g;
+    if(!opts.noDist){
+      const dt=svgEl('text',{x:n.x,y:n.y+38,fill:'#FFD54F','font-size':14,'font-weight':800,'text-anchor':'middle'});
+      dt.textContent='';
+      svg.appendChild(dt); distMap[n.id]=dt;
+    }
+  });
+  return { svg, nodeMap, edgeMap, wLabelMap, distMap };
+}
+function setEdgeColor(edgeMap, key, color){ const e=edgeMap[key]; if(e) e.setAttribute('stroke', color); }
+function setDistText(distMap, id, txt){ const t=distMap[id]; if(t){ t.textContent=txt; t.setAttribute('fill', txt==='0'||txt==='∞'?'#FFD54F':'#FFD54F'); } }
+
+// 柱状图
+function barChart(arr){
+  const root=el('div','bars');
+  root.style.cssText='display:flex;align-items:flex-end;gap:8px;height:100%;max-width:640px;width:100%;';
+  const maxV=Math.max(...arr), bars=[];
+  arr.forEach((v,i)=>{
+    const b=el('div','bar'); b.style.cssText='flex:1;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;min-width:0;';
+    const val=el('div','v',String(v));
+    const stick=el('div','stick'); stick.style.height=(v/maxV*72)+'%';
+    const pos=el('div','pos',String(i));
+    b.appendChild(val); b.appendChild(stick); b.appendChild(pos);
+    root.appendChild(b); bars.push({bar:b, val, stick});
+  });
+  return { root, bars, maxV };
+}
+function resetBarColors(chart){ chart.bars.forEach(b=>b.stick.style.background='var(--navy2)'); }
+function setBarColor(chart,i,color){ if(chart.bars[i]) chart.bars[i].stick.style.background=color; }
+function setBarVal(chart,i,v){ const b=chart.bars[i]; b.val.textContent=v; b.stick.style.height=(v/chart.maxV*72)+'%'; }
+function swapBar(chart,i,j){ const bi=chart.bars[i],bj=chart.bars[j]; const h=bi.stick.style.height; bi.stick.style.height=bj.stick.style.height; bj.stick.style.height=h; const t=bi.val.textContent; bi.val.textContent=bj.val.textContent; bj.val.textContent=t; }
+function shiftBar(chart,from,to){ const bf=chart.bars[from],bt=chart.bars[to]; bt.stick.style.height=bf.stick.style.height; bt.val.textContent=bf.val.textContent; }
+
+// 排序步骤生成器
+function bubbleSteps(init){
+  const a=init.slice(), steps=[], n=a.length;
+  for(let i=0;i<n-1;i++){ for(let j=0;j<n-1-i;j++){ steps.push({t:'cmp',j,j1:j+1}); if(a[j]>a[j+1]){ [a[j],a[j+1]]=[a[j+1],a[j]]; steps.push({t:'swap',j,j1:j+1}); } } steps.push({t:'done',i:n-1-i}); }
+  steps.push({t:'done',i:0});
+  return steps;
+}
+function selectionSteps(init){
+  const a=init.slice(), steps=[], n=a.length;
+  for(let i=0;i<n-1;i++){ let m=i; for(let j=i+1;j<n;j++){ steps.push({t:'scan',i:m,j}); if(a[j]<a[m]){ m=j; steps.push({t:'min',j}); } } if(m!==i){ [a[i],a[m]]=[a[m],a[i]]; steps.push({t:'swap',i,j:m}); } steps.push({t:'done',i}); }
+  return steps;
+}
+function insertionSteps(init){
+  const a=init.slice(), steps=[], n=a.length;
+  for(let i=1;i<n;i++){ const key=a[i]; let j=i-1; steps.push({t:'key',i}); while(j>=0&&a[j]>key){ a[j+1]=a[j]; steps.push({t:'shift',j}); j--; } a[j+1]=key; steps.push({t:'put',j,key}); steps.push({t:'done',i}); }
+  return steps;
+}
+function mergeSteps(init){
+  const a=init.slice(), steps=[];
+  function ms(l,r){ if(l>=r)return; const m=(l+r)>>1; steps.push({t:'split',l,r,m}); ms(l,m); ms(m+1,r); steps.push({t:'merge',l,m,r}); const tmp=a.slice(l,r+1); let i=0,j=m-l+1,k=l; while(i<=m-l&&j<tmp.length){ a[k++]=tmp[i]<=tmp[j]?tmp[i++]:tmp[j++]; } while(i<=m-l)a[k++]=tmp[i++]; while(j<tmp.length)a[k++]=tmp[j++]; steps.push({t:'apply',l,r,arr:a.slice()}); }
+  ms(0,a.length-1);
+  return steps;
+}
+
+/* ============================================================
+   门户胶水层（首页 / 教学面板 / 控制条 / 启动）
+   ============================================================ */
+let currentId = null;
+const TAGS = { linear:'线性', tree:'树', graph:'图', algo:'排序' };
+
+function renderHome(){
+  for(const cat of ['linear','tree','graph','algo']){
+    const bucket = $('grid-'+cat);
+    bucket.innerHTML = '';
+    for(const id of ORDER[cat]){
+      const M = DS_MECHS[id];
+      bucket.insertAdjacentHTML('beforeend', `
+        <div class="mcard" data-id="${id}" style="border-color:${M.light}">
+          <span class="tag">${TAGS[cat]}</span>
+          <div class="ic" style="background:${M.light}">${M.icon}</div>
+          <h3>${M.name}</h3><p>${M.sub}</p>
+          <div class="ops">${M.kpoints.map(k=>k[0]).slice(0,2).join(' · ')}</div>
+          <span class="go">进入 2D 演示 →</span>
+        </div>`);
+    }
+  }
+  document.querySelectorAll('.mcard').forEach(c=>c.onclick=()=>loadMech(c.dataset.id));
+}
+
+function clearActive(){
+  stopPlay();
+  G.playing = false;
+  G.active = null;
+  highlightCode(-1);
+  setPanel('');
+}
+
+function renderStatus(){
+  if(G.active && G.active.status){ setPanel(G.active.status(), true); }
+}
+
+function loadMech(id){
+  const M = DS_MECHS[id];
+  if(!M || !DS_DEMOS[id]) return;
+  currentId = id;
+  $('demo-title').textContent = M.icon+' '+M.name;
+  $('demo-sub').textContent = M.sub;
+
+  // 原理页签（讲解内容；伪代码已移到教学面板）
+  $('panel-principle').innerHTML = `
+    <h3 style="font-size:13px;font-weight:800;color:var(--navy);margin-bottom:8px">📖 ${M.name} 是什么？</h3>
+    <div class="intro" style="margin-top:6px">${M.intro}</div>
+    <div class="kbox"><h4>🔑 核心要点</h4><ul>${M.kpoints.map(k=>`<li><b>${k[0]}：</b>${k[1]}</li>`).join('')}</ul>
+      <div class="formula">${M.formula}</div></div>
+    <div class="kbox"><h4>🌍 生活与应用</h4><div class="lifelist">${M.life.map(l=>`<span>${l}</span>`).join('')}</div></div>
+    <div class="pr-tip">🖱 <b>操作提示：</b>左下方「🧩 教学面板」实时显示<b>伪代码高亮 / 状态表 / 操作日志</b>；控制条可切「🎞 动画 / ⚡ 模拟」模式。</div>`;
+
+  // 魔法棒页签
+  $('panel-prompt').innerHTML = `
+    <h3 style="font-size:13px;font-weight:800;color:var(--navy);margin-bottom:6px">🎬 视频魔法棒</h3>
+    <div class="intro">复制「魔法咒语」到文生视频平台（即梦 / Kling / Seedance），生成 ${M.name} 的原理动画。</div>
+    <div class="pr-box"><div class="pr-label">✨ 正向提示词</div>
+      <button class="copy-btn" data-i="0">复制</button>
+      <div class="pr-text">${M.prompt.pos}</div></div>
+    <div class="pr-box" style="border-color:#FDE0D0"><div class="pr-label">🚫 负向提示词</div>
+      <button class="copy-btn" data-i="1">复制</button>
+      <div class="pr-text">${M.prompt.neg}</div></div>
+    <div class="pr-tip">📌 使用步骤：① 打开即梦 / Kling / Seedance → ② 文生视频 16:9 → ③ 粘贴正负向提示词 → ④ 生成。</div>`;
+
+  // 案例页签（与 3D 版一致：iframe 嵌入 + B 站跳转）
+  $('panel-cases').innerHTML = `
+    <h3 style="font-size:13px;font-weight:800;color:var(--navy);margin-bottom:6px">🌍 生活大发现</h3>
+    <div class="intro">${M.name} 藏在现实世界这些场景里：</div>
+    ${M.cases.map(c=>`<div class="case"><b>📺 ${c.t}</b><div class="note">${c.note}</div>
+      <iframe src="https://player.bilibili.com/player.html?bvid=${c.bvid}&page=1&high_quality=1&danmaku=0&autoplay=0" loading="lazy" scrolling="no" allowfullscreen></iframe>
+      <div class="links"><a href="https://www.bilibili.com/video/${c.bvid}" target="_blank" rel="noopener">在 B 站打开 ↗</a></div>
+      <div class="fallback">如果上方视频无法播放，点击按钮去 B 站直接观看。</div></div>`).join('')}
+    <div class="pr-tip">💡 思考：${M.life[0]} 为什么需要 ${M.name}？它的顺序/结构约束带来什么好处？</div>`;
+
+  wireCopies();
+  setPseudo(id);
+
+  // 构建 2D 模块
+  clearActive();
+  let demo;
+  try { demo = DS_DEMOS[id](); }
+  catch(err){
+    console.error('[loadMech] '+id+' 初始化失败:', err);
+    setPanel('❌ 加载 ['+id+'] 失败：'+(err.message||err));
+    return;
+  }
+  G.active = demo;
+  demo.build();
+  demo.auto();
+  $('stage-title').textContent = demo.title ? demo.title() : M.name;
+  $('stage-sub').textContent = M.sub;
+  // 教学面板初始化
+  setPseudo(id);
+  clearLog();
+  highlightCode(-1);
+  renderStatus();
+  openTeach();
+  showDemo();
+}
+
+function wireCopies(){
+  document.querySelectorAll('.copy-btn').forEach(b=>{
+    b.onclick = ()=>{
+      const txt = b.parentElement.querySelector('.pr-text').textContent;
+      (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject())
+        .then(()=>{ b.textContent='已复制'; setTimeout(()=>b.textContent='复制',1500); })
+        .catch(()=>{ b.textContent='复制'; });
+    };
+  });
+}
+
+function showHome(){
+  $('view-home').style.display = 'block';
+  $('view-demo').classList.remove('on');
+  $('bnav').style.display = 'none';
+}
+function showDemo(){
+  $('view-home').style.display = 'none';
+  $('view-demo').classList.add('on');
+  $('bnav').style.display = 'flex';
+}
+
+// 播放控制
+function stopPlay(){ if(G.timer){ clearInterval(G.timer); G.timer=null; } }
+function startPlay(){
+  stopPlay();
+  G.playing = true;
+  $('ctl-play').textContent = '⏸ 暂停'; $('ctl-play').classList.add('on');
+  const interval = Math.max(220, Math.round(760 / G.speed));
+  G.timer = setInterval(()=>{
+    if(!G.active){ stopPlay(); return; }
+    const more = G.active.step();
+    renderStatus();
+    if(!more){ stopPlay(); G.playing=false; $('ctl-play').textContent='▶ 播放'; $('ctl-play').classList.remove('on'); }
+  }, interval);
+}
+function togglePlay(){
+  if(G.playing){ stopPlay(); G.playing=false; $('ctl-play').textContent='▶ 播放'; $('ctl-play').classList.remove('on'); }
+  else startPlay();
+}
+
+// 控制条事件
+function setModeTag(){
+  $('mode-tag').textContent = TEACH.mode==='anim' ? '🎞 动画模式' : '⚡ 模拟模式';
+  $('mode-tag').classList.toggle('sim', TEACH.mode==='sim');
+  $('ctl-mode').textContent = TEACH.mode==='anim' ? '⚡ 模拟' : '🎞 动画';
+  $('ctl-mode').classList.toggle('on', TEACH.mode==='sim');
+}
+$('ctl-play').onclick = togglePlay;
+$('ctl-step').onclick = ()=>{ if(G.active){ G.active.step(); renderStatus(); } };
+$('ctl-reset').onclick = ()=>{ if(G.active){ stopPlay(); G.playing=false; $('ctl-play').textContent='▶ 播放'; $('ctl-play').classList.remove('on'); G.active.reset(); G.active.auto(); $('stage-title').textContent = G.active.title ? G.active.title() : ''; clearLog(); renderStatus(); } };
+$('ctl-auto').onclick = ()=>{ if(G.active){ stopPlay(); G.active.reset(); G.active.auto(); $('stage-title').textContent = G.active.title ? G.active.title() : ''; clearLog(); renderStatus(); startPlay(); } };
+$('ctl-mode').onclick = ()=>{ TEACH.mode = TEACH.mode==='anim' ? 'sim' : 'anim'; setModeTag(); if(TEACH.mode==='sim' && G.active){ stopPlay(); while(G.active.step()){} renderStatus(); renderLogTail(); } };
+$('ctl-speed').oninput = (e)=>{ G.speed = e.target.value/100; $('ctl-speedv').textContent = e.target.value+'%'; if(G.playing) startPlay(); };
+
+// 返回导航
+$('btn-back').onclick = showHome;
+$('bnav-home').onclick = showHome;
+
+// 讲解面板三页签 + 四态
+document.querySelectorAll('#sheet .tabs button').forEach(b=>{
+  b.onclick = ()=>{
+    document.querySelectorAll('#sheet .tabs button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    ['principle','prompt','cases'].forEach(p=>{
+      $('panel-'+p).style.display = p===b.dataset.tab ? 'block' : 'none';
+    });
+    openSheet();
+  };
+});
+function isMobile(){ return window.innerWidth < 900; }
+function openSheet(){
+  $('sheet').classList.remove('closed','collapsed'); $('sheet-chev').textContent='▾'; $('reopen').style.display='none';
+  if(isMobile()){ $('teach-panel').classList.add('closed'); $('teach-reopen').style.display='block'; }
+}
+function closeSheet(){ $('sheet').classList.add('closed'); $('sheet-chev').textContent='▸'; $('reopen').style.display='block'; }
+function toggleSheet(){
+  if($('sheet').classList.contains('closed')) openSheet();
+  else if($('sheet').classList.contains('collapsed')) { $('sheet').classList.remove('collapsed'); $('sheet-chev').textContent='▾'; }
+  else { $('sheet').classList.add('collapsed'); $('sheet-chev').textContent='▸'; }
+}
+$('sheet-head').onclick = (e)=>{ if(e.target.closest('.sclose')) return; toggleSheet(); };
+$('sheet-close').onclick = closeSheet;
+$('reopen').onclick = openSheet;
+$('bnav-sheet').onclick = ()=> openSheet();
+
+// 教学面板（代码/状态/日志）打开/关闭 + 页签
+function openTeach(){
+  $('teach-panel').classList.remove('closed');
+  $('teach-reopen').style.display='none';
+  if(isMobile()){ $('sheet').classList.add('closed'); $('reopen').style.display='block'; }
+}
+function closeTeach(){ $('teach-panel').classList.add('closed'); $('teach-reopen').style.display='block'; }
+$('teach-close').onclick = closeTeach;
+$('teach-reopen').onclick = openTeach;
+// 控制条按钮：🧩 教学 / 📖 讲解
+$('ctl-teach').onclick = openTeach;
+$('ctl-sheet').onclick = openSheet;
+// 教学面板头部点击折叠/展开（收起标题栏，快速让出舞台）
+$('teach-panel').querySelector('.p2-head').onclick = (e)=>{
+  if(e.target.closest('.p2-close') || e.target.closest('.p2-tabs')) return;
+  const t = $('teach-panel');
+  if(t.classList.contains('collapsed')){ t.classList.remove('collapsed'); }
+  else { t.classList.add('collapsed'); }
+};
+document.querySelectorAll('#teach-panel .p2-tabs button').forEach(b=>{
+  b.onclick = (e)=>{
+    e.stopPropagation();
+    document.querySelectorAll('#teach-panel .p2-tabs button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    ['code','status','log'].forEach(p=>$('p2-'+p).classList.toggle('on', p===b.dataset.p2));
+  };
+});
+
+/* ---- 面板自由拖动（按住头部拖动，拖动后吞掉一次 click 防误触） ---- */
+function makeDraggable(el, handle){
+  let drag = false, moved = false, sx = 0, sy = 0, ox = 0, oy = 0, oh = 0;
+  handle.addEventListener('mousedown', (e)=>{
+    if(e.button !== 0) return;
+    if(e.target.closest('button') || e.target.closest('.tabs') || e.target.closest('.p2-tabs')) return;
+    drag = true; moved = false;
+    sx = e.clientX; sy = e.clientY;
+    const r = el.getBoundingClientRect();
+    ox = r.left; oy = r.top; oh = r.height;
+    el.style.zIndex = '90';
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove', (e)=>{
+    if(!drag) return;
+    const dx = e.clientX - sx, dy = e.clientY - sy;
+    if(!moved && Math.abs(dx) + Math.abs(dy) > 6) moved = true;
+    if(moved){
+      // 拖拽中：left/top 定位并固定高度。
+      // 注意：不能设 bottom:auto —— fixed 元素高度由 top+bottom 约束，
+      // 一旦 bottom 失效高度会塌陷为内容高度，而内容区是绝对定位不撑高，面板会变空。
+      el.style.right = 'auto';
+      el.style.height = oh + 'px';
+      el.style.left = Math.min(Math.max(ox + dx, -el.offsetWidth + 80), window.innerWidth - 80) + 'px';
+      el.style.top = Math.min(Math.max(oy + dy, 50), window.innerHeight - 60) + 'px';
+      el.style.transform = 'none';
+    }
+  });
+  document.addEventListener('mouseup', ()=>{
+    if(drag && moved){
+      // 只吞掉紧随的这一次 click（防头部折叠/关闭被误触）
+      const swallow = (ev)=>{ ev.stopPropagation(); ev.preventDefault(); document.removeEventListener('click', swallow, true); };
+      document.addEventListener('click', swallow, true);
+    }
+    drag = false; moved = false;
+    // 拖完恢复 class 控制的 transform/height（closed 滑出等），inline 定位仅保留 left/top
+    el.style.transform = '';
+    el.style.height = '';
+  });
+}
+// 桌面端启用拖拽（移动端为底部抽屉，不拖）
+if(isMobile()){
+  // 移动端不启用拖拽
+} else {
+  makeDraggable($('teach-panel'), $('teach-panel').querySelector('.p2-head'));
+  makeDraggable($('sheet'), $('sheet-head'));
+}
+
+/* ---- 启动 ---- */
+try { renderHome(); }
+catch(err){
+  document.getElementById('loading').textContent = '❌ 初始化失败：' + (err.stack||err.message||err);
+  throw err;
+}
+$('loading').style.display = 'none';
+showHome();
+setModeTag();
+
+</script>
+</body>
+</html>
