@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI CRM 管理工作台 · 演示原型</title>
+<style>
+:root{
+  --primary:#185FA5; --primary-600:#185FA5; --primary-800:#0C447C;
+  --primary-50:#E6F1FB; --primary-100:#B5D4F4;
+  --bg:#F4F6FA; --card:#FFFFFF; --line:#E3E8F0;
+  --text:#1F2733; --text-2:#5F6B7A; --text-3:#98A2B3;
+  --danger:#D92D20; --danger-50:#FEF3F2;
+  --warn:#B54708; --warn-50:#FFFAEB;
+  --ok:#067647; --ok-50:#ECFDF3;
+  --radius:12px; --shadow:0 1px 3px rgba(16,24,40,.06),0 1px 2px rgba(16,24,40,.04);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);font-size:14px}
+.app{display:flex;min-height:100vh}
+/* 侧边栏 */
+.side{width:212px;background:#fff;border-right:1px solid var(--line);display:flex;flex-direction:column;position:fixed;top:0;bottom:0;left:0;z-index:10}
+.brand{display:flex;align-items:center;gap:10px;padding:20px 18px 16px;border-bottom:1px solid var(--line)}
+.brand-logo{width:34px;height:34px;border-radius:9px;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:15px}
+.brand-name{font-weight:600;font-size:15px;color:var(--text)}
+.brand-sub{font-size:11px;color:var(--text-3);margin-top:1px}
+.nav{padding:12px 10px;flex:1;overflow-y:auto}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:9px;cursor:pointer;color:var(--text-2);margin-bottom:2px;user-select:none;transition:background .15s}
+.nav-item:hover{background:var(--primary-50)}
+.nav-item.active{background:var(--primary-50);color:var(--primary-800);font-weight:500}
+.nav-ico{width:18px;height:18px;flex:none;opacity:.85}
+.nav-badge{margin-left:auto;background:var(--danger);color:#fff;font-size:11px;border-radius:10px;padding:1px 7px;font-weight:500;display:none}
+.nav-badge.show{display:inline-block}
+.side-foot{padding:14px 18px;border-top:1px solid var(--line);font-size:11px;color:var(--text-3)}
+/* 主区 */
+.main{flex:1;margin-left:212px;display:flex;flex-direction:column;min-width:0}
+.top{height:60px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:9}
+.top-title{font-size:16px;font-weight:600}
+.top-right{display:flex;align-items:center;gap:10px}
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:#fff;color:var(--text);border-radius:8px;padding:7px 14px;font-size:13px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.btn:hover{border-color:var(--primary);color:var(--primary-800)}
+.btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
+.btn.primary:hover{background:var(--primary-800)}
+.btn.sm{padding:5px 10px;font-size:12px}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--text-2)}
+.btn.ghost:hover{background:var(--primary-50);color:var(--primary-800)}
+.content{padding:24px;flex:1}
+/* 卡片 */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px;margin-bottom:16px}
+.card-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.card-h h3{font-size:15px;font-weight:600}
+.card-h .sub{font-size:12px;color:var(--text-3)}
+/* KPI */
+.kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:16px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
+.kpi .k-label{font-size:12px;color:var(--text-2);margin-bottom:8px}
+.kpi .k-value{font-size:22px;font-weight:600;color:var(--text);line-height:1.2}
+.kpi .k-value.small{font-size:18px}
+.kpi .k-delta{font-size:11px;margin-top:6px}
+.kpi .k-delta.up{color:var(--ok)}.kpi .k-delta.down{color:var(--danger)}
+/* AI 解读 */
+.ai-block{background:linear-gradient(180deg,#F0F6FD,#F7FAFF);border:1px solid var(--primary-100);border-radius:var(--radius);padding:18px 20px;margin-bottom:16px}
+.ai-block .ai-tag{display:inline-flex;align-items:center;gap:6px;background:var(--primary);color:#fff;font-size:11px;border-radius:6px;padding:3px 8px;margin-bottom:10px;font-weight:500}
+.ai-block .ai-title{font-size:15px;font-weight:600;margin-bottom:12px;color:var(--primary-800)}
+.ai-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 20px}
+.ai-item{display:flex;gap:8px;font-size:13px;line-height:1.7;color:var(--text)}
+.ai-item .dot{width:6px;height:6px;border-radius:50%;flex:none;margin-top:8px}
+.ai-item .t-warn{color:var(--warn);font-weight:500}
+.ai-item .t-danger{color:var(--danger);font-weight:500}
+.ai-item .t-ok{color:var(--ok);font-weight:500}
+.ai-foot{font-size:11px;color:var(--text-3);margin-top:12px;text-align:right}
+/* 图表 */
+.chart{width:100%;height:320px}
+.chart.sm{height:260px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-2 .card{margin-bottom:0}
+/* 表格 */
+.tbl-wrap{overflow:auto;border:1px solid var(--line);border-radius:10px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#F8FAFC;color:var(--text-2);font-weight:500;text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);white-space:nowrap;position:sticky;top:0}
+td{padding:10px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
+tr:hover td{background:#F8FAFD}
+tr:last-child td{border-bottom:none}
+.tag{display:inline-block;font-size:12px;border-radius:6px;padding:2px 8px;font-weight:500}
+.tag.blue{background:var(--primary-50);color:var(--primary-800)}
+.tag.green{background:var(--ok-50);color:var(--ok)}
+.tag.red{background:var(--danger-50);color:var(--danger)}
+.tag.amber{background:var(--warn-50);color:var(--warn)}
+.tag.gray{background:#F2F4F7;color:var(--text-2)}
+/* 空态 / 错误态 */
+.state-box{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:70px 20px;text-align:center}
+.state-box .s-ico{width:64px;height:64px;border-radius:16px;background:var(--primary-50);color:var(--primary);display:flex;align-items:center;justify-content:center;margin-bottom:16px}
+.state-box h3{font-size:16px;margin-bottom:8px}
+.state-box p{color:var(--text-2);font-size:13px;margin-bottom:20px;max-width:420px;line-height:1.7}
+.state-box .s-actions{display:flex;gap:10px}
+/* 报告 */
+.report-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.report-head h2{font-size:20px;font-weight:600}
+.report-head .meta{font-size:12px;color:var(--text-3);margin-top:4px}
+.suggest-box{background:var(--primary-800);border-radius:var(--radius);padding:22px 24px;margin-bottom:16px;color:#fff}
+.suggest-box .sg-tag{font-size:11px;background:rgba(255,255,255,.15);display:inline-block;border-radius:6px;padding:3px 10px;margin-bottom:12px}
+.suggest-box h3{font-size:16px;margin-bottom:14px;font-weight:600}
+.suggest-box ol{margin:0 0 0 18px}
+.suggest-box li{font-size:13.5px;line-height:1.9;margin-bottom:6px}
+.suggest-box li b{color:#FFD98A}
+.rpt-sec{margin-bottom:16px}
+.rpt-sec .sec-title{font-size:15px;font-weight:600;margin-bottom:4px}
+.rpt-sec .sec-desc{font-size:12px;color:var(--text-3);margin-bottom:12px}
+.finding{display:flex;gap:8px;font-size:13px;line-height:1.7;color:var(--text);margin-bottom:6px}
+/* 上传 */
+.drop{display:none;position:fixed;inset:0;background:rgba(12,68,124,.35);z-index:100;align-items:center;justify-content:center}
+.drop.show{display:flex}
+.drop-card{background:#fff;border-radius:16px;width:560px;max-width:92vw;max-height:86vh;overflow:auto;padding:24px}
+.drop-card h3{font-size:16px;margin-bottom:6px}
+.drop-card .sub{font-size:12px;color:var(--text-3);margin-bottom:16px}
+.drop-zone{border:2px dashed var(--primary-100);border-radius:12px;padding:32px;text-align:center;cursor:pointer;transition:all .15s;background:#FBFDFF}
+.drop-zone:hover,.drop-zone.over{border-color:var(--primary);background:var(--primary-50)}
+.drop-zone .dz-ico{font-size:30px;margin-bottom:8px}
+.drop-zone p{color:var(--text-2);font-size:13px}
+.drop-zone p b{color:var(--primary-800)}
+.map-sec{margin-top:16px;display:none}
+.map-sec.show{display:block}
+.map-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px}
+.map-table th{background:#F8FAFC;padding:8px 12px;text-align:left;color:var(--text-2);font-weight:500;border-bottom:1px solid var(--line)}
+.map-table td{padding:8px 12px;border-bottom:1px solid var(--line)}
+.map-table select{width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;background:#fff}
+.preview{max-height:160px;overflow:auto;border:1px solid var(--line);border-radius:8px;margin-top:10px}
+.preview table{font-size:12px}
+.dlg-foot{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
+.hint{font-size:12px;color:var(--text-3);margin-top:8px}
+.error-box{display:none;background:var(--danger-50);border:1px solid #FECDCA;color:var(--danger);font-size:13px;border-radius:8px;padding:10px 14px;margin-top:12px}
+.error-box.show{display:block}
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#1F2733;color:#fff;font-size:13px;border-radius:8px;padding:10px 18px;z-index:200;opacity:0;transition:opacity .25s;pointer-events:none}
+.toast.show{opacity:1}
+.setting-row{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--line)}
+.setting-row:last-child{border-bottom:none}
+.setting-row .s-label{font-size:14px;font-weight:500;margin-bottom:2px}
+.setting-row .s-desc{font-size:12px;color:var(--text-3)}
+.setting-row input[type=text]{width:320px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px}
+.switch{position:relative;width:40px;height:22px;flex:none}
+.switch input{opacity:0;width:0;height:0}
+.switch .sl{position:absolute;inset:0;background:#D0D5DD;border-radius:22px;cursor:pointer;transition:.2s}
+.switch .sl:before{content:"";position:absolute;width:16px;height:16px;border-radius:50%;background:#fff;top:3px;left:3px;transition:.2s}
+.switch input:checked+.sl{background:var(--primary)}
+.switch input:checked+.sl:before{transform:translateX(18px)}
+@media print{
+  body{background:#fff}
+  .side,.top,.no-print{display:none!important}
+  .main{margin:0}
+  .content{padding:0}
+  .card{box-shadow:none;border:none;padding:8px 0;margin-bottom:8px;break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="brand">
+      <div class="brand-logo">AI</div>
+      <div>
+        <div class="brand-name">CRM 管理工作台</div>
+        <div class="brand-sub">AI 经营分析演示版</div>
+      </div>
+    </div>
+    <nav class="nav" id="nav">
+      <div class="nav-item active" data-page="dashboard"><span class="nav-ico">&#9632;</span>工作台</div>
+      <div class="nav-item" data-page="report"><span class="nav-ico">&#9633;</span>经营报告</div>
+      <div class="nav-item" data-page="customers"><span class="nav-ico">&#9679;</span>客户管理</div>
+      <div class="nav-item" data-page="orders"><span class="nav-ico">&#9650;</span>订单管理</div>
+      <div class="nav-item" data-page="risk"><span class="nav-ico">&#9652;</span>回款风险<span class="nav-badge" id="riskBadge"></span></div>
+      <div class="nav-item" data-page="settings"><span class="nav-ico">&#9881;</span>系统设置</div>
+    </nav>
+    <div class="side-foot">Starter Demo · 参考 B 端 AI 界面规范</div>
+  </aside>
+  <main class="main">
+    <header class="top">
+      <div class="top-title" id="topTitle">工作台</div>
+      <div class="top-right">
+        <span style="font-size:12px;color:var(--text-3)" id="dataStatus">未导入数据</span>
+        <button class="btn" onclick="loadSample()">载入示例数据</button>
+        <button class="btn primary" onclick="openUpload()">导入数据</button>
+      </div>
+    </header>
+    <div class="content" id="content">
+      <div id="page-dashboard"></div>
+      <div id="page-report" style="display:none"></div>
+      <div id="page-customers" style="display:none"></div>
+      <div id="page-orders" style="display:none"></div>
+      <div id="page-risk" style="display:none"></div>
+      <div id="page-settings" style="display:none"></div>
+    </div>
+  </main>
+</div>
+
+<div class="drop" id="drop">
+  <div class="drop-card">
+    <h3>导入数据</h3>
+    <div class="sub">支持 CSV / Excel（.xlsx）文件，系统将自动识别字段</div>
+    <div class="drop-zone" id="dropZone">
+      <div class="dz-ico">&#128196;</div>
+      <p><b>点击选择文件</b> 或将文件拖拽到这里</p>
+      <p style="font-size:12px;color:var(--text-3);margin-top:6px">演示环境数据仅在浏览器本地处理，不会上传服务器</p>
+    </div>
+    <input type="file" id="fileInput" accept=".csv,.xlsx,.xls" style="display:none">
+    <div class="error-box" id="uploadError"></div>
+    <div class="map-sec" id="mapSec">
+      <div style="font-size:14px;font-weight:600;margin-top:8px">字段识别结果</div>
+      <div class="hint">系统已自动匹配业务字段，如识别不准确可手动调整</div>
+      <table class="map-table">
+        <thead><tr><th style="width:130px">业务字段</th><th>来源列</th><th style="width:110px">预览值</th></tr></thead>
+        <tbody id="mapBody"></tbody>
+      </table>
+      <div class="preview" id="previewBox"></div>
+    </div>
+    <div class="dlg-foot">
+      <button class="btn" onclick="closeUpload()">取消</button>
+      <button class="btn primary" id="confirmBtn" onclick="confirmImport()" style="display:none">确认导入</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+"use strict";
+/* ============ 全局状态 ============ */
+var State = { orders: [], customers: [], sourceRows: [], sourceHeaders: [], fieldMap: {}, aiMode: 'local', apiKey: '', loaded: false };
+var charts = {};
+
+/* ============ 工具函数 ============ */
+function $(id){ return document.getElementById(id); }
+function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmtMoney(n){ return '¥' + Number(n||0).toLocaleString('zh-CN', {maximumFractionDigits:0}); }
+function fmtNum(n){ return Number(n||0).toLocaleString('zh-CN'); }
+function fmtPct(n){ return (Number(n||0)*100).toFixed(1) + '%'; }
+function toast(msg){ var t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(function(){t.classList.remove('show');},2600); }
+
+/* ============ 导航切换 ============ */
+var PAGE_TITLES = { dashboard:'工作台', report:'经营报告', customers:'客户管理', orders:'订单管理', risk:'回款风险', settings:'系统设置' };
+function switchPage(page){
+  document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.toggle('active', n.dataset.page===page); });
+  ['dashboard','report','customers','orders','risk','settings'].forEach(function(p){
+    $('page-'+p).style.display = (p===page) ? '' : 'none';
+  });
+  $('topTitle').textContent = PAGE_TITLES[page];
+  renderers[page]();
+}
+document.getElementById('nav').addEventListener('click', function(e){
+  var item = e.target.closest('.nav-item'); if(item) switchPage(item.dataset.page);
+});
+
+/* ============ 渲染器注册 ============ */
+var renderers = { dashboard:renderDashboard, report:renderReport, customers:renderCustomers, orders:renderOrders, risk:renderRisk, settings:renderSettings };
+
+/* ============ 示例数据生成 ============ */
+function loadSample(){
+  var customers = ['HY Imports Ltd','Nordic Wear AS','Sunrise Trading Co','Milan Fashion Srl','Tokyo Trend Inc','Dubai Global LLC','Sydney Style Pty','Berlin Mode GmbH','Toronto Apparel','Seoul Chic Co','Cape Town Trade','Lima Export SA'];
+  var categories = ['夹克','衬衫','T恤','连衣裙','裤子','外套'];
+  var regions = ['北美','欧洲','东南亚','中东','南美'];
+  var rows = [];
+  var rnd = seedRandom(42);
+  var base = new Date('2025-09-01').getTime();
+  for(var i=0;i<96;i++){
+    var c = customers[Math.floor(rnd()*customers.length)];
+    var cat = categories[Math.floor(rnd()*categories.length)];
+    var region = regions[Math.floor(rnd()*regions.length)];
+    var date = new Date(base - Math.floor(rnd()*365*86400000));
+    var qty = 40 + Math.floor(rnd()*260);
+    var unitPrice = cat==='夹克' ? (480+rnd()*420) : cat==='外套' ? (380+rnd()*320) : cat==='连衣裙' ? (220+rnd()*260) : cat==='衬衫' ? (120+rnd()*160) : cat==='裤子' ? (150+rnd()*180) : (60+rnd()*90);
+    var amount = Math.round(qty*unitPrice);
+    var costRate = cat==='夹克' ? (0.55+rnd()*0.22) : (0.5+rnd()*0.28);
+    var cost = Math.round(amount*costRate);
+    var paid = Math.round(amount * (0.35+rnd()*0.65));
+    rows.push({
+      date: date.toISOString().slice(0,10),
+      customer: c, category: cat, region: region,
+      quantity: qty, amount: amount, cost: cost, paid: paid,
+      status: paid>=amount ? '已回款' : (paid>0 ? '部分回款' : '未回款')
+    });
+  }
+  rows.sort(function(a,b){ return a.date < b.date ? -1 : 1; });
+  State.orders = rows;
+  State.loaded = true;
+  updateDataStatus();
+  renderAll();
+  toast('已载入示例数据（96 条订单）');
+}
+function seedRandom(seed){ var s = seed; return function(){ s = (s*9301+49297)%233280; return s/233280; }; }
+
+/* ============ CSV 解析 ============ */
+function parseCSV(text){
+  var rows=[]; var row=[]; var cell=''; var q=false;
+  for(var i=0;i<text.length;i++){
+    var ch=text[i];
+    if(q){
+      if(ch==='"'){ if(text[i+1]==='"'){ cell+='"'; i++; } else q=false; }
+      else cell+=ch;
+    } else {
+      if(ch==='"') q=true;
+      else if(ch===','){ row.push(cell); cell=''; }
+      else if(ch==='\n'||ch==='\r'){ if(ch==='\r'&&text[i+1]==='\n') i++; row.push(cell); cell=''; if(row.length&&row.join('').trim()!=='') rows.push(row); row=[]; }
+      else cell+=ch;
+    }
+  }
+  if(cell!==''||row.length){ row.push(cell); if(row.join('').trim()!=='') rows.push(row); }
+  return rows;
+}
+
+/* ============ 字段识别 ============ */
+var FIELD_RULES = {
+  date:['date','日期','下单日期','订单日期','时间','time'],
+  customer:['customer','客户','客户名','客户名称','company','公司','客户公司'],
+  category:['category','品类','类别','产品','商品','type','类型','产品类别'],
+  region:['region','区域','地区','市场','国家','country','区域市场'],
+  quantity:['quantity','数量','件数','qty','订单数量'],
+  amount:['amount','金额','销售额','销售金额','订单金额','revenue','sales','总价','成交额'],
+  cost:['cost','成本','进货价','成本额'],
+  paid:['paid','回款','已回款','收款','到账','回款金额'],
+  status:['status','状态','回款状态','订单状态']
+};
+var FIELD_LABELS = { date:'订单日期', customer:'客户', category:'品类', region:'区域', quantity:'数量', amount:'销售额', cost:'成本', paid:'已回款', status:'回款状态' };
+var REQUIRED_FIELDS = ['customer','amount','date'];
+function detectFields(headers){
+  var map = {};
+  Object.keys(FIELD_RULES).forEach(function(f){
+    var low = headers.map(function(h){ return String(h).toLowerCase(); });
+    for(var i=0;i<low.length;i++){
+      var hit = FIELD_RULES[f].some(function(k){ return low[i].indexOf(k.toLowerCase()) >= 0; });
+      if(hit){ map[f]=i; break; }
+    }
+  });
+  return map;
+}
+
+/* ============ 上传 ============ */
+function openUpload(){ $('drop').classList.add('show'); $('mapSec').classList.remove('show'); $('uploadError').classList.remove('show'); $('confirmBtn').style.display='none'; $('previewBox').innerHTML=''; }
+function closeUpload(){ $('drop').classList.remove('show'); }
+$('dropZone').addEventListener('click', function(){ $('fileInput').click(); });
+$('dropZone').addEventListener('dragover', function(e){ e.preventDefault(); this.classList.add('over'); });
+$('dropZone').addEventListener('dragleave', function(){ this.classList.remove('over'); });
+$('dropZone').addEventListener('drop', function(e){ e.preventDefault(); this.classList.remove('over'); if(e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]); });
+$('fileInput').addEventListener('change', function(){ if(this.files.length) handleFile(this.files[0]); this.value=''; });
+
+function handleFile(file){
+  var err = $('uploadError');
+  err.classList.remove('show');
+  var name = file.name.toLowerCase();
+  if(!/\.(csv|xlsx|xls)$/.test(name)){
+    err.textContent = '文件格式不支持：' + file.name + '。请上传 CSV 或 Excel 文件。';
+    err.classList.add('show'); return;
+  }
+  var reader = new FileReader();
+  if(name.endsWith('.csv')){
+    reader.onload = function(e){ processCSV(e.target.result, file.name); };
+    reader.readAsText(file, 'utf-8');
+  } else {
+    reader.onload = function(e){
+      try{
+        var wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
+        var ws = wb.Sheets[wb.SheetNames[0]];
+        var rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+        processRows(rows, file.name);
+      }catch(ex){
+        err.textContent = 'Excel 解析失败：' + ex.message + '。请确认文件未损坏，或改存为 CSV 后再试。';
+        err.classList.add('show');
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+}
+function processCSV(text, name){
+  var rows = parseCSV(text);
+  if(!rows.length){ showErr('文件内容为空，未读取到数据行。'); return; }
+  processRows(rows, name);
+}
+function showErr(msg){ var err=$('uploadError'); err.textContent=msg; err.classList.add('show'); }
+function processRows(rows, name){
+  var headers = rows[0].map(function(h){ return String(h).trim(); });
+  if(headers.length<1){ showErr('表头识别失败，请确认第一行是字段名称。'); return; }
+  State.sourceHeaders = headers;
+  State.sourceRows = rows.slice(1).filter(function(r){ return r.join('').trim()!==''; });
+  State.fieldMap = detectFields(headers);
+  if(!State.sourceRows.length){ showErr('未读取到数据行，请检查文件内容。'); return; }
+  buildMapUI();
+  $('mapSec').classList.add('show');
+  $('confirmBtn').style.display='inline-flex';
+}
+function buildMapUI(){
+  var body = $('mapBody'); body.innerHTML='';
+  var order = ['customer','date','amount','category','region','quantity','cost','paid','status'];
+  order.forEach(function(f){
+    var tr=document.createElement('tr');
+    var label=FIELD_LABELS[f];
+    var idx = State.fieldMap[f];
+    var sel='<select data-field="'+f+'">';
+    sel+='<option value="-1"'+(idx===undefined?' selected':'')+'>忽略此字段</option>';
+    State.sourceHeaders.forEach(function(h,i){
+      sel+='<option value="'+i+'"'+(idx===i?' selected':'')+'>'+esc(h)+'</option>';
+    });
+    sel+='</select>';
+    var prev = idx!==undefined ? esc(State.sourceRows[0][idx]) : '—';
+    tr.innerHTML='<td>'+label+(REQUIRED_FIELDS.indexOf(f)>=0?' <span style="color:var(--danger)">*</span>':'')+'</td><td>'+sel+'</td><td style="color:var(--text-3)">'+prev+'</td>';
+    body.appendChild(tr);
+  });
+  var pv=$('previewBox');
+  var h='<table><thead><tr>'+State.sourceHeaders.slice(0,8).map(function(h){return '<th>'+esc(h)+'</th>';}).join('')+'</tr></thead><tbody>';
+  State.sourceRows.slice(0,6).forEach(function(r){
+    h+='<tr>'+r.slice(0,8).map(function(c){return '<td>'+esc(c)+'</td>';}).join('')+'</tr>';
+  });
+  h+='</tbody></table>';
+  pv.innerHTML=h;
+  body.querySelectorAll('select').forEach(function(sel){
+    sel.addEventListener('change', function(){ State.fieldMap[this.dataset.field] = parseInt(this.value,10); });
+  });
+}
+function confirmImport(){
+  var missing = REQUIRED_FIELDS.filter(function(f){ return State.fieldMap[f]===undefined || State.fieldMap[f]<0; });
+  if(missing.length){
+    showErr('以下必填字段未映射：' + missing.map(function(f){return FIELD_LABELS[f];}).join('、') + '。请选择来源列。');
+    return;
+  }
+  var orders=[];
+  State.sourceRows.forEach(function(r, ri){
+    function pick(f){ var i=State.fieldMap[f]; return (i===undefined||i<0||i>=r.length) ? '' : r[i]; }
+    var amount = parseFloat(String(pick('amount')).replace(/[^\d.\-]/g,'')) || 0;
+    var cost = parseFloat(String(pick('cost')).replace(/[^\d.\-]/g,'')) || 0;
+    var paid = parseFloat(String(pick('paid')).replace(/[^\d.\-]/g,'')) || 0;
+    var qty = parseInt(pick('quantity'),10) || 0;
+    if(isNaN(amount)) return;
+    var customer = String(pick('customer')).trim();
+    if(!customer) return;
+    var date = normalizeDate(pick('date'));
+    var statusRaw = String(pick('status')).trim();
+    var status = statusRaw || (paid>=amount&&amount>0 ? '已回款' : (paid>0 ? '部分回款' : '未回款'));
+    orders.push({
+      date: date, customer: customer,
+      category: String(pick('category')).trim() || '未分类',
+      region: String(pick('region')).trim() || '未划分',
+      quantity: qty, amount: amount, cost: cost, paid: paid, status: status,
+      _row: ri+2
+    });
+  });
+  if(!orders.length){ showErr('解析后没有有效订单（第 '+REQUIRED_FIELDS.map(function(f){return FIELD_LABELS[f];}).join('/')+' 列可能为空）。'); return; }
+  State.orders = orders;
+  State.loaded = true;
+  closeUpload();
+  updateDataStatus();
+  renderAll();
+  toast('成功导入 ' + orders.length + ' 条订单');
+}
+function normalizeDate(v){
+  v = String(v||'').trim();
+  if(!v) return '';
+  var m = v.match(/(\d{4})[-/.年](\d{1,2})[-/.月](\d{1,2})/);
+  if(m) return m[1]+'-'+pad2(m[2])+'-'+pad2(m[3]);
+  var t = Date.parse(v);
+  if(!isNaN(t)) return new Date(t).toISOString().slice(0,10);
+  return v;
+}
+function pad2(n){ return ('0'+n).slice(-2); }
+
+/* ============ 派生统计 ============ */
+function buildStats(orders){
+  var st = { orders:orders, totalAmount:0, totalCost:0, totalPaid:0, count:0, customers:{}, categories:{}, regions:{}, monthly:{}, riskCount:0, overdueAmount:0 };
+  var now = new Date();
+  orders.forEach(function(o){
+    st.totalAmount += o.amount; st.totalCost += o.cost; st.totalPaid += Math.min(o.paid, o.amount); st.count++;
+    st.customers[o.customer] = st.customers[o.customer] || {name:o.customer, orders:0, amount:0, cost:0, paid:0, lastDate:''};
+    var c = st.customers[o.customer];
+    c.orders++; c.amount+=o.amount; c.cost+=o.cost; c.paid+=Math.min(o.paid,o.amount);
+    if(o.date > c.lastDate) c.lastDate = o.date;
+    st.categories[o.category] = st.categories[o.category] || {name:o.category, orders:0, amount:0, cost:0, paid:0};
+    var ca = st.categories[o.category];
+    ca.orders++; ca.amount+=o.amount; ca.cost+=o.cost; ca.paid+=Math.min(o.paid,o.amount);
+    st.regions[o.region] = st.regions[o.region] || {name:o.region, amount:0};
+    st.regions[o.region].amount += o.amount;
+    if(o.date) { var key=o.date.slice(0,7); st.monthly[key] = st.monthly[key] || {amount:0,paid:0}; st.monthly[key].amount+=o.amount; st.monthly[key].paid+=Math.min(o.paid,o.amount); }
+    var gap = o.amount - o.paid;
+    var days = o.date ? Math.floor((now - new Date(o.date).getTime())/86400000) : 999;
+    if(gap > 0 && (o.paid < o.amount*0.5 || days > 120)){
+      st.riskCount++; st.overdueAmount += gap;
+    }
+  });
+  st.customerList = Object.keys(st.customers).map(function(k){ return st.customers[k]; });
+  st.categoryList = Object.keys(st.categories).map(function(k){ return st.categories[k]; });
+  st.regionList = Object.keys(st.regions).map(function(k){ return st.regions[k]; });
+  st.monthList = Object.keys(st.monthly).sort();
+  st.grossProfit = st.totalAmount - st.totalCost;
+  st.marginRate = st.totalAmount ? st.grossProfit/st.totalAmount : 0;
+  st.paidRate = st.totalAmount ? st.totalPaid/st.totalAmount : 0;
+  st.avgOrder = st.count ? st.totalAmount/st.count : 0;
+  return st;
+}
+function updateDataStatus(){
+  $('dataStatus').textContent = State.loaded ? ('已导入 ' + State.orders.length + ' 条订单') : '未导入数据';
+  var risk = State.loaded ? buildStats(State.orders).riskCount : 0;
+  var badge = $('riskBadge');
+  if(risk>0){ badge.textContent=risk; badge.classList.add('show'); } else badge.classList.remove('show');
+}
+
+/* ============ AI 经营解读（本地规则引擎） ============ */
+function generateInsights(st){
+  var suggestions=[], findings=[], risks=[], actions=[];
+  if(!st.count) return {suggestions:suggestions, findings:findings, risks:risks, actions:actions};
+  var avgMargin = st.marginRate, avgShare = 1/st.categoryList.length;
+  var star=null, riskCat=null, oppCat=null, weakCat=null;
+  st.categoryList.forEach(function(ca){
+    var m = ca.amount ? (ca.amount-ca.cost)/ca.amount : 0;
+    var share = ca.amount/st.totalAmount;
+    if(m>=avgMargin && share>=avgShare && !star) star=ca;
+    else if(m<avgMargin && share>=avgShare && !riskCat) riskCat=ca;
+    else if(m>=avgMargin && share<avgShare && !oppCat) oppCat=ca;
+    else if(m<avgMargin && share<avgShare && !weakCat) weakCat=ca;
+  });
+  if(star) suggestions.push('「'+star.name+'」是当前唯一处于高利润高份额区域的明星品类，建议优先保障产能与备货');
+  else if(st.categoryList.length) suggestions.push('当前没有绝对明星品类，建议聚焦毛利高于平均水平的品类做精细化运营');
+  if(riskCat) suggestions.push('「'+riskCat.name+'」份额高但毛利率低于平均，需评估提价空间或优化采购成本');
+  if(oppCat) suggestions.push('「'+oppCat.name+'」毛利率高于平均但份额偏低，是潜在增量市场，建议加大推广投入');
+  if(weakCat) suggestions.push('「'+weakCat.name+'」毛利率与份额均低于平均，建议战略性收缩或调整产品结构');
+  var top3 = st.customerList.slice().sort(function(a,b){return b.amount-a.amount;}).slice(0,3);
+  var top3Share = top3.reduce(function(s,c){return s+c.amount;},0)/(st.totalAmount||1);
+  if(top3Share>0.5) risks.push('客户集中度偏高：Top3 客户占销售额 '+fmtPct(top3Share)+'，单一客户流失将显著影响营收，建议拓展新客户分散风险');
+  else findings.push('客户结构较均衡：Top3 客户占销售额 '+fmtPct(top3Share)+'，集中度处于合理区间');
+  if(st.paidRate<0.75) risks.push('整体回款率仅 '+fmtPct(st.paidRate)+'，低于健康线 75%，存在流动性压力');
+  else findings.push('整体回款率 '+fmtPct(st.paidRate)+'，回款状况'+(st.paidRate>0.9?'优秀':'良好'));
+  if(st.riskCount>0) risks.push('当前有 '+st.riskCount+' 笔高风险订单，回款缺口合计 '+fmtMoney(st.overdueAmount)+'，建议优先跟进大额超期客户');
+  var worst = st.customerList.filter(function(c){ return c.amount-c.paid>0; }).sort(function(a,b){ return (b.amount-b.paid)-(a.amount-a.paid); })[0];
+  if(worst) actions.push('优先跟进「'+worst.name+'」，其回款缺口 '+fmtMoney(worst.amount-worst.paid)+' 为全部客户中最高，建议本周安排对账');
+  if(star) actions.push('为「'+star.name+'」追加产能排期，并整理其销售数据沉淀为标杆案例');
+  if(st.overdueAmount>0) actions.push('对超期订单建立周度催收清单，按缺口金额从大到小逐笔闭环');
+  if(!actions.length) actions.push('数据较为健康，建议保持现有经营节奏，并关注下季度季节性波动');
+  return {suggestions:suggestions.slice(0,3), findings:findings.slice(0,2), risks:risks.slice(0,3), actions:actions.slice(0,3)};
+}
+
+/* ============ 图表封装 ============ */
+function chart(elId, option, h){
+  var el = $(elId);
+  if(!el) return;
+  el.innerHTML='';
+  if(!window.echarts){ el.innerHTML='<div style="color:var(--text-3);font-size:12px;padding:20px">图表库加载失败，请检查网络后刷新页面</div>'; return; }
+  var c = echarts.init(el);
+  c.setOption(option);
+  if(h) el.style.height=h;
+  charts[elId]=c;
+}
+function baseGrid(){ return {left:48,right:20,top:36,bottom:30}; }
+function baseTooltip(){ return {trigger:'axis'}; }
+var PALETTE=['#185FA5','#D92D20','#B54708','#0F6E56','#7F77DD','#D4537E','#378ADD','#639922'];
+
+/* ============ 页面：工作台 ============ */
+function renderDashboard(){
+  var el=$('page-dashboard');
+  if(!State.loaded || !State.orders.length){ el.innerHTML=emptyState('工作台','还没有经营数据，无法生成经营摘要。','导入你的客户与订单数据（CSV 或 Excel），AI 将自动生成 KPI 摘要、经营解读与趋势图表。'); return; }
+  var st=buildStats(State.orders);
+  var ins=generateInsights(st);
+  var topCust = st.customerList.slice().sort(function(a,b){return b.amount-a.amount;}).slice(0,1)[0];
+  var html='';
+  html+='<div class="kpi-grid">'+kpiCard('总销售额', fmtMoney(st.totalAmount), '累计 '+st.count+' 笔订单', st.totalAmount>0)+
+    kpiCard('毛利率', fmtPct(st.marginRate), '毛利额 '+fmtMoney(st.grossProfit), st.marginRate>0.3)+
+    kpiCard('客户数', fmtNum(st.customerList.length), '活跃客户', true)+
+    kpiCard('平均客单', fmtMoney(st.avgOrder), '单笔订单均值', true)+
+    kpiCard('回款率', fmtPct(st.paidRate), '已回款 / 应收', st.paidRate>=0.75)+
+    kpiCard('风险订单', fmtNum(st.riskCount), '缺口 '+fmtMoney(st.overdueAmount), st.riskCount===0)+'</div>';
+  html+='<div class="ai-block"><span class="ai-tag">AI 经营解读</span><div class="ai-title">关键发现与行动建议</div><div class="ai-grid">';
+  ins.suggestions.forEach(function(s){ html+='<div class="ai-item"><span class="dot" style="background:var(--primary)"></span><span>'+s+'</span></div>'; });
+  ins.risks.forEach(function(s){ html+='<div class="ai-item"><span class="dot" style="background:var(--danger)"></span><span class="t-danger">'+s+'</span></div>'; });
+  ins.findings.forEach(function(s){ html+='<div class="ai-item"><span class="dot" style="background:var(--ok)"></span><span>'+s+'</span></div>'; });
+  ins.actions.forEach(function(s){ html+='<div class="ai-item"><span class="dot" style="background:var(--warn)"></span><span class="t-warn">'+s+'</span></div>'; });
+  html+='</div><div class="ai-foot">以上内容由 AI 生成，仅供参考</div></div>';
+  html+='<div class="grid-2"><div class="card"><div class="card-h"><h3>月度销售趋势</h3><span class="sub">近 12 个月</span></div><div class="chart" id="ch-trend"></div></div>'+
+    '<div class="card"><div class="card-h"><h3>市场结构</h3><span class="sub">区域销售额占比</span></div><div class="chart" id="ch-region"></div></div></div>';
+  html+='<div class="card" style="margin-top:16px"><div class="card-h"><h3>品类结构</h3><span class="sub">销售额与毛利率对比</span></div><div class="chart" id="ch-cat"></div></div>';
+  if(topCust) html+='<div class="card" style="margin-top:16px;background:var(--primary-50);border-color:var(--primary-100)"><div style="font-size:13px;color:var(--primary-800)">重点客户：<b>'+esc(topCust.name)+'</b>，累计 '+fmtMoney(topCust.amount)+'，回款率 '+fmtPct(topCust.paid/topCust.amount)+'，建议保持重点跟进</div></div>';
+  el.innerHTML=html;
+  chart('ch-trend', trendOption(st), '320px');
+  chart('ch-region', regionOption(st), '320px');
+  chart('ch-cat', categoryOption(st), '320px');
+}
+function kpiCard(label, value, delta, good){
+  return '<div class="kpi"><div class="k-label">'+label+'</div><div class="k-value">'+value+'</div><div class="k-delta '+(good?'up':'down')+'">'+delta+'</div></div>';
+}
+function trendOption(st){
+  var data=st.monthList.map(function(k){ return st.monthly[k].amount; });
+  return {color:['#185FA5'], tooltip:baseTooltip(), grid:baseGrid(),
+    xAxis:{type:'category', data:st.monthList.map(function(k){return k.slice(5);}), axisLine:{lineStyle:{color:'#E3E8F0'}}, axisLabel:{color:'#5F6B7A'}},
+    yAxis:{type:'value', axisLabel:{color:'#5F6B7A', formatter:function(v){return v>=10000?(v/10000)+'万':v;}}, splitLine:{lineStyle:{color:'#EEF2F7'}}},
+    series:[{type:'line', smooth:true, data:data, areaStyle:{color:'rgba(24,95,165,.12)'}, lineStyle:{width:2.5}, symbolSize:6}]};
+}
+function regionOption(st){
+  var data=st.regionList.map(function(r){ return {name:r.name, value:r.amount}; }).sort(function(a,b){return b.value-a.value;});
+  return {tooltip:{trigger:'item', formatter:'{b}: {c} ({d}%)'}, legend:{bottom:0, textStyle:{color:'#5F6B7A', fontSize:12}},
+    color:PALETTE, series:[{type:'pie', radius:['42%','68%'], center:['50%','44%'], itemStyle:{borderRadius:6, borderColor:'#fff', borderWidth:2},
+    label:{color:'#5F6B7A', fontSize:12, formatter:'{b}\n{d}%'}, data:data}]};
+}
+function categoryOption(st){
+  var cats=st.categoryList.slice().sort(function(a,b){return b.amount-a.amount;});
+  var x=cats.map(function(c){return c.name;});
+  var amounts=cats.map(function(c){return c.amount;});
+  var margins=cats.map(function(c){ return c.amount?(c.amount-c.cost)/c.amount*100:0; });
+  return {color:['#185FA5','#D92D20'], tooltip:{trigger:'axis'}, legend:{top:0, right:0, textStyle:{color:'#5F6B7A', fontSize:12}},
+    grid:baseGrid(), xAxis:{type:'category', data:x, axisLabel:{color:'#5F6B7A'}, axisLine:{lineStyle:{color:'#E3E8F0'}}},
+    yAxis:[{type:'value', name:'销售额', axisLabel:{color:'#5F6B7A', formatter:function(v){return v>=10000?(v/10000)+'万':v;}}, splitLine:{lineStyle:{color:'#EEF2F7'}}},
+      {type:'value', name:'毛利率 %', min:0, max:100, axisLabel:{color:'#5F6B7A'}, splitLine:{show:false}}],
+    series:[{name:'销售额', type:'bar', barWidth:26, itemStyle:{borderRadius:[4,4,0,0]}, data:amounts},
+      {name:'毛利率', type:'line', yAxisIndex:1, smooth:true, data:margins.map(function(v){return Number(v.toFixed(1));}), lineStyle:{width:2.5}, symbolSize:6}]};
+}
+
+/* ============ 页面：经营报告 ============ */
+function renderReport(){
+  var el=$('page-report');
+  if(!State.loaded || !State.orders.length){ el.innerHTML=emptyState('经营报告','还没有数据，无法生成经营报告。','上传订单数据后，系统将自动生成「结论先行」的经营分析报告：经营建议、关键指标、品类象限、回款风险一应俱全。'); return; }
+  var st=buildStats(State.orders);
+  var ins=generateInsights(st);
+  var genDate = new Date().toLocaleDateString('zh-CN');
+  var topCusts = st.customerList.slice().sort(function(a,b){return b.amount-a.amount;}).slice(0,10);
+  var html='';
+  html+='<div class="report-head"><div><h2>经营分析报告</h2><div class="meta">报告生成时间：'+genDate+' · 数据范围：'+st.count+' 笔订单 / '+st.customerList.length+' 家客户 · 报告由 AI 自动生成</div></div><button class="btn primary no-print" onclick="window.print()">打印 / 导出 PDF</button></div>';
+  html+='<div class="suggest-box"><span class="sg-tag">经营建议 · 先看结论</span><h3>下季度最需要关注的三件事</h3><ol>';
+  var s3 = ins.suggestions.length>=3 ? ins.suggestions : ins.suggestions.concat(ins.risks, ins.actions);
+  s3.slice(0,3).forEach(function(s){ html+='<li><b>建议</b> '+s+'</li>'; });
+  html+='</ol></div>';
+  html+='<div class="kpi-grid">'+kpiCard('总销售额', fmtMoney(st.totalAmount), st.count+' 笔订单', true)+
+    kpiCard('毛利率', fmtPct(st.marginRate), '毛利额 '+fmtMoney(st.grossProfit), st.marginRate>0.3)+
+    kpiCard('回款率', fmtPct(st.paidRate), '健康线 75%', st.paidRate>=0.75)+
+    kpiCard('客户数', fmtNum(st.customerList.length), 'Top3 占比 '+fmtPct(top3Share(st)), true)+
+    kpiCard('风险订单', fmtNum(st.riskCount), '缺口 '+fmtMoney(st.overdueAmount), st.riskCount===0)+
+    kpiCard('平均客单', fmtMoney(st.avgOrder), '单笔均值', true)+'</div>';
+  html+='<div class="rpt-sec card"><div class="sec-title">品类四象限：谁在赚钱，谁在失血</div><div class="sec-desc">X 轴毛利率，Y 轴销售额占比，气泡大小=订单数。右上角为明星品类，左下角需战略决策</div><div class="chart" id="rp-quad"></div></div>';
+  html+='<div class="grid-2"><div class="card rpt-sec"><div class="sec-title">回款率分布</div><div class="sec-desc">回款率直方图：看清订单集中在哪个回款区间</div><div class="chart sm" id="rp-hist"></div></div>'+
+    '<div class="card rpt-sec"><div class="sec-title">月度销售趋势</div><div class="sec-desc">近 12 个月销售额走势</div><div class="chart sm" id="rp-trend"></div></div></div>';
+  html+='<div class="card rpt-sec"><div class="sec-title">客户 × 品类热力图</div><div class="sec-desc">颜色越深销售额越高，空白格=潜在增量机会</div><div class="chart" id="rp-heat"></div></div>';
+  html+='<div class="card rpt-sec"><div class="sec-title">回款缺口排行</div><div class="sec-desc">按客户聚合的未回款金额，颜色越深越需要优先跟进</div><div class="chart" id="rp-gap"></div></div>';
+  html+='<div class="ai-block"><span class="ai-tag">AI 经营解读</span><div class="ai-title">数据背后的经营洞察</div><div class="ai-grid">';
+  ins.suggestions.forEach(function(s){ html+='<div class="ai-item"><span class="dot" style="background:var(--primary)"></span><span>'+s+'</span></div>'; });
+  ins.risks.forEach(function(s){ html+='<div class="ai-item"><span class="dot" style="background:var(--danger)"></span><span class="t-danger">'+s+'</span></div>'; });
+  ins.actions.forEach(function(s){ html+='<div class="ai-item"><span class="dot" style="background:var(--warn)"></span><span class="t-warn">'+s+'</span></div>'; });
+  html+='</div><div class="ai-foot">以上内容由 AI 生成，仅供参考</div></div>';
+  html+='<div style="text-align:center;color:var(--text-3);font-size:12px;padding:16px 0">—— 报告结束 · AI CRM 管理工作台 ——</div>';
+  el.innerHTML=html;
+  chart('rp-quad', quadOption(st), '340px');
+  chart('rp-hist', histOption(st), '280px');
+  chart('rp-trend', trendOption(st), '280px');
+  chart('rp-heat', heatOption(st), '340px');
+  chart('rp-gap', gapOption(st), '320px');
+}
+function top3Share(st){
+  var top3 = st.customerList.slice().sort(function(a,b){return b.amount-a.amount;}).slice(0,3);
+  return top3.reduce(function(s,c){return s+c.amount;},0)/(st.totalAmount||1);
+}
+function quadOption(st){
+  var shareAvg = 1/Math.max(st.categoryList.length,1);
+  var data = st.categoryList.map(function(ca){
+    var m = ca.amount ? (ca.amount-ca.cost)/ca.amount : 0;
+    var share = ca.amount/(st.totalAmount||1);
+    return {name:ca.name, value:[Number((m*100).toFixed(1)), Number((share*100).toFixed(1)), ca.orders, ca.amount]};
+  });
+  return {tooltip:{trigger:'item', formatter:function(p){
+      var d=p.data; return d.name+'<br/>毛利率 '+d.value[0]+'% · 销售占比 '+d.value[1]+'%<br/>订单数 '+d.value[2]+' · 销售额 '+fmtMoney(d.value[3]);
+    }},
+    grid:{left:52,right:24,top:30,bottom:44},
+    xAxis:{type:'value', name:'毛利率 %', nameTextStyle:{color:'#5F6B7A'}, axisLabel:{color:'#5F6B7A'}, splitLine:{lineStyle:{color:'#EEF2F7'}},
+      max:function(v){ return Math.ceil(v.max/10)*10; }},
+    yAxis:{type:'value', name:'销售占比 %', nameTextStyle:{color:'#5F6B7A'}, axisLabel:{color:'#5F6B7A'}, splitLine:{lineStyle:{color:'#EEF2F7'}},
+      max:function(v){ return Math.ceil(v.max/10)*10; }},
+    series:[{type:'scatter', symbolSize:function(v){ return Math.max(22, Math.min(70, v[2]*1.6)); },
+      itemStyle:{color:'rgba(24,95,165,.72)', borderColor:'#0C447C', borderWidth:1},
+      label:{show:true, formatter:function(p){ return p.data.name; }, position:'top', color:'#1F2733', fontSize:12},
+      data:data,
+      markLine:{silent:true, symbol:'none', lineStyle:{type:'dashed', color:'#98A2B3'},
+        data:[{xAxis:Number((st.marginRate*100).toFixed(1)), label:{formatter:'毛利均值 '+fmtPct(st.marginRate), color:'#5F6B7A'}},
+              {yAxis:Number((shareAvg*100).toFixed(1)), label:{formatter:'占比均值', color:'#5F6B7A'}}]}
+    }]};
+}
+function histOption(st){
+  var buckets=[0,0,0,0,0];
+  st.orders.forEach(function(o){
+    var r = o.amount ? Math.min(o.paid,o.amount)/o.amount : 0;
+    var idx = r>=0.8?4 : r>=0.6?3 : r>=0.4?2 : r>=0.2?1 : 0;
+    buckets[idx]++;
+  });
+  var labels=['0-20%','20-40%','40-60%','60-80%','80-100%'];
+  return {tooltip:{trigger:'axis', formatter:function(p){ return p[0].name+': '+p[0].value+' 笔订单'; }},
+    grid:baseGrid(), xAxis:{type:'category', data:labels, axisLabel:{color:'#5F6B7A'}, axisLine:{lineStyle:{color:'#E3E8F0'}}},
+    yAxis:{type:'value', axisLabel:{color:'#5F6B7A'}, splitLine:{lineStyle:{color:'#EEF2F7'}}},
+    series:[{type:'bar', barWidth:34, itemStyle:{color:'#185FA5', borderRadius:[4,4,0,0]}, data:buckets}]};
+}
+function heatOption(st){
+  var topCats = st.categoryList.slice().sort(function(a,b){return b.amount-a.amount;}).slice(0,6).map(function(c){return c.name;});
+  var topCusts = st.customerList.slice().sort(function(a,b){return b.amount-a.amount;}).slice(0,10).map(function(c){return c.name;});
+  var grid={}, maxV=0;
+  st.orders.forEach(function(o){
+    var ci=topCats.indexOf(o.category), ri=topCusts.indexOf(o.customer);
+    if(ci<0||ri<0) return;
+    var k=ci+'_'+ri; grid[k]=(grid[k]||0)+o.amount; if(grid[k]>maxV) maxV=grid[k];
+  });
+  var data=[];
+  Object.keys(grid).forEach(function(k){
+    var p=k.split('_'); data.push([+p[1], +p[0], grid[k]]);
+  });
+  var custShort = topCusts.map(function(n){ return n.length>10 ? n.slice(0,9)+'…' : n; });
+  return {tooltip:{position:'top', formatter:function(p){
+      return topCusts[p.value[0]]+' × '+topCats[p.value[1]]+'<br/>销售额 '+fmtMoney(p.value[2]);
+    }},
+    grid:{left:110,right:60,top:10,bottom:70},
+    xAxis:{type:'category', data:topCats, splitArea:{show:true}, axisLabel:{color:'#5F6B7A'}},
+    yAxis:{type:'category', data:custShort, splitArea:{show:true}, axisLabel:{color:'#5F6B7A'}},
+    visualMap:{min:0, max:maxV, calculable:false, orient:'horizontal', left:'center', bottom:10, itemWidth:10, itemHeight:80, textStyle:{color:'#98A2B3'},
+      inRange:{color:['#E6F1FB','#185FA5']}},
+    series:[{type:'heatmap', data:data, label:{show:false}, emphasis:{itemStyle:{shadowBlur:6}}}]};
+}
+function gapOption(st){
+  var gaps = st.customerList.map(function(c){ return {name:c.name, gap:c.amount-c.paid}; })
+    .filter(function(g){ return g.gap>0; }).sort(function(a,b){return b.gap-a.gap;}).slice(0,10);
+  if(!gaps.length) return {title:{text:'暂无回款缺口', left:'center', top:'middle', textStyle:{color:'#98A2B3', fontSize:14, fontWeight:'normal'}}};
+  var names=gaps.map(function(g){ return g.name.length>10 ? g.name.slice(0,9)+'…' : g.name; });
+  var vals=gaps.map(function(g){ return g.gap; });
+  return {tooltip:{trigger:'axis', formatter:function(p){ return p[0].name+'<br/>回款缺口 '+fmtMoney(p[0].value); }},
+    grid:{left:130,right:50,top:10,bottom:30},
+    xAxis:{type:'value', axisLabel:{color:'#5F6B7A', formatter:function(v){return v>=10000?(v/10000)+'万':v;}}, splitLine:{lineStyle:{color:'#EEF2F7'}}},
+    yAxis:{type:'category', data:names, axisLabel:{color:'#5F6B7A'}, axisLine:{lineStyle:{color:'#E3E8F0'}}},
+    series:[{type:'bar', barWidth:14, data:vals, itemStyle:{color:'#D92D20', borderRadius:[0,4,4,0]}}]};
+}
+
+/* ============ 页面：客户管理 ============ */
+function renderCustomers(){
+  var el=$('page-customers');
+  if(!State.loaded || !State.orders.length){ el.innerHTML=emptyState('客户管理','还没有客户数据。','导入订单数据后，系统将自动汇总客户维度：累计销售额、回款率、订单数与最近下单时间。'); return; }
+  var st=buildStats(State.orders);
+  var list=st.customerList.slice().sort(function(a,b){return b.amount-a.amount;});
+  var total=st.totalAmount||1;
+  var html='<div class="card"><div class="card-h"><h3>客户列表 <span style="font-size:12px;color:var(--text-3);font-weight:400">按累计销售额排序</span></h3><span class="sub">共 '+list.length+' 家客户</span></div><div class="tbl-wrap"><table><thead><tr><th>#</th><th>客户名称</th><th>订单数</th><th>累计销售额</th><th>销售额占比</th><th>毛利率</th><th>回款率</th><th>回款缺口</th><th>最近下单</th><th>风险等级</th></tr></thead><tbody>';
+  list.forEach(function(c, i){
+    var margin = c.amount ? (c.amount-c.cost)/c.amount : 0;
+    var paidRate = c.amount ? c.paid/c.amount : 0;
+    var gap = c.amount-c.paid;
+    var level = gap>0 && (paidRate<0.5 || gap>total*0.05) ? '<span class="tag red">高</span>' : (gap>0 ? '<span class="tag amber">中</span>' : '<span class="tag green">低</span>');
+    html+='<tr><td>'+(i+1)+'</td><td style="font-weight:500">'+esc(c.name)+'</td><td>'+c.orders+'</td><td style="font-weight:500">'+fmtMoney(c.amount)+'</td><td>'+fmtPct(c.amount/total)+'</td><td>'+fmtPct(margin)+'</td><td>'+fmtPct(paidRate)+'</td><td>'+(gap>0?fmtMoney(gap):'—')+'</td><td>'+esc(c.lastDate)+'</td><td>'+level+'</td></tr>';
+  });
+  html+='</tbody></table></div></div>';
+  el.innerHTML=html;
+}
+
+/* ============ 页面：订单管理 ============ */
+function renderOrders(){
+  var el=$('page-orders');
+  if(!State.loaded || !State.orders.length){ el.innerHTML=emptyState('订单管理','还没有订单数据。','导入订单数据（CSV 或 Excel），系统将自动解析金额、回款与状态字段。'); return; }
+  var orders=State.orders.slice().sort(function(a,b){ return a.date < b.date ? 1 : -1; });
+  var html='<div class="card"><div class="card-h"><h3>订单台账 <span style="font-size:12px;color:var(--text-3);font-weight:400">按日期倒序</span></h3><span class="sub">共 '+orders.length+' 笔</span></div><div class="tbl-wrap" style="max-height:70vh"><table><thead><tr><th>日期</th><th>客户</th><th>品类</th><th>区域</th><th>数量</th><th>销售额</th><th>成本</th><th>毛利率</th><th>已回款</th><th>回款率</th><th>状态</th></tr></thead><tbody>';
+  orders.forEach(function(o){
+    var margin = o.amount ? (o.amount-o.cost)/o.amount : 0;
+    var paidRate = o.amount ? Math.min(o.paid,o.amount)/o.amount : 0;
+    var stTag = paidRate>=1 ? '<span class="tag green">已回款</span>' : (paidRate>0 ? '<span class="tag amber">部分回款</span>' : '<span class="tag red">未回款</span>');
+    html+='<tr><td>'+esc(o.date)+'</td><td>'+esc(o.customer)+'</td><td><span class="tag blue">'+esc(o.category)+'</span></td><td>'+esc(o.region)+'</td><td>'+o.quantity+'</td><td style="font-weight:500">'+fmtMoney(o.amount)+'</td><td>'+fmtMoney(o.cost)+'</td><td>'+fmtPct(margin)+'</td><td>'+fmtMoney(o.paid)+'</td><td>'+fmtPct(paidRate)+'</td><td>'+stTag+'</td></tr>';
+  });
+  html+='</tbody></table></div></div>';
+  el.innerHTML=html;
+}
+
+/* ============ 页面：回款风险 ============ */
+function renderRisk(){
+  var el=$('page-risk');
+  if(!State.loaded || !State.orders.length){ el.innerHTML=emptyState('回款风险','还没有数据。','导入订单数据后，系统将按回款缺口与账龄自动识别高风险订单。'); return; }
+  var st=buildStats(State.orders);
+  var now=new Date();
+  var rows=State.orders.map(function(o){
+    var gap=o.amount-o.paid;
+    var days=o.date ? Math.floor((now-new Date(o.date).getTime())/86400000) : 999;
+    return {o:o, gap:gap, days:days, paidRate:o.amount?Math.min(o.paid,o.amount)/o.amount:0};
+  }).filter(function(r){ return r.gap>0; }).sort(function(a,b){ return b.gap-a.gap; });
+  var high=rows.filter(function(r){ return r.o.paid<r.o.amount*0.5 || r.days>120; });
+  var html='<div class="kpi-grid">'+kpiCard('高风险订单', fmtNum(high.length), '回款率<50% 或账龄>120天', high.length===0)+
+    kpiCard('回款缺口总额', fmtMoney(st.overdueAmount), '全部未回款金额', st.overdueAmount===0)+
+    kpiCard('整体回款率', fmtPct(st.paidRate), '健康线 75%', st.paidRate>=0.75)+
+    kpiCard('待跟进客户', fmtNum(st.customerList.filter(function(c){return c.amount-c.paid>0;}).length), '有缺口的客户数', false)+'</div>';
+  if(high.length){
+    html+='<div class="ai-block"><span class="ai-tag">AI 风险提示</span><div class="ai-title">优先处理以下客户，避免坏账扩大</div><div class="ai-grid">';
+    high.slice(0,4).forEach(function(r){
+      html+='<div class="ai-item"><span class="dot" style="background:var(--danger)"></span><span class="t-danger">「'+esc(r.o.customer)+'」缺口 '+fmtMoney(r.gap)+'，回款率 '+fmtPct(r.paidRate)+(r.days>120?'，账龄已达 '+r.days+' 天':'')+'，建议尽快安排催收</span></div>';
+    });
+    html+='</div><div class="ai-foot">以上内容由 AI 生成，仅供参考</div></div>';
+  }
+  if(!rows.length){
+    html+='<div class="card"><div class="state-box" style="padding:40px"><h3>暂无回款缺口</h3><p>所有订单均已全额回款，保持现状即可。</p></div></div>';
+    el.innerHTML=html; return;
+  }
+  html+='<div class="card"><div class="card-h"><h3>回款缺口明细 <span style="font-size:12px;color:var(--text-3);font-weight:400">按缺口金额排序</span></h3><span class="sub">'+rows.length+' 笔待跟进</span></div><div class="tbl-wrap" style="max-height:60vh"><table><thead><tr><th>日期</th><th>客户</th><th>品类</th><th>销售额</th><th>已回款</th><th>缺口金额</th><th>回款率</th><th>账龄</th><th>风险</th></tr></thead><tbody>';
+  rows.slice(0,100).forEach(function(r){
+    var lv = r.o.paid<r.o.amount*0.5||r.days>120 ? '<span class="tag red">高</span>' : (r.days>60 ? '<span class="tag amber">中</span>' : '<span class="tag gray">低</span>');
+    html+='<tr><td>'+esc(r.o.date)+'</td><td>'+esc(r.o.customer)+'</td><td>'+esc(r.o.category)+'</td><td>'+fmtMoney(r.o.amount)+'</td><td>'+fmtMoney(r.o.paid)+'</td><td style="font-weight:500;color:var(--danger)">'+fmtMoney(r.gap)+'</td><td>'+fmtPct(r.paidRate)+'</td><td>'+r.days+' 天</td><td>'+lv+'</td></tr>';
+  });
+  html+='</tbody></table></div></div>';
+  el.innerHTML=html;
+}
+
+/* ============ 页面：系统设置 ============ */
+function renderSettings(){
+  var el=$('page-settings');
+  el.innerHTML='<div class="card"><div class="card-h"><h3>系统设置</h3><span class="sub">演示原型 · 数据仅存于浏览器本地</span></div>'+
+    '<div class="setting-row"><div><div class="s-label">AI 经营解读</div><div class="s-desc">本地规则引擎（默认，离线可用）</div></div>'+
+    '<label class="switch"><input type="checkbox" id="aiSwitch" onchange="toggleAi(this)"><span class="sl"></span></label></div>'+
+    '<div class="setting-row"><div><div class="s-label">大模型 API Key（可选）</div><div class="s-desc">开启后调用通义千问生成解读，留空则自动回退本地规则引擎</div></div>'+
+    '<input type="text" id="apiKey" placeholder="sk-..." value="" onchange="saveKey(this)"></div>'+
+    '<div class="setting-row"><div><div class="s-label">经营报告</div><div class="s-desc">报告采用「先结论后数据」结构，顶部为经营建议</div></div>'+
+    '<span class="tag blue">已启用</span></div>'+
+    '<div class="setting-row"><div><div class="s-label">数据安全</div><div class="s-desc">数据仅在浏览器本地解析处理，不上传任何服务器（演示环境）</div></div>'+
+    '<span class="tag green">本地处理</span></div>'+
+    '<div class="setting-row"><div><div class="s-label">当前数据</div><div class="s-desc">'+(State.loaded?State.orders.length+' 条订单 / '+buildStats(State.orders).customerList.length+' 家客户':'未导入')+'</div></div>'+
+    '<button class="btn sm" onclick="clearData()">清空数据</button></div>'+
+    '</div>';
+}
+function toggleAi(cb){
+  State.aiMode = cb.checked ? 'online' : 'local';
+  toast(State.aiMode==='online' ? '已切换到大模型解读模式（需配置 API Key）' : '已切换回本地规则引擎');
+  renderAll();
+}
+function saveKey(inp){ State.apiKey = inp.value.trim(); }
+function clearData(){
+  State.orders=[]; State.loaded=false;
+  Object.keys(charts).forEach(function(k){ if(charts[k]) charts[k].dispose(); });
+  charts={};
+  updateDataStatus(); renderAll();
+  toast('数据已清空');
+}
+
+/* ============ 空态 ============ */
+function emptyState(title, msg, hint){
+  return '<div class="card"><div class="state-box"><div class="s-ico">&#128203;</div><h3>'+title+' · 暂无数据</h3><p>'+msg+'<br/><span style="color:var(--text-3);font-size:12px">'+hint+'</span></p>'+
+    '<div class="s-actions"><button class="btn primary" onclick="openUpload()">立即上传数据</button><button class="btn" onclick="loadSample()">载入示例数据</button></div></div></div>';
+}
+function renderAll(){
+  ['dashboard','report','customers','orders','risk','settings'].forEach(function(p){
+    var fn = renderers[p]; if(fn) fn();
+  });
+  Object.keys(charts).forEach(function(k){ if(charts[k]) charts[k].resize(); });
+}
+
+/* ============ 初始化 ============ */
+window.addEventListener('resize', function(){
+  Object.keys(charts).forEach(function(k){ if(charts[k]) charts[k].resize(); });
+});
+document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeUpload(); });
+renderAll();
+</script>
+</body>
+</html>
