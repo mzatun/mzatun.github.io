@@ -878,7 +878,7 @@ function buildStyle(){
     "relief": { type:"image", url:"data:image/webp;base64," + RELIEF_B64, coordinates:[[73,54],[135,54],[135,17],[73,17]] },
     "china": { type:"geojson", data: makeChinaGeo() },
     "rivers": { type:"geojson", data: RIVERS_GEO },
-    "routes": { type:"geojson", data: { type:"FeatureCollection", features: ROUTES.map(r => ({ type:"Feature", properties:{ id:r.id }, geometry:{ type:"LineString", coordinates: r.pts } })) } }
+    "routes": { type:"geojson", data: { type:"FeatureCollection", features: ROUTES.map(r => ({ type:"Feature", properties:{ id:r.id, color:r.color, name:r.name }, geometry:{ type:"LineString", coordinates: r.pts } })) } }
   };
   const layers = [
     { id:"bg", type:"background", paint:{ "background-color": MAP_BG } },
@@ -886,8 +886,8 @@ function buildStyle(){
     { id:"prov-fill", type:"fill", source:"china", paint:{ "fill-color":["get","f"], "fill-opacity":["get","o"], "fill-antialias":false } },
     { id:"rivers-dark", type:"line", source:"rivers", layout:{ "line-join":"round","line-cap":"round" }, paint:{ "line-color":"#4F7D8C", "line-width":["interpolate",["linear"],["zoom"],3,0.6,7,1.6], "line-opacity":0.9 } },
     { id:"rivers-light", type:"line", source:"rivers", layout:{ "line-join":"round","line-cap":"round" }, paint:{ "line-color":"#9BC3C9", "line-width":["interpolate",["linear"],["zoom"],3,0.25,7,0.7], "line-opacity":0.55 } },
-    { id:"route-glow", type:"line", source:"routes", layout:{ "line-join":"round","line-cap":"round" }, paint:{ "line-color":["get","id"], "line-width":["interpolate",["linear"],["zoom"],3,3.4,8,7], "line-opacity":0.22 } },
-    { id:"route-line", type:"line", source:"routes", layout:{ "line-join":"round","line-cap":"round" }, paint:{ "line-color":["get","id"], "line-width":["interpolate",["linear"],["zoom"],3,1.6,8,3.2], "line-opacity":0.95 } },
+    { id:"route-glow", type:"line", source:"routes", layout:{ "line-join":"round","line-cap":"round" }, paint:{ "line-color":["get","color"], "line-width":["interpolate",["linear"],["zoom"],3,4.5,8,9], "line-opacity":0.3 } },
+    { id:"route-line", type:"line", source:"routes", layout:{ "line-join":"round","line-cap":"round" }, paint:{ "line-color":["get","color"], "line-width":["interpolate",["linear"],["zoom"],3,2.2,8,4.2], "line-opacity":0.96 } },
     { id:"prov-line", type:"line", source:"china", paint:{ "line-color":"#B8893B", "line-width":0.8, "line-opacity":0.5 } }
   ];
   return { version:8, projection:{ type:"globe" }, sources, layers };
