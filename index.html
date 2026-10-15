@@ -184,14 +184,20 @@
 
   /* ---------- open source ---------- */
   .repos{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
-  .repo{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:var(--shadow-sm);transition:transform .2s,border-color .2s}
+  .repo{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:var(--shadow-sm);transition:transform .2s,border-color .2s;display:flex;flex-direction:column}
   .repo:hover{transform:translateY(-4px);border-color:var(--teal)}
   .repo .rn{font-weight:750;font-size:15px;display:flex;align-items:center;gap:8px}
   .repo .rn svg{width:16px;height:16px;fill:var(--ink-faint)}
-  .repo p{font-size:13px;color:var(--ink-soft);margin-top:8px}
+  .repo p{font-size:13px;color:var(--ink-soft);margin-top:8px;flex:1 1 auto}
   .repo .lang{margin-top:12px;font-size:12px;color:var(--ink-faint);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
   .repo .lang i{width:9px;height:9px;border-radius:50%;display:inline-block}
   .repo .lang .st{color:var(--amber);font-weight:700}
+  /* 双师色线：GIS 专业课（绿） / AI 应用课（紫） */
+  .repo-gis{border-top:4px solid #15803d}
+  .repo-gis:hover{border-color:#15803d;border-top-color:#15803d}
+  .repo-gis .rn{color:#15803d}
+  .repo-ai{border-top:4px solid #7c3aed}
+  .repo-ai:hover{border-color:#7c3aed;border-top-color:#7c3aed}
   @media(max-width:900px){.repos{grid-template-columns:repeat(2,1fr)}}
   @media(max-width:600px){.repos{grid-template-columns:1fr}}
 
@@ -712,42 +718,42 @@
       <p>把真实交付链沉淀成可教学的课程体系：一篇网络教程 → 五卷教程 → 15 章教材 → 32 学时教学配套 → 53 份课程体系。新增一条印刷出版线：15 章屏幕版重排为 16 开 282 页印刷教材，含五暗面、三阶段止损线、口径错误认账与 M1–M18 方法论速查。生产给教学以血肉，教学给生产以骨骼。同一方法论已复刻到新链：公选课《氛围编程与AI应用创作》——课程方案 → 教程六卷 → 117 页印刷教材。</p>
     </div>
     <div class="repos">
-      <a class="repo reveal" href="https://mzatun.github.io/jyedu-gis-tutorial/" target="_blank" rel="noopener">
+      <a class="repo reveal repo-gis" href="https://mzatun.github.io/jyedu-gis-tutorial/" target="_blank" rel="noopener">
         <div class="rn">🗺️ GIS基础软件教程 · GeoScene Pro 操作手册（成果站）</div>
-        <p>嘉应学院 GIS 专业课程群「教程智能体」成果：11 专题 + 2 综合案例，300+ 关键截图 + 内联 SVG 原理图，按「原理 → 逻辑 → 过程」重编国产 GIS 软件操作教程，教学用途开源，单文件离线即开。</p>
-        <div class="lang"><i style="background:#0d9488"></i> HTML · GIS 课程 · 教学开源</div>
+        <p>嘉应学院 GIS 专业课程群「教程智能体」成果：11 专题 + 2 综合案例，按「原理 → 逻辑 → 过程」重编，教学开源，单文件离线即开。</p>
+        <div class="lang"><i style="background:#15803d"></i> HTML · GIS 课程 · 教学开源</div>
       </a>
-      <a class="repo reveal" href="https://mzatun.github.io/FDE-tutorial-to-course/" target="_blank" rel="noopener">
+      <a class="repo reveal repo-ai" href="https://mzatun.github.io/FDE-tutorial-to-course/" target="_blank" rel="noopener">
         <div class="rn">📚 双师型课程 · FDE 从教程到课程（成果站）</div>
         <p>六层成果链全量开放：教程五卷（约 5.3 万字）· 15 章教材（8.1 万汉字）· 32 学时教学配套 · 53 份课程体系（202 个内联 SVG，校验 0 失败）。单文件零依赖，双击即开。</p>
         <div class="lang"><i style="background:#a8322d"></i> HTML · 双师型课程 · GitHub Pages</div>
       </a>
-      <a class="repo reveal" href="https://mzatun.github.io/FDE-tutorial-to-course/双师迭代录/index.html" target="_blank" rel="noopener">
+      <a class="repo reveal repo-ai" href="https://mzatun.github.io/FDE-tutorial-to-course/双师迭代录/index.html" target="_blank" rel="noopener">
         <div class="rn">📜 双师迭代录 · 九卷纪实</div>
         <p>这条链怎么走通的完整纪实：四转入 · 四转出 · 三引擎 · 四指标 · 五红线，附时间轴与工具链清单，方法论层面完整开源。</p>
         <div class="lang"><i style="background:#2e5c8a"></i> HTML · 方法论 · 零依赖</div>
       </a>
-      <a class="repo reveal" href="https://github.com/mzatun/FDE-tutorial-to-course" target="_blank" rel="noopener">
+      <a class="repo reveal repo-ai" href="https://github.com/mzatun/FDE-tutorial-to-course" target="_blank" rel="noopener">
         <div class="rn"><svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 005.47 7.59c.4.07.55-.17.55-.38v-1.34c-2.23.49-2.7-1.07-2.7-1.07-.36-.93-.89-1.18-.89-1.18-.73-.5.05-.49.05-.49.81.06 1.23.83 1.23.83.72 1.23 1.88.87 2.34.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 014 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.28.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48v2.2c0 .21.15.46.55.38A8 8 0 0016 8c0-4.42-3.58-8-8-8z"/></svg> FDE-tutorial-to-course 仓库</div>
         <p>全量成果 + 工具链脚本（装配 / 校验 / 脱敏 / 封面），可复现的生产现场：verify_textbook / merge_book / verify_course / redact 等。</p>
         <div class="lang"><i style="background:#3572A5"></i> HTML · Python · 工具链</div>
       </a>
-      <a class="repo reveal" href="https://mzatun.github.io/FDE-tutorial-to-course/30-book/output/%E6%88%91%E7%9A%84FDE%E5%AE%9E%E6%88%98%E5%8F%8D%E6%80%9D_%E5%85%A8%E4%B9%A6_%E6%B0%B4%E5%8D%B0%E7%89%88.pdf" target="_blank" rel="noopener">
+      <a class="repo reveal repo-ai" href="https://mzatun.github.io/FDE-tutorial-to-course/30-book/output/%E6%88%91%E7%9A%84FDE%E5%AE%9E%E6%88%98%E5%8F%8D%E6%80%9D_%E5%85%A8%E4%B9%A6_%E6%B0%B4%E5%8D%B0%E7%89%88.pdf" target="_blank" rel="noopener">
         <div class="rn">📕 我的 FDE 实战反思 · 282 页直读</div>
         <p>16 开印刷教材全量：122,730 汉字 · 7 图 · 111 表 · 143 框，5 篇 15 章 + 附录 A–G。深赭单专色、三线表、页眉页码齐全；每页带 mzatun.github.io 平铺水印与页脚来源行。</p>
         <div class="lang"><i style="background:#8a5a18"></i> PDF · 印刷级 · 282 页</div>
       </a>
-      <a class="repo reveal" href="https://mzatun.github.io/vibe-coding-ai-course/" target="_blank" rel="noopener">
+      <a class="repo reveal repo-ai" href="https://mzatun.github.io/vibe-coding-ai-course/" target="_blank" rel="noopener">
         <div class="rn">🎨 氛围编程与AI应用创作 · 成果站</div>
         <p>一门公选课的三级成果链一站可见：课程方案 → 教程六卷 → 117 页印刷教材；项目过程时间线 + 全资源索引页，从写代码到指挥 AI。</p>
         <div class="lang"><i style="background:#1e4e9e"></i> HTML · vibe coding · GitHub Pages</div>
       </a>
-      <a class="repo reveal" href="https://mzatun.github.io/vibe-coding-ai-course/30-book/output/%E6%B0%9B%E5%9B%B4%E7%BC%96%E7%A8%8B%E4%B8%8EAI%E5%BA%94%E7%94%A8%E5%88%9B%E4%BD%9C_%E5%85%A8%E4%B9%A6%E5%90%88%E8%AE%A2%E6%9C%AC_v1.pdf" target="_blank" rel="noopener">
+      <a class="repo reveal repo-ai" href="https://mzatun.github.io/vibe-coding-ai-course/30-book/output/%E6%B0%9B%E5%9B%B4%E7%BC%96%E7%A8%8B%E4%B8%8EAI%E5%BA%94%E7%94%A8%E5%88%9B%E4%BD%9C_%E5%85%A8%E4%B9%A6%E5%90%88%E8%AE%A2%E6%9C%AC_v1.pdf" target="_blank" rel="noopener">
         <div class="rn">📕 教材合订本 · 117 页直读</div>
         <p>三篇八章 + 4 附录，5.0 万汉字 · 49 图 · 41 表；Paged.js + Edge 内核印刷级直出，页眉页脚页码齐全，浅底深字 SVG 配色铁律。</p>
         <div class="lang"><i style="background:#b45309"></i> PDF · 教材 · 印刷级</div>
       </a>
-      <a class="repo reveal" href="https://github.com/mzatun/vibe-coding-ai-course" target="_blank" rel="noopener">
+      <a class="repo reveal repo-ai" href="https://github.com/mzatun/vibe-coding-ai-course" target="_blank" rel="noopener">
         <div class="rn"><svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 005.47 7.59c.4.07.55-.17.55-.38v-1.34c-2.23.49-2.7-1.07-2.7-1.07-.36-.93-.89-1.18-.89-1.18-.73-.5.05-.49.05-.49.81.06 1.23.83 1.23.83.72 1.23 1.88.87 2.34.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 014 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.28.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48v2.2c0 .21.15.46.55.38A8 8 0 0016 8c0-4.42-3.58-8-8-8z"/></svg> vibe-coding-ai-course 仓库</div>
         <p>全量源文件 + 教材生产线脚本（build_book.py 装配校验 / html2pdf.js 直出 / shot_pages.js 目检），可复现的出版现场。</p>
         <div class="lang"><i style="background:#3572A5"></i> HTML · Python · 工具链</div>
