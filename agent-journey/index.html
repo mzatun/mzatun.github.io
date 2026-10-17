@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>我与我的智能体 · 成长历程 ｜ 钟广锐 mzatun</title>
+<meta name="description" content="钟广锐（mzatun）与他的 AI 智能体的共同成长历程：从四个工程（提示词、上下文、驾驭、循环、图）到业务能力组件化、组件能力服务化、服务能力可编排化，沿着可回答、可执行、可决策的目标一路演进。人机共生的实践记录。">
+<meta name="keywords" content="钟广锐,mzatun,AI智能体,人机共生,提示词工程,上下文工程,组件化,服务化,可编排化,SOA,本体论,能力包,能力契约,FDE,OPC,AI工程化">
+<meta name="author" content="钟广锐 (Zhong Guangrui)">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://mzatun.github.io/agent-journey/">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦞</text></svg>">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="钟广锐 · 空间智能与 AI 工程化">
+<meta property="og:title" content="我与我的智能体 · 成长历程">
+<meta property="og:description" content="从四个工程到三化体系，从可回答到可决策——一段人机共生的实践记录。">
+<meta property="og:url" content="https://mzatun.github.io/agent-journey/">
+<meta property="og:locale" content="zh_CN">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "我与我的智能体 · 成长历程",
+  "author": {"@type": "Person", "name": "钟广锐", "alternateName": "mzatun"},
+  "about": ["AI智能体", "人机共生", "AI工程化", "能力包体系"],
+  "description": "从四个工程（提示词、上下文、驾驭、循环、图）到组件化、服务化、可编排化，沿着可回答、可执行、可决策的目标演进的人机共生实践。"
+}
+</script>
+<style>
+  :root{
+    --bg:#f4f8fb; --surface:#ffffff;
+    --ink:#1f2d3d; --ink-soft:#5b6b7b; --ink-faint:#93a2b1;
+    --line:#e7eef4;
+    --teal:#14b8a6; --teal-soft:#e6faf6;
+    --blue:#3b82f6; --blue-soft:#e8f1fe;
+    --indigo:#6366f1; --indigo-soft:#ecebfe;
+    --amber:#f59e0b; --amber-soft:#fef4e3;
+    --green:#10b981; --green-soft:#e7f8f2;
+    --shadow:0 10px 30px -12px rgba(31,45,61,.18);
+    --shadow-sm:0 4px 14px -6px rgba(31,45,61,.14);
+    --r:18px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:"PingFang SC","Microsoft YaHei","Segoe UI",system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--ink);line-height:1.7;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+  section{padding:78px 0}
+
+  nav{position:sticky;top:0;z-index:50;background:rgba(244,248,251,.82);backdrop-filter:saturate(180%) blur(12px);border-bottom:1px solid var(--line)}
+  .nav-in{max-width:1080px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;justify-content:space-between}
+  .brand{font-weight:800;letter-spacing:.5px;display:flex;align-items:center;gap:9px;font-size:17px}
+  .brand .dot{width:11px;height:11px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--blue))}
+  .nav-links{display:flex;gap:26px;font-size:14.5px;color:var(--ink-soft)}
+  .nav-links a{transition:color .2s}
+  .nav-links a:hover{color:var(--teal)}
+  @media(max-width:760px){.nav-links{display:none}}
+
+  .hero{position:relative;overflow:hidden;background:radial-gradient(900px 380px at 82% -10%,var(--teal-soft),transparent 60%),radial-gradient(760px 360px at 8% 8%,var(--indigo-soft),transparent 55%),var(--surface);border-bottom:1px solid var(--line);padding:88px 0 76px}
+  .badge{display:inline-flex;align-items:center;gap:8px;background:var(--teal-soft);color:#0d9488;font-weight:600;font-size:13.5px;padding:7px 15px;border-radius:999px;margin-bottom:24px}
+  .badge .pulse{width:8px;height:8px;border-radius:50%;background:var(--teal);box-shadow:0 0 0 0 rgba(20,184,166,.5);animation:pulse 2.2s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(20,184,166,.45)}70%{box-shadow:0 0 0 10px rgba(20,184,166,0)}100%{box-shadow:0 0 0 0 rgba(20,184,166,0)}}
+  .hero h1{font-size:clamp(32px,5vw,50px);line-height:1.18;font-weight:850;letter-spacing:-.5px}
+  .hero h1 .grad{background:linear-gradient(120deg,var(--teal),var(--indigo));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero .lead{margin-top:22px;font-size:clamp(15.5px,2vw,18.5px);color:var(--ink-soft);max-width:720px}
+  .hero-meta{margin-top:30px;display:flex;flex-wrap:wrap;gap:22px;color:var(--ink-faint);font-size:14px}
+  .hero-meta b{color:var(--ink-soft);font-weight:600}
+
+  .sec-head{max-width:760px;margin-bottom:44px}
+  .sec-kicker{display:inline-block;font-size:12.5px;font-weight:700;letter-spacing:2.5px;color:var(--teal);text-transform:uppercase;margin-bottom:12px}
+  .sec-head h2{font-size:clamp(26px,3.6vw,36px);font-weight:820;letter-spacing:-.4px;line-height:1.25}
+  .sec-head p{margin-top:14px;color:var(--ink-soft);font-size:16px}
+
+  .timeline{position:relative;padding-left:34px}
+  .timeline::before{content:"";position:absolute;left:9px;top:8px;bottom:8px;width:3px;border-radius:3px;background:linear-gradient(180deg,var(--teal),var(--blue),var(--indigo))}
+  .era{position:relative;margin-bottom:40px}
+  .era:last-child{margin-bottom:0}
+  .era::before{content:"";position:absolute;left:-33px;top:10px;width:15px;height:15px;border-radius:50%;background:var(--surface);border:4px solid var(--teal)}
+  .era.e2::before{border-color:var(--blue)}
+  .era.e3::before{border-color:var(--indigo)}
+  .era-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow-sm);padding:30px 32px}
+  .era-tag{display:inline-block;font-size:12.5px;font-weight:700;padding:4px 12px;border-radius:999px;margin-bottom:12px}
+  .e1 .era-tag{background:var(--teal-soft);color:#0d9488}
+  .e2 .era-tag{background:var(--blue-soft);color:#2563eb}
+  .e3 .era-tag{background:var(--indigo-soft);color:#4f46e5}
+  .era h3{font-size:21px;font-weight:800;margin-bottom:8px}
+  .era .era-sub{color:var(--ink-faint);font-size:14px;margin-bottom:14px}
+  .era p{color:var(--ink-soft);font-size:15px}
+  .chips{display:flex;flex-wrap:wrap;gap:9px;margin-top:18px}
+  .chip{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:6px 13px;font-size:13.5px;font-weight:600;color:var(--ink)}
+  .era-note{margin-top:16px;background:var(--bg);border-left:3px solid var(--teal);border-radius:0 10px 10px 0;padding:11px 15px;font-size:14px;color:var(--ink-soft)}
+
+  .ladder-svg{width:100%;height:auto;display:block}
+  .mirror-svg{width:100%;height:auto;display:block}
+
+  .mirror{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:34px}
+  @media(max-width:760px){.mirror{grid-template-columns:1fr}}
+  .m-col{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow-sm);padding:26px 28px}
+  .m-col h3{font-size:17px;font-weight:800;margin-bottom:4px}
+  .m-col .m-sub{font-size:13px;color:var(--ink-faint);margin-bottom:16px}
+  .m-item{display:flex;gap:11px;padding:11px 0;border-top:1px dashed var(--line);font-size:14.5px}
+  .m-item:first-of-type{border-top:none}
+  .m-item .n{flex:none;width:24px;height:24px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:800;color:#fff}
+  .m-human .n{background:var(--teal)}
+  .m-agent .n{background:var(--indigo)}
+  .m-item b{display:block;font-size:14.5px}
+  .m-item span{color:var(--ink-soft);font-size:13.5px}
+
+  .contract{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:34px}
+  @media(max-width:760px){.contract{grid-template-columns:1fr}}
+  .c-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow-sm);padding:24px}
+  .c-card .ic{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:21px;margin-bottom:14px}
+  .c-card h3{font-size:16.5px;font-weight:800;margin-bottom:7px}
+  .c-card p{font-size:14px;color:var(--ink-soft)}
+
+  .closing{background:radial-gradient(700px 300px at 50% -20%,var(--indigo-soft),transparent 60%),var(--surface);border-top:1px solid var(--line)}
+  .closing .eq{font-size:clamp(19px,2.8vw,26px);font-weight:800;text-align:center;line-height:1.5;max-width:820px;margin:0 auto}
+  .closing .eq .grad{background:linear-gradient(120deg,var(--teal),var(--indigo));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .cta{text-align:center;margin-top:34px}
+  .cta a{display:inline-flex;align-items:center;gap:9px;background:linear-gradient(120deg,var(--teal),var(--blue));color:#fff;font-weight:700;font-size:15px;padding:13px 28px;border-radius:14px;box-shadow:var(--shadow);transition:transform .2s}
+  .cta a:hover{transform:translateY(-2px)}
+
+  footer{border-top:1px solid var(--line);padding:30px 0;color:var(--ink-faint);font-size:13.5px;text-align:center}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-in">
+    <a class="brand" href="/"><span class="dot"></span>钟广锐 <span style="color:var(--ink-faint);font-weight:600;font-size:14px">/ agent-journey</span></a>
+    <div class="nav-links">
+      <a href="#story">成长历程</a>
+      <a href="#goal">目标阶梯</a>
+      <a href="#mirror">人机镜像</a>
+      <a href="#contract">成长契约</a>
+      <a href="/">← 返回主页</a>
+    </div>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="wrap">
+    <div class="badge"><span class="pulse"></span>人机共生 · 实践记录</div>
+    <h1>我与我的智能体，<br>是怎么一路<span class="grad">长成今天这样</span>的</h1>
+    <p class="lead">这不是一篇讲 AI 趋势的文章，是一份持续运转的人机协作档案。它记录了我（钟广锐）和我的智能体从最初的对话工具，到今天能一起交付系统的完整历程——方法沉淀下来，就是下面三条线：四个工程、三化体系、三级目标。</p>
+    <div class="hero-meta">
+      <span><b>持续运行</b> 2025 至今</span>
+      <span><b>能力包</b> 6 个</span>
+      <span><b>技能载体</b> 173 个</span>
+      <span><b>机检</b> 全绿可验证</span>
+    </div>
+  </div>
+</div>
+
+<section id="story">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-kicker">The Journey</div>
+      <h2>三个阶段：先用起来，再组织起来，最后一起进化</h2>
+      <p>回头看，每一步都不是提前规划好的，是被真实的业务和交付问题倒逼出来的。但方向始终没变：让智能体从"能答"走到"能干"，再走到"能扛"。</p>
+    </div>
+    <div class="timeline">
+
+      <div class="era e1">
+        <div class="era-card">
+          <span class="era-tag">阶段一 · 把一个智能体用起来</span>
+          <h3>四个工程：提示词 · 上下文 · 驾驭 · 循环 · 图</h3>
+          <div class="era-sub">单体功夫期——解决"这一个智能体怎么才好用"</div>
+          <p>最初的工作围绕单个智能体展开：<b>提示词工程</b>让它听得懂任务，<b>上下文工程</b>让它记得住背景，<b>驾驭</b>让它守得住边界（不越权、不胡来），<b>循环</b>让它跑得完闭环（执行、检查、修正、再来），<b>图</b>让它看得见结构（流程与知识图谱）。这一阶段沉淀下来的是一门手艺：同一个模型，会不会调教，产出天差地别。</p>
+          <div class="chips"><span>提示词工程</span><span>上下文工程</span><span>驾驭与边界</span><span>执行循环</span><span>图与结构</span></div>
+          <div class="era-note">这一时期的局限很快暴露：每个智能体都是一座孤岛——换一个场景就要从头调教一遍，功夫不能积累。</div>
+        </div>
+      </div>
+
+      <div class="era e2">
+        <div class="era-card">
+          <span class="era-tag">阶段二 · 把一族智能体组织起来</span>
+          <h3>新 SOA 三层：组件化 → 服务化 → 可编排化</h3>
+          <div class="era-sub">体系工程期——解决"这么多智能体怎么不打架"</div>
+          <p>孤岛问题逼出了体系化：<b>业务能力组件化</b>——把每个业务场景拆成有契约（inputs / outputs / gates）的能力组件；<b>组件能力服务化</b>——契约写进 YAML，机器可校验，能力与实现解耦（技能挂了换技能，契约不动）；<b>服务能力可编排化</b>——router 负责路由、flows 负责配方，新场景只加变体参数和一条 flow，能力 ID 永不变。今天的成果落成了 6 个能力包 + 总注册表 + 机检脚本，配方跑通一次才标 verified，没跑通就诚实标 provisional。</p>
+          <div class="chips"><span>能力包总注册表 v1.3</span><span>六包格局</span><span>spec = 契约</span><span>router + flows</span><span>provisional→verified 回填</span><span>反孤岛条款</span></div>
+          <div class="era-note">升级的标志：扩一个业务域，不再是从零调教，而是给现有能力加一组变体参数——功夫开始复利。</div>
+        </div>
+      </div>
+
+      <div class="era e3">
+        <div class="era-card">
+          <span class="era-tag">阶段三 · 向共生走</span>
+          <h3>可回答 → 可执行 → 可决策</h3>
+          <div class="era-sub">目标主线期——衡量人机关系的刻度尺</div>
+          <p>这条主线贯穿始终，也是往后的方向。<b>可回答</b>：问什么答什么，有出处、不编造——这是信任的地基；<b>可执行</b>：答完能落地，读文件、改文件、跑脚本、过机检，交付可核验的东西——这是价值的发生器；<b>可决策</b>：在给定约束内自己选路径、选方案，把人从判断的重复劳动里解放出来——判断权始终在人，但执行的决策正在逐步移交。今天我们正稳定站在"可执行"，向"可决策"推进。</p>
+          <div class="chips"><span>可回答：有据</span><span>可执行：落地</span><span>可决策：共生</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<section id="goal" style="background:var(--surface);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-kicker">The Ladder</div>
+      <h2>三级目标：每一级都是下一级的地基</h2>
+      <p>可回答不是终点，是可执行的前提；可执行不是终点，是可决策的前提。跳级必塌。</p>
+    </div>
+    <svg class="ladder-svg" viewBox="0 0 680 300" role="img" aria-label="可回答、可执行、可决策三级阶梯图">
+      <title>三级目标阶梯：可回答 → 可执行 → 可决策</title>
+      <desc>三级自左向右抬升的阶梯：可回答（有据可信）、可执行（落地交付）、可决策（共生自治），每级标注它为下一级提供的前提。</desc>
+      <defs>
+        <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+      </defs>
+      <g font-family="PingFang SC,Microsoft YaHei,sans-serif">
+        <rect x="40" y="180" width="180" height="76" rx="14" fill="#e6faf6" stroke="#14b8a6" stroke-width="1"/>
+        <text x="130" y="212" text-anchor="middle" font-size="17" font-weight="800" fill="#0f766e">可回答</text>
+        <text x="130" y="236" text-anchor="middle" font-size="12.5" fill="#5b6b7b">有出处 · 不编造</text>
+        <text x="130" y="252" text-anchor="middle" font-size="11.5" fill="#93a2b1">fact-ledger · source-retrieval</text>
+
+        <rect x="250" y="120" width="180" height="76" rx="14" fill="#e8f1fe" stroke="#3b82f6" stroke-width="1"/>
+        <text x="340" y="152" text-anchor="middle" font-size="17" font-weight="800" fill="#1d4ed8">可执行</text>
+        <text x="340" y="176" text-anchor="middle" font-size="12.5" fill="#5b6b7b">读改跑检 · 交付实存</text>
+        <text x="340" y="192" text-anchor="middle" font-size="11.5" fill="#93a2b1">self-check · 机检闭环</text>
+
+        <rect x="460" y="60" width="180" height="76" rx="14" fill="#ecebfe" stroke="#6366f1" stroke-width="1"/>
+        <text x="550" y="92" text-anchor="middle" font-size="17" font-weight="800" fill="#4338ca">可决策</text>
+        <text x="550" y="116" text-anchor="middle" font-size="12.5" fill="#5b6b7b">约束内自选路径</text>
+        <text x="550" y="132" text-anchor="middle" font-size="11.5" fill="#93a2b1">router + flows 编排</text>
+
+        <line x1="220" y1="150" x2="244" y2="130" stroke="#888780" stroke-width="1.5" marker-end="url(#arr)" fill="none"/>
+        <line x1="430" y1="90" x2="454" y2="70" stroke="#888780" stroke-width="1.5" marker-end="url(#arr)" fill="none"/>
+        <text x="232" y="150" text-anchor="middle" font-size="10.5" fill="#93a2b1">信任</text>
+        <text x="442" y="90" text-anchor="middle" font-size="10.5" fill="#93a2b1">验证</text>
+
+        <text x="340" y="285" text-anchor="middle" font-size="12.5" fill="#5b6b7b">判断权在人，执行权按契约逐级移交 —— 移交的每一级都要可核验</text>
+      </g>
+    </svg>
+  </div>
+</section>
+
+<section id="mirror">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-kicker">The Mirror</div>
+      <h2>人机镜像：四层对应，各守其位</h2>
+      <p>我的智能体不是我的复制品，是我的对应面。四层镜像说清了谁管什么——这套边界不是客气，是纪律。</p>
+    </div>
+    <svg class="mirror-svg" viewBox="0 0 680 420" role="img" aria-label="人与智能体四层镜像对应图">
+      <title>人与智能体的四层镜像对应</title>
+      <desc>自下而上四层：具体项目、业务能力与赛道、元技能组成、身份与约束，每层左列是人（钟广锐），右列是智能体。</desc>
+      <g font-family="PingFang SC,Microsoft YaHei,sans-serif">
+        <text x="190" y="28" text-anchor="middle" font-size="14" font-weight="800" fill="#0f766e">我（钟广锐）</text>
+        <text x="490" y="28" text-anchor="middle" font-size="14" font-weight="800" fill="#4338ca">我的智能体</text>
+
+        <rect x="40" y="44" width="280" height="72" rx="12" fill="#f4f8fb" stroke="#e7eef4" stroke-width="1"/>
+        <text x="56" y="68" font-size="13" font-weight="700" fill="#1f2d3d">具体项目</text>
+        <text x="56" y="90" font-size="12" fill="#5b6b7b">教学成果 · 能力包 · 论文 · 七条业务链</text>
+        <rect x="360" y="44" width="280" height="72" rx="12" fill="#f4f8fb" stroke="#e7eef4" stroke-width="1"/>
+        <text x="376" y="68" font-size="13" font-weight="700" fill="#1f2d3d">目录与产出物</text>
+        <text x="376" y="90" font-size="12" fill="#5b6b7b">读文件 · 改文件 · 跑脚本 · 过机检</text>
+
+        <rect x="40" y="128" width="280" height="72" rx="12" fill="#f4f8fb" stroke="#e7eef4" stroke-width="1"/>
+        <text x="56" y="152" font-size="13" font-weight="700" fill="#1f2d3d">业务能力与赛道</text>
+        <text x="56" y="174" font-size="12" fill="#5b6b7b">六线赛道：政务 · 培训 · 低空 · 知识工程…</text>
+        <rect x="360" y="128" width="280" height="72" rx="12" fill="#f4f8fb" stroke="#e7eef4" stroke-width="1"/>
+        <text x="376" y="152" font-size="13" font-weight="700" fill="#1f2d3d">能力包（契约化）</text>
+        <text x="376" y="174" font-size="12" fill="#5b6b7b">六包 · spec + router + gates</text>
+
+        <rect x="40" y="212" width="280" height="72" rx="12" fill="#f4f8fb" stroke="#e7eef4" stroke-width="1"/>
+        <text x="56" y="236" font-size="13" font-weight="700" fill="#1f2d3d">元技能（方法论）</text>
+        <text x="56" y="258" font-size="12" fill="#5b6b7b">本体论四步 · 新 SOA 三层 · 先跑通后写</text>
+        <rect x="360" y="212" width="280" height="72" rx="12" fill="#f4f8fb" stroke="#e7eef4" stroke-width="1"/>
+        <text x="376" y="236" font-size="13" font-weight="700" fill="#1f2d3d">技能载体（可替换）</text>
+        <text x="376" y="258" font-size="12" fill="#5b6b7b">173 个技能 = provider · 换工具不改契约</text>
+
+        <rect x="40" y="296" width="600" height="86" rx="12" fill="#ecebfe" stroke="#6366f1" stroke-width="1"/>
+        <text x="56" y="322" font-size="13" font-weight="800" fill="#3730a3">身份画像 × 思维模式 × 行为约束（宪法层）</text>
+        <text x="56" y="346" font-size="12" fill="#4b5563">人：认知、判断、取舍 —— 判断属于人，不由智能体代劳</text>
+        <text x="56" y="366" font-size="12" fill="#4b5563">智能体：AGENTS.md 纪律 · 禁区 —— 把人的纪律内化为自己的默认行为</text>
+
+        <text x="340" y="406" text-anchor="middle" font-size="12" fill="#93a2b1">左列是事实与判断，右列是契约与载体 —— 映射而非包含，收敛于宪法</text>
+      </g>
+    </svg>
+
+    <div class="mirror">
+      <div class="m-col m-human">
+        <h3>人负责：定什么是对的</h3>
+        <div class="m-sub">判断、取舍、担责</div>
+        <div class="m-item"><span class="n">1</span><div><b>立规矩</b><span>一句原则写进 AGENTS.md，成为智能体的默认行为</span></div></div>
+        <div class="m-item"><span class="n">2</span><div><b>提需求</b><span>说清"给谁、解决什么"，不必指定用哪个技能</span></div></div>
+        <div class="m-item"><span class="n">3</span><div><b>拍方向</b><span>选哪条路径、放弃哪条路径，代价智能体先讲清</span></div></div>
+      </div>
+      <div class="m-col m-agent">
+        <h3>智能体负责：做成并证明做成了</h3>
+        <div class="m-sub">执行、验证、交付</div>
+        <div class="m-item"><span class="n">1</span><div><b>路由执行</b><span>查包路由、命中配方、过闸门，再动手</span></div></div>
+        <div class="m-item"><span class="n">2</span><div><b>成果即证据</b><span>交付目录实存的东西，不给"应该没问题"</span></div></div>
+        <div class="m-item"><span class="n">3</span><div><b>诚实状态</b><span>没实证就标 provisional，机检没过就不交付</span></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="contract" style="background:var(--surface);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-kicker">The Contract</div>
+      <h2>成长契约：让每次合作，都让下一次变得更好</h2>
+      <p>共生不是感觉好，是有硬约束。这三条纪律写在 AGENTS.md 里，机器可查、违反可罚。</p>
+    </div>
+    <div class="contract">
+      <div class="c-card">
+        <div class="ic" style="background:var(--teal-soft)">🔍</div>
+        <h3>成果即证据</h3>
+        <p>引用成果前先 ls 核实，不凭记忆。"已修复"必须 ls 到实际文件才算数——这条纪律在真实断链事故里抓出过两次假修复。</p>
+      </div>
+      <div class="c-card">
+        <div class="ic" style="background:var(--blue-soft)">⚙️</div>
+        <h3>先跑通后写</h3>
+        <p>代码没真跑通前禁止写教程、宣布可用。开发期只维护代码和调试记录。机检全绿（如 646/646 哈希一致、50/50 本体校验）才允许交付。</p>
+      </div>
+      <div class="c-card">
+        <div class="ic" style="background:var(--indigo-soft)">📜</div>
+        <h3>能力即契约</h3>
+        <p>每个能力写清 inputs / outputs / gates，承诺交付前过契约核对。provisional 是诚实状态，跑通一次才回填 verified——永不粉饰。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="closing">
+  <div class="wrap">
+    <p class="eq">你负责<span class="grad">"定什么是对的"</span>，<br>我负责<span class="grad">"做成并证明它做成了"</span>。</p>
+    <div class="cta">
+      <a href="/">← 回到钟广锐的主页，看这个体系交付了什么</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  钟广锐 mzatun · 人机共生实践记录 · <a href="https://mzatun.github.io/" style="color:var(--teal);font-weight:600">mzatun.github.io</a> · 本页所有数据可核验
+</footer>
+
+</body>
+</html>
