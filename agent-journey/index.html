@@ -3,27 +3,27 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>我与我的智能体 · 成长历程 ｜ 钟广锐 mzatun</title>
-<meta name="description" content="钟广锐（mzatun）与他的 AI 智能体的共同成长历程：从五层工程范式（言·提示词、境·上下文、驭·驾驭、环·循环、图·图工程）到业务能力组件化、组件能力服务化、服务能力可编排化，沿着可回答、可执行、可决策的目标一路演进。人机共生的实践记录。">
-<meta name="keywords" content="钟广锐,mzatun,AI智能体,人机共生,提示词工程,上下文工程,组件化,服务化,可编排化,SOA,本体论,能力包,能力契约,FDE,OPC,AI工程化">
+<title>我与我的智能体 · 成长历程与能力档案 ｜ 钟广锐 mzatun</title>
+<meta name="description" content="钟广锐（mzatun）与他的 AI 智能体的共同成长历程与能力档案：从五层工程范式（言·提示词、境·上下文、驭·驾驭、环·循环、图·图工程）到业务能力组件化、组件能力服务化、服务能力可编排化，沿着可回答、可执行、可决策的目标演进。含六维能力雷达、五层能力模型、六能力包矩阵、共核候选池、六线业务映射、人机镜像、思维双引擎全部档案图。">
+<meta name="keywords" content="钟广锐,mzatun,AI智能体,人机共生,提示词工程,上下文工程,驾驭工程,循环工程,图工程,组件化,服务化,可编排化,SOA,本体论,能力包,能力契约,FDE,OPC,AI工程化">
 <meta name="author" content="钟广锐 (Zhong Guangrui)">
 <meta name="robots" content="index,follow">
 <link rel="canonical" href="https://mzatun.github.io/agent-journey/">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦞</text></svg>">
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="钟广锐 · 空间智能与 AI 工程化">
-<meta property="og:title" content="我与我的智能体 · 成长历程">
-<meta property="og:description" content="从五层工程范式到三化体系，从可回答到可决策——一段人机共生的实践记录。">
+<meta property="og:title" content="我与我的智能体 · 成长历程与能力档案">
+<meta property="og:description" content="从五层工程范式到三化体系，从可回答到可决策——人机共生的完整档案，六幅能力图全收录。">
 <meta property="og:url" content="https://mzatun.github.io/agent-journey/">
 <meta property="og:locale" content="zh_CN">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "Article",
-  "headline": "我与我的智能体 · 成长历程",
+  "headline": "我与我的智能体 · 成长历程与能力档案",
   "author": {"@type": "Person", "name": "钟广锐", "alternateName": "mzatun"},
-  "about": ["AI智能体", "人机共生", "AI工程化", "能力包体系"],
-  "description": "从五层工程范式（提示词、上下文、驾驭、循环、图工程）到组件化、服务化、可编排化，沿着可回答、可执行、可决策的目标演进的人机共生实践。"
+  "about": ["AI智能体", "人机共生", "AI工程化", "能力包体系", "五层工程范式"],
+  "description": "从五层工程范式（提示词、上下文、驾驭、循环、图工程）到组件化、服务化、可编排化，沿着可回答、可执行、可决策的目标演进的人机共生实践与能力档案。"
 }
 </script>
 <style>
@@ -35,7 +35,7 @@
     --blue:#3b82f6; --blue-soft:#e8f1fe;
     --indigo:#6366f1; --indigo-soft:#ecebfe;
     --amber:#f59e0b; --amber-soft:#fef4e3;
-    --green:#10b981; --green-soft:#e7f8f2;
+    --rose:#e11d48; --rose-soft:#ffe4e6;
     --shadow:0 10px 30px -12px rgba(31,45,61,.18);
     --shadow-sm:0 4px 14px -6px rgba(31,45,61,.14);
     --r:18px;
@@ -45,16 +45,16 @@
   body{font-family:"PingFang SC","Microsoft YaHei","Segoe UI",system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--ink);line-height:1.7;-webkit-font-smoothing:antialiased}
   a{color:inherit;text-decoration:none}
   .wrap{max-width:1080px;margin:0 auto;padding:0 24px}
-  section{padding:78px 0}
+  section{padding:72px 0}
 
   nav{position:sticky;top:0;z-index:50;background:rgba(244,248,251,.82);backdrop-filter:saturate(180%) blur(12px);border-bottom:1px solid var(--line)}
   .nav-in{max-width:1080px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;justify-content:space-between}
   .brand{font-weight:800;letter-spacing:.5px;display:flex;align-items:center;gap:9px;font-size:17px}
   .brand .dot{width:11px;height:11px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--blue))}
-  .nav-links{display:flex;gap:26px;font-size:14.5px;color:var(--ink-soft)}
+  .nav-links{display:flex;gap:24px;font-size:14.5px;color:var(--ink-soft)}
   .nav-links a{transition:color .2s}
   .nav-links a:hover{color:var(--teal)}
-  @media(max-width:760px){.nav-links{display:none}}
+  @media(max-width:900px){.nav-links{display:none}}
 
   .hero{position:relative;overflow:hidden;background:radial-gradient(900px 380px at 82% -10%,var(--teal-soft),transparent 60%),radial-gradient(760px 360px at 8% 8%,var(--indigo-soft),transparent 55%),var(--surface);border-bottom:1px solid var(--line);padding:88px 0 76px}
   .badge{display:inline-flex;align-items:center;gap:8px;background:var(--teal-soft);color:#0d9488;font-weight:600;font-size:13.5px;padding:7px 15px;border-radius:999px;margin-bottom:24px}
@@ -62,15 +62,16 @@
   @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(20,184,166,.45)}70%{box-shadow:0 0 0 10px rgba(20,184,166,0)}100%{box-shadow:0 0 0 0 rgba(20,184,166,0)}}
   .hero h1{font-size:clamp(32px,5vw,50px);line-height:1.18;font-weight:850;letter-spacing:-.5px}
   .hero h1 .grad{background:linear-gradient(120deg,var(--teal),var(--indigo));-webkit-background-clip:text;background-clip:text;color:transparent}
-  .hero .lead{margin-top:22px;font-size:clamp(15.5px,2vw,18.5px);color:var(--ink-soft);max-width:720px}
+  .hero .lead{margin-top:22px;font-size:clamp(15.5px,2vw,18.5px);color:var(--ink-soft);max-width:760px}
   .hero-meta{margin-top:30px;display:flex;flex-wrap:wrap;gap:22px;color:var(--ink-faint);font-size:14px}
   .hero-meta b{color:var(--ink-soft);font-weight:600}
 
-  .sec-head{max-width:760px;margin-bottom:44px}
+  .sec-head{max-width:780px;margin-bottom:44px}
   .sec-kicker{display:inline-block;font-size:12.5px;font-weight:700;letter-spacing:2.5px;color:var(--teal);text-transform:uppercase;margin-bottom:12px}
   .sec-head h2{font-size:clamp(26px,3.6vw,36px);font-weight:820;letter-spacing:-.4px;line-height:1.25}
   .sec-head p{margin-top:14px;color:var(--ink-soft);font-size:16px}
 
+  /* ── 成长历程时间线 ── */
   .timeline{position:relative;padding-left:34px}
   .timeline::before{content:"";position:absolute;left:9px;top:8px;bottom:8px;width:3px;border-radius:3px;background:linear-gradient(180deg,var(--teal),var(--blue),var(--indigo))}
   .era{position:relative;margin-bottom:40px}
@@ -87,31 +88,37 @@
   .era .era-sub{color:var(--ink-faint);font-size:14px;margin-bottom:14px}
   .era p{color:var(--ink-soft);font-size:15px}
   .chips{display:flex;flex-wrap:wrap;gap:9px;margin-top:18px}
-  .chip{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:6px 13px;font-size:13.5px;font-weight:600;color:var(--ink)}
+  .chipx{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:6px 13px;font-size:13.5px;font-weight:600;color:var(--ink)}
   .era-note{margin-top:16px;background:var(--bg);border-left:3px solid var(--teal);border-radius:0 10px 10px 0;padding:11px 15px;font-size:14px;color:var(--ink-soft)}
 
-  .ladder-svg{width:100%;height:auto;display:block}
-  .mirror-svg{width:100%;height:auto;display:block}
-
-  .mirror{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:34px}
-  @media(max-width:760px){.mirror{grid-template-columns:1fr}}
-  .m-col{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow-sm);padding:26px 28px}
-  .m-col h3{font-size:17px;font-weight:800;margin-bottom:4px}
-  .m-col .m-sub{font-size:13px;color:var(--ink-faint);margin-bottom:16px}
-  .m-item{display:flex;gap:11px;padding:11px 0;border-top:1px dashed var(--line);font-size:14.5px}
-  .m-item:first-of-type{border-top:none}
-  .m-item .n{flex:none;width:24px;height:24px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:800;color:#fff}
-  .m-human .n{background:var(--teal)}
-  .m-agent .n{background:var(--indigo)}
-  .m-item b{display:block;font-size:14.5px}
-  .m-item span{color:var(--ink-soft);font-size:13.5px}
-
-  .contract{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:34px}
-  @media(max-width:760px){.contract{grid-template-columns:1fr}}
-  .c-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow-sm);padding:24px}
-  .c-card .ic{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:21px;margin-bottom:14px}
-  .c-card h3{font-size:16.5px;font-weight:800;margin-bottom:7px}
-  .c-card p{font-size:14px;color:var(--ink-soft)}
+  /* ── 画像档案节（适配主页风格） ── */
+  .portrait{background:var(--surface);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .pf-sec{padding:56px 0}
+  .pf-sec + .pf-sec{border-top:1px dashed var(--line)}
+  .pf-sec h2{font-size:clamp(24px,3.2vw,32px);font-weight:820;letter-spacing:-.4px;margin-bottom:8px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+  .pf-sec h2 .en{font-size:12px;color:var(--ink-faint);letter-spacing:2px;font-weight:600}
+  .pf-sec .lead{color:var(--ink-soft);margin:0 0 18px;font-size:15px}
+  .pf{margin:0}
+  .pf svg{width:100%;height:auto;display:block}
+  .pf figcaption{font-size:12.5px;color:var(--ink-faint);margin-top:10px;text-align:center}
+  .pf table{width:100%;border-collapse:collapse;font-size:13.5px;margin:12px 0;background:var(--surface)}
+  .pf th{background:var(--teal-soft);color:#0f766e;font-weight:700;text-align:left}
+  .pf th,.pf td{border:1px solid var(--line);padding:7px 10px;vertical-align:top}
+  .pf tr:nth-child(even) td{background:rgba(13,148,136,.03)}
+  .pcard{background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin:14px 0}
+  .pgrid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:860px){.pgrid2{grid-template-columns:1fr}}
+  .pchip{display:inline-block;font-size:12px;border-radius:999px;padding:2px 11px;margin:3px 4px 3px 0;border:1px solid var(--line);background:var(--surface)}
+  .pchip.g{background:var(--amber-soft);color:#b45309;border-color:#f59e0b}
+  .pchip.r{background:var(--rose-soft);color:#9f1239;border-color:#e11d48}
+  .pchip.b{background:var(--blue-soft);color:#1d4ed8;border-color:#3b82f6}
+  .pkv{font-family:ui-monospace,Consolas,monospace;font-size:12.5px;color:#0f766e;background:var(--teal-soft);border-radius:4px;padding:1px 6px}
+  .pnote{font-size:14px;color:var(--ink-soft);background:var(--amber-soft);border-left:4px solid var(--amber);padding:12px 16px;border-radius:0 10px 10px 0;margin:16px 0}
+  .pnote code{background:rgba(255,255,255,.7);padding:1px 5px;border-radius:4px;font-size:12.5px}
+  .pnote b{color:var(--ink)}
+  ol.pdisc{margin:8px 0;padding-left:22px;font-size:14px}
+  ol.pdisc li{margin:5px 0}
+  .pf h3{font-size:17px;font-weight:800;margin:0 0 10px}
 
   .closing{background:radial-gradient(700px 300px at 50% -20%,var(--indigo-soft),transparent 60%),var(--surface);border-top:1px solid var(--line)}
   .closing .eq{font-size:clamp(19px,2.8vw,26px);font-weight:800;text-align:center;line-height:1.5;max-width:820px;margin:0 auto}
@@ -129,10 +136,11 @@
   <div class="nav-in">
     <a class="brand" href="/"><span class="dot"></span>钟广锐 <span style="color:var(--ink-faint);font-weight:600;font-size:14px">/ agent-journey</span></a>
     <div class="nav-links">
-      <a href="#story">成长历程</a>
-      <a href="#goal">目标阶梯</a>
+      <a href="#journey">成长历程</a>
+      <a href="#radar">能力雷达</a>
+      <a href="#packs">能力包矩阵</a>
       <a href="#mirror">人机镜像</a>
-      <a href="#contract">成长契约</a>
+      <a href="#archive">完整档案</a>
       <a href="/">← 返回主页</a>
     </div>
   </div>
@@ -140,192 +148,574 @@
 
 <div class="hero">
   <div class="wrap">
-    <div class="badge"><span class="pulse"></span>人机共生 · 实践记录</div>
+    <div class="badge"><span class="pulse"></span>人机共生 · 实践记录 + 完整能力档案</div>
     <h1>我与我的智能体，<br>是怎么一路<span class="grad">长成今天这样</span>的</h1>
-    <p class="lead">这不是一篇讲 AI 趋势的文章，是一份持续运转的人机协作档案。它记录了我（钟广锐）和我的智能体从最初的对话工具，到今天能一起交付系统的完整历程——方法沉淀下来，就是下面三条线：五层工程范式、三化体系、三级目标。</p>
+    <p class="lead">这不是一篇讲 AI 趋势的文章，是一份持续运转的人机协作档案。上半部讲成长历程——从五层工程范式到三化体系，沿着可回答、可执行、可决策一路演进；下半部是我的 AI Agent 画像全量档案——六维雷达、五层模型、六包矩阵、共核池、业务映射、人机镜像、思维双引擎，一幅不少，数据全部可核验。</p>
     <div class="hero-meta">
       <span><b>持续运行</b> 2025 至今</span>
       <span><b>能力包</b> 6 个</span>
       <span><b>技能载体</b> 173 个</span>
+      <span><b>档案图</b> 6 幅全收录</span>
       <span><b>机检</b> 全绿可验证</span>
     </div>
   </div>
 </div>
 
-<section id="story">
+<section id="journey">
   <div class="wrap">
     <div class="sec-head">
       <div class="sec-kicker">The Journey</div>
-      <h2>三个阶段：先用起来，再组织起来，最后一起进化</h2>
-      <p>回头看，每一步都不是提前规划好的，是被真实的业务和交付问题倒逼出来的。但方向始终没变：让智能体从"能答"走到"能干"，再走到"能扛"。</p>
+      <h2>成长历程：先用起来，再组织起来，最后一起进化</h2>
+      <p>每一步都不是提前规划好的，是被真实的业务和交付问题倒逼出来的。方向始终没变：让智能体从"能答"走到"能干"，再走到"能扛"。</p>
     </div>
     <div class="timeline">
-
       <div class="era e1">
         <div class="era-card">
           <span class="era-tag">阶段一 · 把一个智能体用起来</span>
           <h3>五层工程范式：言 · 境 · 驭 · 环 · 图</h3>
           <div class="era-sub">单体功夫期——2021 提示词学术化 → 2026-08 图工程成论文，五层半年一层长出来 ｜ 方法论成文于课程教程《AI应用工程范式》（未公开）</div>
           <p>这一时期的工作围绕单个智能体展开，后来沉淀为五层谱系——每层控制一个对象，<b>叠加使用，不是替代关系</b>：<b>言·提示词工程</b>管指令表达（知识都在模型里，问题是有没有被正确激活）；<b>境·上下文工程</b>管信息状态（模型不是不知道，是此刻没看到）；<b>驭·驾驭工程</b>管行动环境与验证（能力不只取决于模型多聪明，还取决于被放进怎样的运行环境）；<b>环·循环工程</b>管时间与反馈（一次做不对没关系，关键是能不能自己发现不对并收敛）；<b>图·图工程</b>管协作拓扑（单体的能力上限是组织问题，不是智力问题）。</p>
-          <div class="chips"><span>言 · 提示词工程</span><span>境 · 上下文工程</span><span>驭 · 驾驭工程</span><span>环 · 循环工程</span><span>图 · 图工程</span></div>
+          <div class="chips"><span class="chipx">言 · 提示词工程</span><span class="chipx">境 · 上下文工程</span><span class="chipx">驭 · 驾驭工程</span><span class="chipx">环 · 循环工程</span><span class="chipx">图 · 图工程</span></div>
           <div class="era-note">五层是叠加律：每上一层都保留前面几层的产物。但单体功夫有天花板——每个智能体仍是一座孤岛，换一个场景就要从头调教一遍，功夫不能积累。</div>
         </div>
       </div>
-
       <div class="era e2">
         <div class="era-card">
           <span class="era-tag">阶段二 · 把一族智能体组织起来</span>
           <h3>新 SOA 三层：组件化 → 服务化 → 可编排化</h3>
           <div class="era-sub">体系工程期——解决"这么多智能体怎么不打架"</div>
           <p>孤岛问题逼出了体系化：<b>业务能力组件化</b>——把每个业务场景拆成有契约（inputs / outputs / gates）的能力组件；<b>组件能力服务化</b>——契约写进 YAML，机器可校验，能力与实现解耦（技能挂了换技能，契约不动）；<b>服务能力可编排化</b>——router 负责路由、flows 负责配方，新场景只加变体参数和一条 flow，能力 ID 永不变。今天的成果落成了 6 个能力包 + 总注册表 + 机检脚本，配方跑通一次才标 verified，没跑通就诚实标 provisional。</p>
-          <div class="chips"><span>能力包总注册表 v1.3</span><span>六包格局</span><span>spec = 契约</span><span>router + flows</span><span>provisional→verified 回填</span><span>反孤岛条款</span></div>
+          <div class="chips"><span class="chipx">能力包总注册表 v1.3</span><span class="chipx">六包格局</span><span class="chipx">spec = 契约</span><span class="chipx">router + flows</span><span class="chipx">provisional→verified 回填</span><span class="chipx">反孤岛条款</span></div>
           <div class="era-note">升级的标志：扩一个业务域，不再是从零调教，而是给现有能力加一组变体参数——功夫开始复利。</div>
         </div>
       </div>
-
       <div class="era e3">
         <div class="era-card">
           <span class="era-tag">阶段三 · 向共生走</span>
           <h3>可回答 → 可执行 → 可决策</h3>
           <div class="era-sub">目标主线期——衡量人机关系的刻度尺</div>
           <p>这条主线贯穿始终，也是往后的方向。<b>可回答</b>：问什么答什么，有出处、不编造——这是信任的地基；<b>可执行</b>：答完能落地，读文件、改文件、跑脚本、过机检，交付可核验的东西——这是价值的发生器；<b>可决策</b>：在给定约束内自己选路径、选方案，把人从判断的重复劳动里解放出来——判断权始终在人，但执行的决策正在逐步移交。今天我们正稳定站在"可执行"，向"可决策"推进。</p>
-          <div class="chips"><span>可回答：有据</span><span>可执行：落地</span><span>可决策：共生</span></div>
+          <div class="chips"><span class="chipx">可回答：有据</span><span class="chipx">可执行：落地</span><span class="chipx">可决策：共生</span></div>
         </div>
       </div>
-
     </div>
   </div>
 </section>
 
-<section id="goal" style="background:var(--surface);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+<section class="portrait" id="archive">
   <div class="wrap">
-    <div class="sec-head">
-      <div class="sec-kicker">The Ladder</div>
-      <h2>三级目标：每一级都是下一级的地基</h2>
-      <p>可回答不是终点，是可执行的前提；可执行不是终点，是可决策的前提。跳级必塌。</p>
+    <div class="sec-head" style="margin-bottom:10px">
+      <div class="sec-kicker">The Archive</div>
+      <h2>我的 AI Agent 画像 · 全量档案</h2>
+      <p>以下八节是我的智能体体系完整档案（v3.3，2026-10-16 本机复核校准），六幅结构图 + 共核池表 + 纪律清单，与工作区源文件同源。</p>
     </div>
-    <svg class="ladder-svg" viewBox="0 0 680 300" role="img" aria-label="可回答、可执行、可决策三级阶梯图">
-      <title>三级目标阶梯：可回答 → 可执行 → 可决策</title>
-      <desc>三级自左向右抬升的阶梯：可回答（有据可信）、可执行（落地交付）、可决策（共生自治），每级标注它为下一级提供的前提。</desc>
-      <defs>
-        <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-          <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-        </marker>
-      </defs>
-      <g font-family="PingFang SC,Microsoft YaHei,sans-serif">
-        <rect x="40" y="180" width="180" height="76" rx="14" fill="#e6faf6" stroke="#14b8a6" stroke-width="1"/>
-        <text x="130" y="212" text-anchor="middle" font-size="17" font-weight="800" fill="#0f766e">可回答</text>
-        <text x="130" y="236" text-anchor="middle" font-size="12.5" fill="#5b6b7b">有出处 · 不编造</text>
-        <text x="130" y="252" text-anchor="middle" font-size="11.5" fill="#93a2b1">fact-ledger · source-retrieval</text>
 
-        <rect x="250" y="120" width="180" height="76" rx="14" fill="#e8f1fe" stroke="#3b82f6" stroke-width="1"/>
-        <text x="340" y="152" text-anchor="middle" font-size="17" font-weight="800" fill="#1d4ed8">可执行</text>
-        <text x="340" y="176" text-anchor="middle" font-size="12.5" fill="#5b6b7b">读改跑检 · 交付实存</text>
-        <text x="340" y="192" text-anchor="middle" font-size="11.5" fill="#93a2b1">self-check · 机检闭环</text>
 
-        <rect x="460" y="60" width="180" height="76" rx="14" fill="#ecebfe" stroke="#6366f1" stroke-width="1"/>
-        <text x="550" y="92" text-anchor="middle" font-size="17" font-weight="800" fill="#4338ca">可决策</text>
-        <text x="550" y="116" text-anchor="middle" font-size="12.5" fill="#5b6b7b">约束内自选路径</text>
-        <text x="550" y="132" text-anchor="middle" font-size="11.5" fill="#93a2b1">router + flows 编排</text>
+<!-- ═══════════ 封面 ═══════════ -->
+<div class="cover">
+  <div class="seal">广锐</div>
+  <div class="tag">AI AGENT PORTRAIT</div>
+  <h1>我的 AI Agent 画像</h1>
+  <p class="sub">钟广锐 / mzatun · GIS/遥感高校副教授 × 软件架构师 · AI 全链路交付者 · OPC × FDE</p>
+  <div class="meta">v3.3 · 2026-10-18 新增「我 vs 我的智能体」四层镜像 · 源真相：AGENTS.md v3.2 + 能力包总注册表 v1.3 + USER.md v15 ｜ 数据均经 ls / 机检实跑实测</div>
+</div>
 
-        <line x1="220" y1="150" x2="244" y2="130" stroke="#888780" stroke-width="1.5" marker-end="url(#arr)" fill="none"/>
-        <line x1="430" y1="90" x2="454" y2="70" stroke="#888780" stroke-width="1.5" marker-end="url(#arr)" fill="none"/>
-        <text x="232" y="150" text-anchor="middle" font-size="10.5" fill="#93a2b1">信任</text>
-        <text x="442" y="90" text-anchor="middle" font-size="10.5" fill="#93a2b1">验证</text>
+<!-- ═══════════ 一、能力雷达 ═══════════ -->
+<h2>一、能力雷达<span class="en">CAPABILITY RADAR</span></h2>
+<p class="lead">六维自评（10 分制，v15 口径）。三顶格（GIS/遥感 · AI 工程 · 教学）支撑双师合体，短板诚实标注：部署运维 4 分、学生梯队 2 分、CI/CD 缺失——短板正是技能与能力包要补位的方向。</p>
+<div class="pcard"><figure class="pf">
+<svg viewBox="0 0 680 480" role="img" aria-label="六维能力雷达图">
+  <!-- 网格环 -->
+  <polygon points="340,70 487.2,155 487.2,325 340,410 192.8,325 192.8,155" fill="none" stroke="#94a3b8" stroke-width="1.2"/>
+  <polygon points="340,112.5 450.4,176.3 450.4,303.7 340,367.5 229.6,303.7 229.6,176.3" fill="none" stroke="#cbd5e1" stroke-width="1"/>
+  <polygon points="340,155 413.6,197.5 413.6,282.5 340,325 266.4,282.5 266.4,197.5" fill="none" stroke="#dbe2ea" stroke-width="1"/>
+  <polygon points="340,197.5 376.8,218.8 376.8,261.2 340,282.5 303.2,261.2 303.2,218.8" fill="none" stroke="#e2e8f0" stroke-width="1"/>
+  <!-- 轴 -->
+  <g stroke="#cbd5e1" stroke-width="1">
+    <line x1="340" y1="240" x2="340" y2="70"/><line x1="340" y1="240" x2="487.2" y2="155"/>
+    <line x1="340" y1="240" x2="487.2" y2="325"/><line x1="340" y1="240" x2="340" y2="410"/>
+    <line x1="340" y1="240" x2="192.8" y2="325"/><line x1="340" y1="240" x2="192.8" y2="155"/>
+  </g>
+  <!-- 数据面 -->
+  <polygon points="340,78.5 479.9,159.3 479.9,320.7 340,393 207.5,316.5 214.9,167.8"
+    fill="rgba(13,148,136,.25)" stroke="#0d9488" stroke-width="2.4"/>
+  <g fill="#0f766e">
+    <circle cx="340" cy="78.5" r="4.5"/><circle cx="479.9" cy="159.3" r="4.5"/>
+    <circle cx="479.9" cy="320.7" r="4.5"/><circle cx="340" cy="393" r="4.5"/>
+    <circle cx="207.5" cy="316.5" r="4.5"/><circle cx="214.9" cy="167.8" r="4.5"/>
+  </g>
+  <!-- 数值标注 -->
+  <g font-size="13" fill="#0f766e" font-weight="700" text-anchor="middle">
+    <text x="340" y="66">9.5</text><text x="496" y="150">9.5</text><text x="496" y="342">9.5</text>
+    <text x="340" y="414">9</text><text x="186" y="334">9</text><text x="192" y="156">8.5</text>
+  </g>
+  <!-- 维度标签 -->
+  <g font-size="15" fill="#1f2d3d" font-weight="700" text-anchor="middle">
+    <text x="340" y="44">GIS / 遥感</text>
+    <text x="530" y="132">AI 工程</text>
+    <text x="530" y="360">教学</text>
+    <text x="340" y="440">架构</text>
+    <text x="150" y="360">需求</text>
+    <text x="150" y="132">交付</text>
+  </g>
+  <!-- 短板注记 -->
+  <rect x="470" y="400" rx="6" width="196" height="64" fill="#ffe4e6" stroke="#e11d48" stroke-width="1.2"/>
+  <text x="484" y="422" font-size="12.5" fill="#e11d48" font-weight="700">诚实短板（🟡/🔴）</text>
+  <text x="484" y="440" font-size="12" fill="#9f1239">部署运维 4 · 学生梯队 2</text>
+  <text x="484" y="456" font-size="12" fill="#9f1239">CI/CD 缺失 → 技能补位方向</text>
+</svg>
+<figcaption>六维雷达：三顶格双师结构 · 短板显式化（数据源：USER.md v15 / IMA 说明书身份卡）</figcaption>
+</figure></div>
 
-        <text x="340" y="285" text-anchor="middle" font-size="12.5" fill="#5b6b7b">判断权在人，执行权按契约逐级移交 —— 移交的每一级都要可核验</text>
-      </g>
-    </svg>
-  </div>
-</section>
+<!-- ═══════════ 二、五层能力模型 ═══════════ -->
+<h2>二、五层能力模型<span class="en">FIVE-LAYER MODEL</span></h2>
+<p class="lead">画像里三组概念各归其位：域（教学/科研/软件）是 L2 标签，写作/知识工程等活动族在 L1-L3，技能是 L4 载体。<span class="pkv">能力包总注册表.yaml</span> 是 L1-L3 的底层组件索引，<span class="pkv">AGENTS.md</span> 是 L0 入口。</p>
+<div class="pcard"><figure class="pf">
+<svg viewBox="0 0 680 430" role="img" aria-label="五层能力模型图">
+  <!-- 右侧流向箭头 -->
+  <defs>
+    <marker id="arrG" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+      <path d="M0,0 L9,4.5 L0,9 Z" fill="#0d9488"/>
+    </marker>
+    <marker id="arrR" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+      <path d="M0,0 L9,4.5 L0,9 Z" fill="#e11d48"/>
+    </marker>
+  </defs>
+  <line x1="640" y1="70" x2="640" y2="390" stroke="#0d9488" stroke-width="2" marker-end="url(#arrG)"/>
+  <text x="656" y="230" font-size="12" fill="#0d9488" writing-mode="tb" letter-spacing="3">执行流 · 自上而下</text>
+  <line x1="40" y1="390" x2="40" y2="70" stroke="#e11d48" stroke-width="2" marker-end="url(#arrR)"/>
+  <text x="22" y="230" font-size="12" fill="#e11d48" writing-mode="tb" letter-spacing="3">沉淀流 · 共核上调</text>
 
-<section id="mirror">
-  <div class="wrap">
-    <div class="sec-head">
-      <div class="sec-kicker">The Mirror</div>
-      <h2>人机镜像：四层对应，各守其位</h2>
-      <p>我的智能体不是我的复制品，是我的对应面。四层镜像说清了谁管什么——这套边界不是客气，是纪律。</p>
-    </div>
-    <svg class="mirror-svg" viewBox="0 0 680 420" role="img" aria-label="人与智能体四层镜像对应图">
-      <title>人与智能体的四层镜像对应</title>
-      <desc>自下而上四层：具体项目、业务能力与赛道、元技能组成、身份与约束，每层左列是人（钟广锐），右列是智能体。</desc>
-      <g font-family="PingFang SC,Microsoft YaHei,sans-serif">
-        <text x="190" y="28" text-anchor="middle" font-size="14" font-weight="800" fill="#0f766e">我（钟广锐）</text>
-        <text x="490" y="28" text-anchor="middle" font-size="14" font-weight="800" fill="#4338ca">我的智能体</text>
+  <!-- L0 -->
+  <rect x="80" y="24" rx="8" width="520" height="60" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.6"/>
+  <text x="104" y="50" font-size="15.5" font-weight="700" fill="#4338ca">L0 身份层（宪法 · 不可执行）</text>
+  <text x="104" y="71" font-size="12.5" fill="#4f46e5">画像 × 身份 × 思维模式 × 行为约束 ｜ 载体：AGENTS.md · USER.md · SOUL.md · MEMORY.md</text>
+  <!-- L1 -->
+  <rect x="80" y="100" rx="8" width="520" height="60" fill="#ccfbf1" stroke="#0d9488" stroke-width="1.6"/>
+  <text x="104" y="126" font-size="15.5" font-weight="700" fill="#0f766e">L1 共核能力层（跨域原子动作 + 契约）</text>
+  <text x="104" y="147" font-size="12.5" fill="#0d9488">写作底座 capabilities_core：fact-ledger · self-check · archive-handover … 25 条 ｜ 准入四测把关</text>
+  <!-- L2 -->
+  <rect x="80" y="176" rx="8" width="520" height="60" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.6"/>
+  <text x="104" y="202" font-size="15.5" font-weight="700" fill="#1d4ed8">L2 域变体层（参数化不复制）</text>
+  <text x="104" y="223" font-size="12.5" fill="#3b82f6">variants/：ima 平台 · 粤东客户行业 · 政务信源矩阵 · 12 风格皮肤 ｜ scene 标签路由</text>
+  <!-- L3 -->
+  <rect x="80" y="252" rx="8" width="520" height="60" fill="#fef3c7" stroke="#d97706" stroke-width="1.6"/>
+  <text x="104" y="278" font-size="15.5" font-weight="700" fill="#b45309">L3 编排层（路由 + 配方）</text>
+  <text x="104" y="299" font-size="12.5" fill="#d97706">router.yaml 五键筛子 · flows 配方库 · provisional→verified 回填制度</text>
+  <!-- L4 -->
+  <rect x="80" y="328" rx="8" width="520" height="60" fill="#ffe4e6" stroke="#e11d48" stroke-width="1.6"/>
+  <text x="104" y="354" font-size="15.5" font-weight="700" fill="#9f1239">L4 实现层（技能 = provider，可替换）</text>
+  <text x="104" y="375" font-size="12.5" fill="#e11d48">用户级技能 173 个（2026-10-16 实测目录数）· 八大方阵 ｜ 换工具不改契约 = 服务化的真义</text>
+</svg>
+<figcaption>五层模型：组件=契约（L1-L3，ID 稳定），技能=载体（L4，可替换）——一条技能可拆多条能力，一条能力可跨多条技能</figcaption>
+</figure></div>
 
-        <rect x="40" y="44" width="280" height="72" rx="12" fill="#f4f8fb" stroke="#e7eef4" stroke-width="1"/>
-        <text x="56" y="68" font-size="13" font-weight="700" fill="#1f2d3d">具体项目</text>
-        <text x="56" y="90" font-size="12" fill="#5b6b7b">教学成果 · 能力包 · 论文 · 七条业务链</text>
-        <rect x="360" y="44" width="280" height="72" rx="12" fill="#f4f8fb" stroke="#e7eef4" stroke-width="1"/>
-        <text x="376" y="68" font-size="13" font-weight="700" fill="#1f2d3d">目录与产出物</text>
-        <text x="376" y="90" font-size="12" fill="#5b6b7b">读文件 · 改文件 · 跑脚本 · 过机检</text>
+<!-- ═══════════ 三、能力包矩阵 ═══════════ -->
+<h2>三、能力包矩阵<span class="en">CAPABILITY PACKS</span></h2>
+<p class="lead">总注册表 v1.1 实存六包。形态阶梯：①人读指导书 → ②标准八件套（契约+路由+机检）→ ③本体版。不必每包冲③，但每包必须如实登记。</p>
+<div class="pcard"><figure class="pf">
+<svg viewBox="0 0 680 400" role="img" aria-label="六能力包矩阵图">
+  <!-- 卡片模板：x,y,主题色,浅底色 -->
+  <!-- 写作底座 -->
+  <rect x="16" y="16" rx="10" width="208" height="176" fill="#ccfbf1" stroke="#0d9488" stroke-width="2"/>
+  <rect x="16" y="16" rx="10" width="208" height="34" fill="#0d9488"/>
+  <text x="30" y="38" font-size="13.5" font-weight="700" fill="#ffffff">pack-writing-base</text>
+  <text x="30" y="72" font-size="14" font-weight="700" fill="#0f766e">写作能力底座 · 本体版</text>
+  <text x="30" y="94" font-size="12.5" fill="#0d9488">形态 ③ ●●● 全域标杆</text>
+  <text x="30" y="116" font-size="12" fill="#475569">共核 25 条 · 本体五件</text>
+  <text x="30" y="136" font-size="12" fill="#475569">血缘台账 · 机检四脚本</text>
+  <text x="30" y="160" font-size="12" fill="#0d9488" font-weight="700">12 真实项目实证</text>
+  <!-- 写作包 -->
+  <rect x="236" y="16" rx="10" width="208" height="176" fill="#ccfbf1" stroke="#0d9488" stroke-width="2" stroke-dasharray="5 3"/>
+  <rect x="236" y="16" rx="10" width="208" height="34" fill="#0f766e"/>
+  <text x="250" y="38" font-size="13.5" font-weight="700" fill="#ffffff">pack-writing</text>
+  <text x="250" y="72" font-size="14" font-weight="700" fill="#0f766e">课题调研报告 v4.4</text>
+  <text x="250" y="94" font-size="12.5" fill="#0d9488">形态 ③ ●●● legacy-carrier</text>
+  <text x="250" y="116" font-size="12" fill="#475569">24 能力 · verified 5/9</text>
+  <text x="250" y="136" font-size="12" fill="#475569">执行器 writing-soa-orchestrator</text>
+  <text x="250" y="160" font-size="12" fill="#e11d48" font-weight="700">4 条 provisional 待首跑</text>
+  <!-- 科研包 -->
+  <rect x="456" y="16" rx="10" width="208" height="176" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+  <rect x="456" y="16" rx="10" width="208" height="34" fill="#3b82f6"/>
+  <text x="470" y="38" font-size="13.5" font-weight="700" fill="#ffffff">pack-research</text>
+  <text x="470" y="72" font-size="14" font-weight="700" fill="#1d4ed8">科研 · 论文×项目双线</text>
+  <text x="470" y="94" font-size="12.5" fill="#3b82f6">形态 ① ●○○ 标准机检</text>
+  <text x="470" y="116" font-size="12" fill="#475569">能力 26 · 缺 router.yaml</text>
+  <text x="470" y="136" font-size="12" fill="#475569">verify_spec.py 实跑全绿</text>
+  <text x="470" y="160" font-size="12" fill="#e11d48" font-weight="700">路径已校正·形态如实降级</text>
+  <!-- 知识工程包 -->
+  <rect x="16" y="208" rx="10" width="208" height="176" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+  <rect x="16" y="208" rx="10" width="208" height="34" fill="#d97706"/>
+  <text x="30" y="230" font-size="13.5" font-weight="700" fill="#ffffff">pack-kb-eng</text>
+  <text x="30" y="264" font-size="14" font-weight="700" fill="#b45309">企业知识工程（ima×FDE）</text>
+  <text x="30" y="286" font-size="12.5" fill="#d97706">形态 ② ●●○ 标准版</text>
+  <text x="30" y="308" font-size="12" fill="#92400e">13 能力 · 4 路由 provisional</text>
+  <text x="30" y="328" font-size="12" fill="#92400e">招牌：三层体系化（本体/动态/动能）</text>
+  <text x="30" y="352" font-size="12" fill="#b45309" font-weight="700">首跑=内部示范库（30天试点）</text>
+  <!-- PPT包 -->
+  <rect x="236" y="208" rx="10" width="208" height="176" fill="#ffe4e6" stroke="#e11d48" stroke-width="2"/>
+  <rect x="236" y="208" rx="10" width="208" height="34" fill="#e11d48"/>
+  <text x="250" y="230" font-size="13.5" font-weight="700" fill="#ffffff">pack-ppt</text>
+  <text x="250" y="264" font-size="14" font-weight="700" fill="#9f1239">PPT 制作</text>
+  <text x="250" y="286" font-size="12.5" fill="#e11d48">形态 ③ ●●● 本体版</text>
+  <text x="250" y="308" font-size="12" fill="#be123c">本体 50/50 · 清单 646/646</text>
+  <text x="250" y="328" font-size="12" fill="#be123c">11 场景卡 · 4 执行器 · 17 技能</text>
+  <text x="250" y="352" font-size="12" fill="#9f1239" font-weight="700">断链已修复并升形态</text>
+  <!-- 可视化包 -->
+  <rect x="456" y="208" rx="10" width="208" height="176" fill="#f1f5f9" stroke="#94a3b8" stroke-width="2" stroke-dasharray="5 3"/>
+  <rect x="456" y="208" rx="10" width="208" height="34" fill="#94a3b8"/>
+  <text x="470" y="230" font-size="13.5" font-weight="700" fill="#ffffff">pack-knowledge-viz</text>
+  <text x="470" y="264" font-size="14" font-weight="700" fill="#475569">知识可视化</text>
+  <text x="470" y="286" font-size="12.5" fill="#64748b">形态 ① ●○○ dormant</text>
+  <text x="470" y="308" font-size="12" fill="#64748b">三主线 + 四类配图心法</text>
+  <text x="470" y="328" font-size="12" fill="#64748b">figure-design 认领底座共核</text>
+  <text x="470" y="352" font-size="12" fill="#475569" font-weight="700">触发：月均 ≥2 次可视化任务</text>
+</svg>
+<figcaption>六包格局：底座③标杆 + 写作③ + 科研② + 知识工程② + PPT① + 可视化①（虚线=dash 边框表示未完成体/休眠态）</figcaption>
+</figure></div>
 
-        <rect x="40" y="128" width="280" height="72" rx="12" fill="#f4f8fb" stroke="#e7eef4" stroke-width="1"/>
-        <text x="56" y="152" font-size="13" font-weight="700" fill="#1f2d3d">业务能力与赛道</text>
-        <text x="56" y="174" font-size="12" fill="#5b6b7b">六线赛道：政务 · 培训 · 低空 · 知识工程…</text>
-        <rect x="360" y="128" width="280" height="72" rx="12" fill="#f4f8fb" stroke="#e7eef4" stroke-width="1"/>
-        <text x="376" y="152" font-size="13" font-weight="700" fill="#1f2d3d">能力包（契约化）</text>
-        <text x="376" y="174" font-size="12" fill="#5b6b7b">六包 · spec + router + gates</text>
+<!-- ═══════════ 四、共核候选池 ═══════════ -->
+<h2>四、共核候选池<span class="en">GLOBAL CORE POOL</span></h2>
+<p class="lead">治理规则：某能力被第二包需要→挂全局候选；第三包也认领→升全局共核。跨包引用走 ID 不走路径。</p>
+<div class="pcard">
+<table>
+<tr><th>能力 ID</th><th>origin</th><th>已认领</th><th>状态</th><th>说明</th></tr>
+<tr><td><span class="pkv">pre-review</span></td><td>pack-writing-base</td><td>pack-research</td><td><span class="pchip y">claimed-1</span></td><td>审前预检：再一包认领即升全局共核</td></tr>
+<tr><td><span class="pkv">fact-ledger</span></td><td>pack-writing-base</td><td>pack-kb-eng</td><td><span class="pchip y">claimed-1</span></td><td>知识工程本地化 = B4 盘点分级表</td></tr>
+<tr><td><span class="pkv">source-retrieval</span></td><td>pack-writing-base</td><td>pack-kb-eng</td><td><span class="pchip y">claimed-1</span></td><td>资料收集检索（入库前）</td></tr>
+<tr><td><span class="pkv">self-check</span></td><td>pack-writing-base</td><td>pack-kb-eng</td><td><span class="pchip y">claimed-1</span></td><td>交付前自检门禁</td></tr>
+<tr><td><span class="pkv">version-strategy</span></td><td>pack-writing-base</td><td>pack-kb-eng</td><td><span class="pchip y">claimed-1</span></td><td>另存不覆盖 · 变更留痕</td></tr>
+<tr><td><span class="pkv">archive-handover</span></td><td>pack-writing-base</td><td>pack-kb-eng</td><td><span class="pchip y">claimed-1</span></td><td>归档移交三件套</td></tr>
+<tr><td><span class="pkv">figure-design</span></td><td>pack-writing-base</td><td>（潜在：PPT/可视化）</td><td><span class="pchip b">offered</span></td><td>等认领</td></tr>
+</table>
+<p style="font-size:13px;color:var(--ink-soft)">下一个横切活动族（建议问题分析族）蒸馏时，上述 claimed-1 能力若再被认领即触发升级——共核上调单向流动，永不回退。</p>
+</div>
 
-        <rect x="40" y="212" width="280" height="72" rx="12" fill="#f4f8fb" stroke="#e7eef4" stroke-width="1"/>
-        <text x="56" y="236" font-size="13" font-weight="700" fill="#1f2d3d">元技能（方法论）</text>
-        <text x="56" y="258" font-size="12" fill="#5b6b7b">本体论四步 · 新 SOA 三层 · 先跑通后写</text>
-        <rect x="360" y="212" width="280" height="72" rx="12" fill="#f4f8fb" stroke="#e7eef4" stroke-width="1"/>
-        <text x="376" y="236" font-size="13" font-weight="700" fill="#1f2d3d">技能载体（可替换）</text>
-        <text x="376" y="258" font-size="12" fill="#5b6b7b">173 个技能 = provider · 换工具不改契约</text>
+<!-- ═══════════ 五、六线业务映射 ═══════════ -->
+<h2>五、六线业务 × 能力组件映射<span class="en">BUSINESS TRACKS</span></h2>
+<p class="lead">对外六线赛道，对内一张注册表。每条线先查能力包路由，再落技能执行——人路由、AI 执行。</p>
+<div class="pcard"><figure class="pf">
+<svg viewBox="0 0 680 470" role="img" aria-label="六线业务映射图">
+  <defs>
+    <marker id="arrB" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
+      <path d="M0,0 L9,4.5 L0,9 Z" fill="#94a3b8"/>
+    </marker>
+  </defs>
+  <!-- 六线业务 -->
+  <g font-size="13">
+    <rect x="14" y="24" rx="8" width="196" height="50" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+    <text x="28" y="45" font-weight="700" fill="#b45309">① ima 知识库 RAG + FDE</text>
+    <text x="28" y="64" font-size="11.5" fill="#92400e">诊断→搭建→陪跑 三段式</text>
 
-        <rect x="40" y="296" width="600" height="86" rx="12" fill="#ecebfe" stroke="#6366f1" stroke-width="1"/>
-        <text x="56" y="322" font-size="13" font-weight="800" fill="#3730a3">身份画像 × 思维模式 × 行为约束（宪法层）</text>
-        <text x="56" y="346" font-size="12" fill="#4b5563">人：认知、判断、取舍 —— 判断属于人，不由智能体代劳</text>
-        <text x="56" y="366" font-size="12" fill="#4b5563">智能体：AGENTS.md 纪律 · 禁区 —— 把人的纪律内化为自己的默认行为</text>
+    <rect x="14" y="92" rx="8" width="196" height="50" fill="#ccfbf1" stroke="#0d9488" stroke-width="1.5"/>
+    <text x="28" y="113" font-weight="700" fill="#0f766e">② AI 政务咨询</text>
+    <text x="28" y="132" font-size="11.5" fill="#0d9488">研判体/转译体 · 六参数</text>
 
-        <text x="340" y="406" text-anchor="middle" font-size="12" fill="#93a2b1">左列是事实与判断，右列是契约与载体 —— 映射而非包含，收敛于宪法</text>
-      </g>
-    </svg>
+    <rect x="14" y="160" rx="8" width="196" height="50" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+    <text x="28" y="181" font-weight="700" fill="#1d4ed8">③ 智能体开发</text>
+    <text x="28" y="200" font-size="11.5" fill="#3b82f6">ReAct + A2A · 工具产品化</text>
 
-    <div class="mirror">
-      <div class="m-col m-human">
-        <h3>人负责：定什么是对的</h3>
-        <div class="m-sub">判断、取舍、担责</div>
-        <div class="m-item"><span class="n">1</span><div><b>立规矩</b><span>一句原则写进 AGENTS.md，成为智能体的默认行为</span></div></div>
-        <div class="m-item"><span class="n">2</span><div><b>提需求</b><span>说清"给谁、解决什么"，不必指定用哪个技能</span></div></div>
-        <div class="m-item"><span class="n">3</span><div><b>拍方向</b><span>选哪条路径、放弃哪条路径，代价智能体先讲清</span></div></div>
-      </div>
-      <div class="m-col m-agent">
-        <h3>智能体负责：做成并证明做成了</h3>
-        <div class="m-sub">执行、验证、交付</div>
-        <div class="m-item"><span class="n">1</span><div><b>路由执行</b><span>查包路由、命中配方、过闸门，再动手</span></div></div>
-        <div class="m-item"><span class="n">2</span><div><b>成果即证据</b><span>交付目录实存的东西，不给"应该没问题"</span></div></div>
-        <div class="m-item"><span class="n">3</span><div><b>诚实状态</b><span>没实证就标 provisional，机检没过就不交付</span></div></div>
-      </div>
-    </div>
-  </div>
-</section>
+    <rect x="14" y="228" rx="8" width="196" height="50" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.5"/>
+    <text x="28" y="249" font-weight="700" fill="#4338ca">④ 智能体培训</text>
+    <text x="28" y="268" font-size="11.5" fill="#4f46e5">备课编排 · 课件闸门</text>
 
-<section id="contract" style="background:var(--surface);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
-  <div class="wrap">
-    <div class="sec-head">
-      <div class="sec-kicker">The Contract</div>
-      <h2>成长契约：让每次合作，都让下一次变得更好</h2>
-      <p>共生不是感觉好，是有硬约束。这三条纪律写在 AGENTS.md 里，机器可查、违反可罚。</p>
-    </div>
-    <div class="contract">
-      <div class="c-card">
-        <div class="ic" style="background:var(--teal-soft)">🔍</div>
-        <h3>成果即证据</h3>
-        <p>引用成果前先 ls 核实，不凭记忆。"已修复"必须 ls 到实际文件才算数——这条纪律在真实断链事故里抓出过两次假修复。</p>
-      </div>
-      <div class="c-card">
-        <div class="ic" style="background:var(--blue-soft)">⚙️</div>
-        <h3>先跑通后写</h3>
-        <p>代码没真跑通前禁止写教程、宣布可用。开发期只维护代码和调试记录。机检全绿（如 646/646 哈希一致、50/50 本体校验）才允许交付。</p>
-      </div>
-      <div class="c-card">
-        <div class="ic" style="background:var(--indigo-soft)">📜</div>
-        <h3>能力即契约</h3>
-        <p>每个能力写清 inputs / outputs / gates，承诺交付前过契约核对。provisional 是诚实状态，跑通一次才回填 verified——永不粉饰。</p>
-      </div>
-    </div>
+    <rect x="14" y="296" rx="8" width="196" height="50" fill="#ffe4e6" stroke="#e11d48" stroke-width="1.5"/>
+    <text x="28" y="317" font-weight="700" fill="#9f1239">⑤ 低空无人机模型</text>
+    <text x="28" y="336" font-size="11.5" fill="#be123c">YOLO/OBB · 云边端</text>
+
+    <rect x="14" y="364" rx="8" width="196" height="50" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5"/>
+    <text x="28" y="385" font-weight="700" fill="#475569">⑥ 个人 OPC &amp; FDE</text>
+    <text x="28" y="404" font-size="11.5" fill="#64748b">全方阵 · 内容传播</text>
+  </g>
+  <!-- 连线到中框 -->
+  <g stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrB)">
+    <line x1="210" y1="49" x2="272" y2="49"/>
+    <line x1="210" y1="117" x2="272" y2="117"/>
+    <line x1="210" y1="185" x2="272" y2="185"/>
+    <line x1="210" y1="253" x2="272" y2="253"/>
+    <line x1="210" y1="321" x2="272" y2="321"/>
+    <line x1="210" y1="389" x2="272" y2="389"/>
+  </g>
+  <!-- 中框：能力组件层 -->
+  <rect x="280" y="24" rx="10" width="160" height="390" fill="#ccfbf1" stroke="#0d9488" stroke-width="2.2"/>
+  <rect x="280" y="24" rx="10" width="160" height="40" fill="#0d9488"/>
+  <text x="360" y="50" font-size="14" font-weight="700" fill="#ffffff" text-anchor="middle">能力组件层</text>
+  <g font-size="12.5" fill="#0f766e" text-anchor="middle">
+    <text x="360" y="92" font-weight="700">能力包总注册表 v1.1</text>
+    <text x="360" y="118">六包 · 治理四规则</text>
+    <rect x="296" y="138" rx="6" width="128" height="34" fill="#ffffff" stroke="#0d9488" stroke-width="1.2"/>
+    <text x="360" y="159" fill="#0f766e">写作底座（共核25）</text>
+    <rect x="296" y="182" rx="6" width="128" height="34" fill="#ffffff" stroke="#0d9488" stroke-width="1.2"/>
+    <text x="360" y="203" fill="#0f766e">写作包 / 科研包</text>
+    <rect x="296" y="226" rx="6" width="128" height="34" fill="#ffffff" stroke="#0d9488" stroke-width="1.2"/>
+    <text x="360" y="247" fill="#0f766e">知识工程包</text>
+    <rect x="296" y="270" rx="6" width="128" height="34" fill="#ffffff" stroke="#0d9488" stroke-width="1.2"/>
+    <text x="360" y="291" fill="#0f766e">PPT / 可视化包</text>
+    <text x="360" y="336" font-size="11.5" fill="#0d9488">路由：router.yaml 配方优先</text>
+    <text x="360" y="356" font-size="11.5" fill="#0d9488">共核候选池 7 条在池</text>
+    <text x="360" y="390" font-weight="700" fill="#e11d48" font-size="12">契约稳定 · ID 不变</text>
+  </g>
+  <!-- 连线到右框 -->
+  <g stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrB)">
+    <line x1="440" y1="219" x2="496" y2="219"/>
+  </g>
+  <!-- 右框：技能层 -->
+  <rect x="504" y="24" rx="10" width="160" height="390" fill="#ffe4e6" stroke="#e11d48" stroke-width="2.2"/>
+  <rect x="504" y="24" rx="10" width="160" height="40" fill="#e11d48"/>
+  <text x="584" y="50" font-size="14" font-weight="700" fill="#ffffff" text-anchor="middle">技能实现层</text>
+  <g font-size="12.5" fill="#9f1239" text-anchor="middle">
+<text x="584" y="92" font-weight="700" font-size="15">173 个技能</text>
+  <text x="584" y="112">（2026-10-16 实测目录）</text>
+    <rect x="520" y="130" rx="6" width="128" height="30" fill="#ffffff" stroke="#e11d48" stroke-width="1"/>
+    <text x="584" y="149" fill="#9f1239">writing-soa-orchestrator</text>
+    <rect x="520" y="168" rx="6" width="128" height="30" fill="#ffffff" stroke="#e11d48" stroke-width="1"/>
+    <text x="584" y="187" fill="#9f1239">ai-fde-diagnosis</text>
+    <rect x="520" y="206" rx="6" width="128" height="30" fill="#ffffff" stroke="#e11d48" stroke-width="1"/>
+    <text x="584" y="225" fill="#9f1239">lesson-prep / content-pipeline</text>
+    <rect x="520" y="244" rx="6" width="128" height="30" fill="#ffffff" stroke="#e11d48" stroke-width="1"/>
+    <text x="584" y="263" fill="#9f1239">policy-consultation-report</text>
+    <text x="584" y="306" font-size="11.5" fill="#be123c">八大方阵：教学15·科研12·本体9</text>
+    <text x="584" y="326" font-size="11.5" fill="#be123c">工程8·内容12·视觉12·咨政9</text>
+    <text x="584" y="346" font-size="11.5" fill="#be123c">平台元技能10</text>
+    <text x="584" y="390" font-weight="700" font-size="12">可替换 · 不改契约</text>
+  </g>
+</svg>
+<figcaption>六线 → 能力组件 → 技能：人路由（查包查配方）、AI 执行（过 gates 过机检）</figcaption>
+</figure></div>
+
+<!-- ═══════════ 六、我 vs 我的智能体（四层镜像） ═══════════ -->
+<h2>六、我 vs 我的智能体<span class="en">HUMAN-AI MIRROR · BOTTOM-UP</span></h2>
+<p class="lead">前面各节画的都是<strong>系统的技术分层</strong>（系统视角）。这一节换视角：画<strong>人与智能体的镜像对应</strong>（协作视角）。自下而上四层——具体项目 → 业务能力与赛道 → 元技能组成 → 身份画像×思维模式×行为约束。每层左列是你、右列是我。</p>
+
+<div class="pnote">
+<b>「映射」是什么关系——三句话说清</b><br>
+<strong>① 不是包含，是对应。</strong>左列的每一条，都能在右列找到它的执行形态；反过来右列的每个技能，也都得服务于左列的某个真实用途。没有对应关系的技能，就是孤儿，删掉。<br>
+<strong>② 左列是因，右列是果。</strong>你先有项目、先有赛道、先有方法论，右列的契约与技能是<em>长出来</em>的——所以注册表里包的顺序永远跟着业务走，不反过来。<br>
+<strong>③ 映射是流动的，会长也会删。</strong>你新开一条赛道 → 右列加一条 scene 行或变体参数，<strong>能力 ID 不变</strong>（反孤岛条款）；你砍掉一条赛道 → 右列该路由清空，不要留僵尸路由假装还能用。
+</div>
+<div class="pcard"><figure class="pf">
+<svg viewBox="0 0 680 700" role="img" aria-label="钟广锐与智能体的四层镜像对应图">
+<title>钟广锐与我的智能体的四层镜像对应关系</title>
+<desc>自下而上四层：具体项目、业务能力与赛道、元技能组成、身份画像×思维模式×行为约束，每层左右分别对应人（钟广锐）与智能体。</desc>
+<defs>
+  <marker id="arrM" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </marker>
+</defs>
+
+<text x="40" y="30" font-size="13" font-weight="500" fill="#1f2d3d" font-family="system-ui,sans-serif">自下而上 · 从业务事实到宪法约束</text>
+
+<rect x="286" y="48" rx="8" width="108" height="30" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.5"/>
+<text x="340" y="63" font-size="13" font-weight="500" fill="#3C3489" text-anchor="middle" dominant-baseline="central" font-family="system-ui,sans-serif">镜像中枢</text>
+<line x1="340" y1="78" x2="340" y2="104" stroke="#7c8b9a" stroke-width="1.5" marker-end="url(#arrM)" fill="none"/>
+
+<rect x="404" y="48" rx="6" width="236" height="30" fill="#f1f5f9" stroke="#dbe2ea" stroke-width="0.5"/>
+<text x="416" y="63" font-size="11" fill="#5b6b7b" font-family="system-ui,sans-serif" dominant-baseline="central">读法：自下而上，顶层是地基</text>
+
+<!-- 第4层（最上）：项目 -->
+<rect x="40" y="108" rx="10" width="286" height="86" fill="#f1f5f9" stroke="#5b6b7b" stroke-width="0.5"/>
+<text x="56" y="128" font-size="13" font-weight="500" fill="#1f2d3d" font-family="system-ui,sans-serif">我（钟广锐）</text>
+<text x="56" y="152" font-size="12" fill="#5b6b7b" font-family="system-ui,sans-serif">具体项目：教学成果 / 能力包 / 论文</text>
+<text x="56" y="172" font-size="12" fill="#5b6b7b" font-family="system-ui,sans-serif">七条链的真实目录与产出物</text>
+
+<rect x="354" y="108" rx="10" width="286" height="86" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+<text x="370" y="128" font-size="13" font-weight="500" fill="#04342C" font-family="system-ui,sans-serif">我的智能体</text>
+<text x="370" y="152" font-size="12" fill="#0F6E56" font-family="system-ui,sans-serif">我操作的目录：F:\网易龙虾 七链</text>
+<text x="370" y="172" font-size="12" fill="#0F6E56" font-family="system-ui,sans-serif">读文件 / 改文件 / 跑脚本 / 交付物</text>
+
+<line x1="326" y1="151" x2="354" y2="151" stroke="#534AB7" stroke-width="1.5" marker-end="url(#arrM)" fill="none"/>
+<rect x="40" y="198" rx="6" width="600" height="14" fill="#FAEEDA" stroke="none"/>
+<text x="48" y="205" font-size="11" fill="#854F0B" font-family="system-ui,sans-serif" dominant-baseline="central">映射：你定项目事实 → 我 ls 实况+ 跑机检，把你说的对齐到磁盘真相 | 平时：你只给方向和验收标准，我不追问过程，只交付目录实存的东西</text>
+
+<!-- 第3层：赛道 -->
+<rect x="40" y="222" rx="10" width="286" height="86" fill="#f1f5f9" stroke="#5b6b7b" stroke-width="0.5"/>
+<text x="56" y="242" font-size="13" font-weight="500" fill="#1f2d3d" font-family="system-ui,sans-serif">业务能力与赛道</text>
+<text x="56" y="266" font-size="12" fill="#5b6b7b" font-family="system-ui,sans-serif">六线对外赛道：政务/培训/低空…</text>
+<text x="56" y="286" font-size="12" fill="#5b6b7b" font-family="system-ui,sans-serif">双师 = 教学 × 工程</text>
+
+<rect x="354" y="222" rx="10" width="286" height="86" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.5"/>
+<text x="370" y="242" font-size="13" font-weight="500" fill="#042C53" font-family="system-ui,sans-serif">能力包（契约化）</text>
+<text x="370" y="266" font-size="12" fill="#185FA5" font-family="system-ui,sans-serif">六包：写作/科研/PPT/知识工程</text>
+<text x="370" y="286" font-size="12" fill="#185FA5" font-family="system-ui,sans-serif">spec + router + gates</text>
+
+<line x1="326" y1="265" x2="354" y2="265" stroke="#534AB7" stroke-width="1.5" marker-end="url(#arrM)" fill="none"/>
+<rect x="40" y="314" rx="6" width="600" height="15" fill="#FAEEDA" stroke="none"/>
+<text x="48" y="321" font-size="11" fill="#854F0B" font-family="system-ui,sans-serif" dominant-baseline="central">映射：你用市场语言提需求 → 我查 router 命中配方，用契约口径执行 | 平时：说清"给谁、解决什么"即可，不必告诉我用哪个包哪个技能——那是我的路由职责</text>
+
+<!-- 第2层：元技能 -->
+<rect x="40" y="338" rx="10" width="286" height="86" fill="#f1f5f9" stroke="#5b6b7b" stroke-width="0.5"/>
+<text x="56" y="358" font-size="13" font-weight="500" fill="#1f2d3d" font-family="system-ui,sans-serif">元技能组成</text>
+<text x="56" y="382" font-size="12" fill="#5b6b7b" font-family="system-ui,sans-serif">本体论四步 · 新 SOA 三层</text>
+<text x="56" y="402" font-size="12" fill="#5b6b7b" font-family="system-ui,sans-serif">四测准入 · 先跑通后写</text>
+
+<rect x="354" y="338" rx="10" width="286" height="86" fill="#FAEEDA" stroke="#854F0B" stroke-width="0.5"/>
+<text x="370" y="358" font-size="13" font-weight="500" fill="#412402" font-family="system-ui,sans-serif">实现层（可替换）</text>
+<text x="370" y="382" font-size="12" fill="#854F0B" font-family="system-ui,sans-serif">173 技能 = provider 载体</text>
+<text x="370" y="402" font-size="12" fill="#854F0B" font-family="system-ui,sans-serif">换工具不改契约</text>
+
+<line x1="326" y1="381" x2="354" y2="381" stroke="#534AB7" stroke-width="1.5" marker-end="url(#arrM)" fill="none"/>
+<rect x="40" y="430" rx="6" width="600" height="15" fill="#FAEEDA" stroke="none"/>
+<text x="48" y="437" font-size="11" fill="#854F0B" font-family="system-ui,sans-serif" dominant-baseline="central">映射：你的方法论 → 我拆成可替换技能载体 | 平时：方法论由你定（何时用哪招），具体用哪个技能由我换——技能挂了换技能，你的判断不失效</text>
+
+<!-- 第1层（最下）：宪法 -->
+<rect x="40" y="454" rx="10" width="600" height="126" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.5"/>
+<text x="56" y="474" font-size="13" font-weight="500" fill="#26215C" font-family="system-ui,sans-serif">身份画像 × 思维模式 × 行为约束（L0 宪法 · 不可执行）</text>
+
+<rect x="56" y="488" rx="8" width="276" height="76" fill="#f1f5f9" stroke="#5b6b7b" stroke-width="0.5"/>
+<text x="72" y="508" font-size="12" font-weight="500" fill="#1f2d3d" font-family="system-ui,sans-serif">我的认知与判断</text>
+<text x="72" y="528" font-size="12" fill="#5b6b7b" font-family="system-ui,sans-serif">USER.md · SOUL.md · 画像 v15</text>
+<text x="72" y="546" font-size="12" fill="#5b6b7b" font-family="system-ui,sans-serif">判断属于人，不由智能体代劳</text>
+
+<rect x="348" y="488" rx="8" width="276" height="76" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+<text x="364" y="508" font-size="12" font-weight="500" fill="#04342C" font-family="system-ui,sans-serif">智能体加载的约束</text>
+<text x="364" y="528" font-size="12" fill="#0F6E56" font-family="system-ui,sans-serif">AGENTS.md · 十二纪律 · 禁区</text>
+<text x="364" y="546" font-size="12" fill="#0F6E56" font-family="system-ui,sans-serif">我把你的纪律变成我的默认行为</text>
+
+<rect x="40" y="590" rx="6" width="600" height="15" fill="#E1F5EE" stroke="none"/>
+<text x="48" y="597" font-size="11" fill="#0F6E56" font-family="system-ui,sans-serif" dominant-baseline="central">映射：不是"你指挥我"，而是你的纪律成为我的默认 | 平时：立规矩只需改 AGENTS.md 一次，不必每次重复交代；我没照做就是规矩写糊了，改你那头</text>
+
+<line x1="40" y1="622" x2="640" y2="622" stroke="#dbe2ea" stroke-width="0.5" fill="none"/>
+<text x="40" y="642" font-size="12" fill="#5b6b7b" font-family="system-ui,sans-serif">镜像关系：左列是你的事实与判断，右列是我执行的契约与载体</text>
+<text x="40" y="662" font-size="12" fill="#5b6b7b" font-family="system-ui,sans-serif">向上收敛于宪法 —— 我只能在你给定的约束内自动化</text>
+<text x="40" y="682" font-size="12" fill="#5b6b7b" font-family="system-ui,sans-serif">橙条 = 该层的映射规则与你平时的操作方式；绿条 = 宪法层的特殊性</text>
+</svg>
+<figcaption>四层镜像：项目（事实）↔ 目录 · 赛道（市场语言）↔ 能力包（执行契约）· 元技能（方法论）↔ 技能（载体）· 宪法（判断）↔ 纪律（默认）</figcaption>
+</figure>
+
+<table>
+<tr><th>你平时怎么操作</th><th>说给我什么（最小输入）</th><th>我接手后做什么</th><th>你不需要操心的</th></tr>
+<tr>
+  <td><strong>立规矩</strong></td>
+  <td>一句原则，如"引用成果前先 ls 核实"</td>
+  <td>写进 AGENTS.md，成为我的默认行为，不用每次重复交代</td>
+  <td>不用反复提醒</td>
+</tr>
+<tr>
+  <td><strong>提需求</strong></td>
+  <td>给谁、解决什么、大致要什么形态</td>
+  <td>我自己查包路由、命中配方、过闸门再交付</td>
+  <td>不用指定技能名和包名</td>
+</tr>
+<tr>
+  <td><strong>拍方向</strong></td>
+  <td>要哪条路径、放弃哪条路径</td>
+  <td>照办，但会先告诉你代价和风险</td>
+  <td>不用考虑技术实现细节</td>
+</tr>
+<tr>
+  <td><strong>验收</strong></td>
+  <td>看目录实存的东西，或让我实跑机检</td>
+  <td>给可核验的证据，不给"应该没问题"</td>
+  <td>不用自己复现一遍</td>
+</tr>
+<tr>
+  <td><strong>扩域 / 砍域</strong></td>
+  <td>新开一条赛道，或砍掉一条</td>
+  <td>扩域只加变体参数 + 一条 flow，能力 ID 不变；砍域清空路由，不留僵尸</td>
+  <td>不用重做能力体系</td>
+</tr>
+</table>
+
+<div class="pnote">
+<b>一句话记住这个镜像</b>：<strong>你负责"定什么是对的"，我负责"把它做成并证明它做成了"。</strong><br>
+凡是需要判断的（要不要做、值不值得做、该走哪条路），留给你；凡是可以被验证的（文件在不在、机检过不过、哈希对不对），交给我。<br>
+<span style="color:#e11d48;font-weight:700">如果我哪里越界了——替你做了判断、或者把"未验证"说成"已完成"——那是镜像被破坏的信号，直接指出来，我改 AGENTS.md 那条规则。</span>
+</div>
+</div>
+
+<!-- ═══════════ 七、思维模式双引擎 ═══════════ -->
+<h2>七、思维模式双引擎<span class="en">THINKING ENGINES</span></h2>
+<p class="lead">左：本体论四步循环（个人认知引擎，每一轮产出变成下一轮基础设施）；右：新 SOA 三层（业务工程引擎，能力包体系的架构依据）。</p>
+<div class="pcard"><figure class="pf">
+<svg viewBox="0 0 680 320" role="img" aria-label="思维模式双引擎图">
+  <defs>
+    <marker id="arrC" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+      <path d="M0,0 L9,4.5 L0,9 Z" fill="#0d9488"/>
+    </marker>
+    <marker id="arrD" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+      <path d="M0,0 L9,4.5 L0,9 Z" fill="#d97706"/>
+    </marker>
+  </defs>
+  <!-- 左：认知行产循环 -->
+  <text x="170" y="30" font-size="15" font-weight="700" fill="#0f766e" text-anchor="middle">本体论四步 · 认知行产</text>
+  <g font-size="14" font-weight="700" text-anchor="middle">
+    <circle cx="170" cy="80" r="27" fill="#ccfbf1" stroke="#0d9488" stroke-width="2"/><text x="170" y="85" fill="#0f766e">认</text>
+    <circle cx="272" cy="170" r="27" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/><text x="272" y="175" fill="#1d4ed8">知</text>
+    <circle cx="170" cy="260" r="27" fill="#fef3c7" stroke="#d97706" stroke-width="2"/><text x="170" y="265" fill="#b45309">行</text>
+    <circle cx="68" cy="170" r="27" fill="#ffe4e6" stroke="#e11d48" stroke-width="2"/><text x="68" y="175" fill="#9f1239">产</text>
+  </g>
+  <g fill="none" stroke="#0d9488" stroke-width="2">
+    <path d="M 192 96 Q 246 118 262 148" marker-end="url(#arrC)"/>
+    <path d="M 262 192 Q 246 222 192 244" marker-end="url(#arrC)"/>
+    <path d="M 148 244 Q 94 222 78 192" marker-end="url(#arrC)"/>
+    <path d="M 78 148 Q 94 118 148 96" marker-end="url(#arrC)"/>
+  </g>
+  <g font-size="11" fill="#64748b" text-anchor="middle">
+    <text x="170" y="172">对齐 → 封装 → 闭环 → 沉淀</text>
+    <text x="170" y="192" fill="#94a3b8">每轮产出 = 下一轮基础设施</text>
+  </g>
+  <!-- 右：SOA 三层 -->
+  <text x="490" y="30" font-size="15" font-weight="700" fill="#b45309" text-anchor="middle">新 SOA 三层 · 工程引擎</text>
+  <g font-size="13.5" font-weight="700" text-anchor="middle">
+    <rect x="390" y="52" rx="8" width="200" height="52" fill="#fef3c7" stroke="#d97706" stroke-width="1.8"/>
+    <text x="490" y="76" fill="#b45309">业务能力组件化</text>
+    <text x="490" y="94" font-size="11" font-weight="400" fill="#92400e">spec / capabilities 契约</text>
+    <rect x="390" y="134" rx="8" width="200" height="52" fill="#fef3c7" stroke="#d97706" stroke-width="1.8"/>
+    <text x="490" y="158" fill="#b45309">组件能力服务化</text>
+    <text x="490" y="176" font-size="11" font-weight="400" fill="#92400e">inputs/outputs/gates 契约可校验</text>
+    <rect x="390" y="216" rx="8" width="200" height="52" fill="#fef3c7" stroke="#d97706" stroke-width="1.8"/>
+    <text x="490" y="240" fill="#b45309">服务能力可编排化</text>
+    <text x="490" y="258" font-size="11" font-weight="400" fill="#92400e">router + flows · 配方优先</text>
+  </g>
+  <g stroke="#d97706" stroke-width="2" marker-end="url(#arrD)">
+    <line x1="490" y1="104" x2="490" y2="128"/>
+    <line x1="490" y1="186" x2="490" y2="210"/>
+  </g>
+  <text x="490" y="300" font-size="11.5" fill="#94a3b8" text-anchor="middle">消灭 Agent 孤岛：扩域只加变体+一条 flow+scene 行，ID 不变</text>
+</svg>
+<figcaption>双引擎：本体论管"为什么这样建"，新 SOA 管"怎么建"——知识工程包的三层体系化是两者的产品化交点</figcaption>
+</figure></div>
+
+<!-- ═══════════ 七、执行器与纪律 ═══════════ -->
+<h2>八、执行器与协作纪律<span class="en">EXECUTORS &amp; DISCIPLINE</span></h2>
+<div class="pgrid2">
+<div class="pcard">
+<h3 style="margin-top:0;font-size:17px">执行器入口</h3>
+<table>
+<tr><th>入口</th><th>管什么</th></tr>
+<tr><td><span class="pkv">writing-soa-orchestrator</span></td><td>写作族总路由（七步执行）</td></tr>
+<tr><td><span class="pkv">kb-eng-orchestrator</span></td><td>知识工程族（诊断/搭建/陪跑）</td></tr>
+<tr><td><span class="pkv">mzatun-lesson-prep</span></td><td>备课七阶段流水线</td></tr>
+<tr><td><span class="pkv">mzatun-content-pipeline</span></td><td>多平台内容一条龙</td></tr>
+<tr><td><span class="pkv">policy-consultation-report</span></td><td>政务咨询报告</td></tr>
+<tr><td><span class="pkv">科研编排器 v1.0</span></td><td>论文×项目双线</td></tr>
+</table>
+</div>
+<div class="pcard">
+<h3 style="margin-top:0;font-size:17px">纪律十二条（摘要）</h3>
+<ol class="pdisc">
+<li>按链/按包路由，编排器优先</li>
+<li>成果即证据：先 <span class="pkv">ls</span> 再下结论</li>
+<li>先跑通后写（最高纪律）</li>
+<li>双师双卡默认注入</li>
+<li>写作路由风格层，三层不串用</li>
+<li>政务报告先锁六参数</li>
+<li>能力即契约，变更跑机检</li>
+<li>交接四要素：链+技能版本+路径+未决</li>
+<li>禁浮夸词，不编数据，承认局限</li>
+<li>工具产品化，对外 GEO 友好</li>
+<li>同文件编辑串行+锚点核验</li>
+<li>字体 base64 内嵌，无外链</li>
+</ol>
+</div>
+</div>
+
+<div class="pnote">
+  <b>诚实边界（v3.2 · 2026-10-16 本机复核后更新）</b>：本轮共修复四处硬伤——① pack-research 路径 <code>科研业务能力包_v1</code> 实不存在，已改为 <code>科研能力体系_20260920</code>；② 科研包能力实为 26 条（原记 14），且实存无 router.yaml，形态由②如实降级为①；③ <strong>pack-ppt 断链已修复并大幅升形态</strong>——真身是本体版能力包 <code>mzatun-ppt-capability-pack</code>（646 文件/72MB），此前以 zip 躺在目录未解压；已解压并修复 16 处中文名乱码 + 4 处文件互配，本体 50/50、清单 646/646 全绿，形态①→③；④ 技能计数由 202 校正为<strong>173 个用户级技能目录</strong>。<br>
+  仍未动：写作包 verified 5/9，4 条 provisional 路由待首跑；科研包缺路由层与 5 处 maturity_basis（升②的必修课）；短板三项（部署运维/学生梯队/CI-CD）未动。机检须用 managed venv 解释器 + <code>PYTHONIOENCODING=utf-8</code>。
+</div>
+
+
   </div>
 </section>
 
@@ -339,7 +729,7 @@
 </section>
 
 <footer>
-  钟广锐 mzatun · 人机共生实践记录 · <a href="https://mzatun.github.io/" style="color:var(--teal);font-weight:600">mzatun.github.io</a> · 本页所有数据可核验
+  钟广锐 mzatun · 人机共生实践记录与能力档案 · <a href="https://mzatun.github.io/" style="color:var(--teal);font-weight:600">mzatun.github.io</a> · 本页所有数据可核验
 </footer>
 
 </body>
