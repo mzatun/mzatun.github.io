@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>铁三角研究报告：AI 时代的成长航线 —— 写给准备学 Vibe Coding 与想进 FDE 的你</title>
+<style>
+:root{
+  --bg:#F7FAFF; --card:#FFFFFF; --ink:#1B2A4A; --sub:#5A6B8C;
+  --blue:#1E5AA8; --teal:#0FA3A3; --violet:#6C5CE7; --amber:#F5A623;
+  --line:#E3ECF7; --radius:16px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--ink);line-height:1.8;}
+.wrap{max-width:980px;margin:0 auto;padding:48px 20px;}
+header{text-align:center;margin-bottom:36px;}
+header h1{font-size:2.1rem;font-weight:800;background:linear-gradient(90deg,var(--blue),var(--teal));-webkit-background-clip:text;background-clip:text;color:transparent;}
+header p{color:var(--sub);margin-top:10px;font-size:1.05rem;}
+.tagline{display:inline-block;background:#EAF2FF;color:var(--blue);border-radius:999px;padding:5px 18px;font-size:.88rem;margin-top:14px;font-weight:600;}
+section{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:34px 36px;margin-bottom:26px;}
+h2{font-size:1.35rem;font-weight:800;margin-bottom:18px;display:flex;align-items:center;gap:10px;}
+h2::before{content:"";width:6px;height:26px;border-radius:3px;background:linear-gradient(180deg,var(--blue),var(--teal));flex:none;}
+h3{font-size:1.08rem;margin:22px 0 10px;color:var(--blue);font-weight:700;}
+p{margin-bottom:14px;color:#33455F;}
+b{color:var(--ink);}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:18px;margin:20px 0;}
+.card{border-radius:var(--radius);padding:22px;color:#fff;}
+.card h4{font-size:1.05rem;margin-bottom:6px;}
+.card .sub{opacity:.88;font-size:.85rem;margin-bottom:10px;}
+.c-blue{background:linear-gradient(135deg,#1E5AA8,#3B82D6);}
+.c-violet{background:linear-gradient(135deg,#6C5CE7,#9B8CFF);}
+.c-teal{background:linear-gradient(135deg,#0FA3A3,#2BC5B4);}
+.card .model{background:rgba(255,255,255,.18);border-radius:8px;padding:8px 12px;font-size:.9rem;font-weight:600;}
+.card p{color:#fff;font-size:.9rem;margin-top:10px;margin-bottom:0;}
+blockquote{border-left:4px solid var(--amber);background:#FFF8EC;padding:14px 18px;border-radius:0 10px 10px 0;margin:16px 0;color:#6B5312;font-size:.95rem;font-weight:500;}
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.92rem;}
+th{background:#EAF2FF;color:var(--blue);text-align:left;font-weight:700;}
+th,td{padding:10px 14px;border-bottom:1px solid var(--line);}
+tr:hover td{background:#F4F8FF;}
+.myth{display:grid;grid-template-columns:1fr;gap:12px;margin:14px 0;}
+.myth .item{background:#F4F8FF;border-radius:10px;padding:14px 18px;font-size:.95rem;}
+.myth .item b{color:#C0392B;}
+.chips{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;}
+.chip{background:#EAF2FF;color:var(--blue);border-radius:999px;padding:4px 16px;font-size:.86rem;font-weight:600;}
+.fig{background:#F7FAFF;border:1px solid var(--line);border-radius:12px;padding:10px;margin:18px 0;}
+.fig figcaption{font-size:.88rem;color:var(--sub);text-align:center;margin-top:6px;}
+.role{display:flex;gap:16px;flex-wrap:wrap;margin:16px 0;}
+.role div{flex:1;min-width:230px;background:#F4F8FF;border-radius:10px;padding:16px 18px;}
+.role .t{font-weight:700;color:var(--violet);margin-bottom:6px;}
+footer{text-align:center;color:var(--sub);font-size:.85rem;padding:16px 0 56px;}
+.kicker{display:inline-block;font-size:.8rem;font-weight:800;letter-spacing:2px;color:var(--teal);margin-bottom:8px;}
+/* ===== 总纲导航 ===== */
+.card .links{display:flex;flex-direction:column;gap:8px;margin-top:12px;}
+.card .links a{color:#fff;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.38);border-radius:9px;padding:8px 13px;font-size:.88rem;font-weight:600;text-decoration:none;display:block;transition:background .15s,transform .15s;}
+.card .links a:hover{background:rgba(255,255,255,.32);transform:translateX(3px);}
+.toc-maps{display:flex;gap:12px;flex-wrap:wrap;margin-top:20px;}
+.map-link{flex:1;min-width:210px;text-align:center;background:linear-gradient(135deg,var(--blue),var(--teal));color:#fff;border-radius:12px;padding:14px 18px;font-weight:700;font-size:.95rem;text-decoration:none;box-shadow:0 4px 14px rgba(31,90,168,.18);transition:opacity .15s,transform .15s;}
+.map-link:hover{opacity:.92;transform:translateY(-2px);}
+.map-link.home{background:linear-gradient(135deg,#5A6B8C,#8CA0BF);}
+.toc-note{font-size:.9rem;color:var(--sub);margin-top:10px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="kicker">RESEARCH REPORT · 课程开发档案深度分析</div>
+  <h1>铁三角研究报告：AI 时代的成长航线</h1>
+  <p>从 Vibe Coding 入口，到本体论底座，再到 FDE 出口</p>
+  <div class="tagline">写给准备学 vibe coding、想了解 FDE、或在相关岗位学习中陷入迷茫的你</div>
+</header>
+
+<section class="toc">
+  <h2>总纲 · 三门课一站导航（本页即三门课的序）</h2>
+  <p>铁三角不是三门课的拼盘，是同一套方法论（FDE × OPC）在三个海拔的教学投影。下面每门课给出<b>成果站（教程）、教材、GitHub 仓库</b>入口；FDE 课另附双师介绍页。页末可直达两幅动态知识图谱。</p>
+  <div class="grid3">
+    <div class="card c-blue">
+      <h4>🎨 氛围编程与AI应用创作</h4>
+      <div class="sub">入口层 · Vibe Coding · 公选课</div>
+      <div class="model">定 — 驭 — 验 — 交</div>
+      <div class="links">
+        <a href="https://mzatun.github.io/vibe-coding-ai-course/" target="_blank" rel="noopener">📖 教程 · 成果站（六卷）</a>
+        <a href="https://mzatun.github.io/vibe-coding-ai-course/30-book/output/%E6%B0%9B%E5%9B%B4%E7%BC%96%E7%A8%8B%E4%B8%8EAI%E5%BA%94%E7%94%A8%E5%88%9B%E4%BD%9C_%E5%85%A8%E4%B9%A6%E5%90%88%E8%AE%A2%E6%9C%AC_v1.pdf" target="_blank" rel="noopener">📕 教材 · 117 页合订本（PDF）</a>
+        <a href="https://github.com/mzatun/vibe-coding-ai-course" target="_blank" rel="noopener">💻 GitHub 仓库</a>
+      </div>
+    </div>
+    <div class="card c-violet">
+      <h4>🏛 基于大模型本体建模及应用分析</h4>
+      <div class="sub">底座层 · 本体论 · 从入门到 FDE 交付</div>
+      <div class="model">会读 — 会建 — 会校 — 会判</div>
+      <div class="links">
+        <a href="https://mzatun.github.io/ontology-fde-course/" target="_blank" rel="noopener">📖 教程 · 成果站（七卷）</a>
+        <a href="https://mzatun.github.io/ontology-fde-course/20-book/output/%E7%AC%AC%E4%B8%80%E7%AB%A0_%E4%BB%8E%E5%93%B2%E5%AD%A6%E8%AF%8D%E5%88%B0%E5%B7%A5%E7%A8%8B%E4%BB%B6.pdf" target="_blank" rel="noopener">📕 教材 · 八章 PDF（第一章）</a>
+        <a href="https://github.com/mzatun/ontology-fde-course" target="_blank" rel="noopener">💻 GitHub 仓库</a>
+      </div>
+    </div>
+    <div class="card c-teal">
+      <h4>🚀 GIS工程项目管理与实践</h4>
+      <div class="sub">出口层 · FDE · 企业 AI 落地与交付 · 双师型课程</div>
+      <div class="model">诊 — 建 — 交 — 复</div>
+      <div class="links">
+        <a href="https://mzatun.github.io/FDE-tutorial-to-course/双师迭代录/index.html" target="_blank" rel="noopener">👥 双师介绍 · 迭代录（九卷纪实）</a>
+        <a href="https://mzatun.github.io/FDE-tutorial-to-course/" target="_blank" rel="noopener">📖 教程 · 成果站（五卷）</a>
+        <a href="https://mzatun.github.io/FDE-tutorial-to-course/30-book/output/%E6%88%91%E7%9A%84FDE%E5%AE%9E%E6%88%98%E5%8F%8D%E6%80%9D_%E5%85%A8%E4%B9%A6_%E6%B0%B4%E5%8D%B0%E7%89%88.pdf" target="_blank" rel="noopener">📕 教材 · 282 页实战反思（PDF）</a>
+        <a href="https://github.com/mzatun/FDE-tutorial-to-course" target="_blank" rel="noopener">💻 GitHub 仓库</a>
+      </div>
+    </div>
+  </div>
+  <div class="toc-maps">
+    <a class="map-link" href="铁三角_AI时代三位一体的体识体系_v2_动态成长图.html">🌱 动态成长图 · 知识成长动画</a>
+    <a class="map-link" href="铁三角_AI时代三位一体的体识体系_v2_四视图.html">🗺 四视图 · 图谱 / 导图 / 矩阵 / 路线</a>
+    <a class="map-link home" href="https://mzatun.github.io/" target="_blank" rel="noopener">🏠 回到主页</a>
+  </div>
+  <p class="toc-note">👇 以下为研究报告正文（作为三门课的序），先读"一、开门见山"再决定从哪门课开始。</p>
+</section>
+
+<section>
+<h2>一、开门见山：一门课是船票，三门课才是航线</h2>
+<p>如果你正在焦虑"会的编程正在被 AI 替代"，先给结论：<b>答案不是安慰，是迁移</b>——把编程能力升级为 AI 编排能力（需求定义 → 提示与上下文 → 生成与验收 → 迭代交付）。这不是鸡汤，这是 2026 年产业界真实的岗位形态变化。</p>
+<p>但只学"用 AI 写东西"，<b>不靠谱</b>。铁三角给的答案是三个顶点各管一段：<b>vibe 课给你入口和作品，本体论课给你骨架和判断力，FDE 课给你出口和职业身份</b>。三课不是拼盘，是一套方法论（FDE×OPC）在三个海拔的教学投影——<b>定义问题 > 解题</b>，这三门课本质上教的是同一件事：把模糊问题变成可验收的成果。</p>
+<div class="chips">
+  <span class="chip">成果即证据</span><span class="chip">验收标准先行</span><span class="chip">过程留痕采信</span><span class="chip">反代写 / 反漂移</span><span class="chip">交付三件套</span><span class="chip">靠谱 > 聪明</span>
+</div>
+</section>
+
+<section>
+<h2>二、三门课是什么：三个海拔，一条链</h2>
+<div class="grid3">
+  <div class="card c-blue">
+    <h4>🏔 入口层 · 氛围编程与AI应用创作</h4>
+    <div class="sub">Vibe Coding：用 AI 把想法做成软件</div>
+    <div class="model">定 — 驭 — 验 — 交</div>
+    <p>不教编程语言，教"指挥 AI 创造软件"。你的角色从"写代码的人"升级为"定义问题、指挥 AI、验收成果的软件创作者"。结课即作品集，直接进简历。</p>
+  </div>
+  <div class="card c-violet">
+    <h4>🧱 底座层 · 基于大模型本体建模及应用分析</h4>
+    <div class="sub">本体论教程：从入门到 FDE 交付</div>
+    <div class="model">会读 — 会建 — 会校 — 会判</div>
+    <p>把"本体论"从哲学名词讲成可操作的工程件：让知识可判定（建模 / 校验 / 决策）。不教具体框架，教"该不该上、怎么建、怎么校"的判定力。</p>
+  </div>
+  <div class="card c-teal">
+    <h4>🚀 出口层 · GIS工程项目管理与实践</h4>
+    <div class="sub">FDE：企业 AI 落地与前沿部署工程</div>
+    <div class="model">诊 — 建 — 交 — 复</div>
+    <p>不教编码实现，教交付与验收。课程观一句话：这门课不培养"会用大模型的人"，培养"能对企业某个业务环节的经营结果负责的人"。</p>
+  </div>
+</div>
+<p>三门课边界划得很清楚，互不重叠也无断档：vibe 课"不教语法、不教项目管理"，本体论课"不教具体框架、教判定"，FDE 课"不教编码实现、教交付与验收"。串起来正好是 FDE 方法论的<b>教学化全链</b>：想法→规格（vibe·定）→ 知识组织与决策（本体·判）→ 生产与验收（vibe·驭验）→ 端到端交付（FDE·交）。学生从公选课入口走到毕业设计 / 企业项目出口，<b>一路有课接，不掉沟里</b>。</p>
+
+<figure class="fig">
+<!-- ===== 铁三角关系图（SVG） ===== -->
+<svg viewBox="0 0 960 760" xmlns="http://www.w3.org/2000/svg" font-family="PingFang SC, Microsoft YaHei, sans-serif" style="width:100%;height:auto;display:block;">
+  <defs>
+    <linearGradient id="gVB" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3B82D6"/><stop offset="1" stop-color="#6C5CE7"/></linearGradient>
+    <linearGradient id="gBO" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#6C5CE7"/><stop offset="1" stop-color="#0FA3A3"/></linearGradient>
+    <linearGradient id="gOV" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0FA3A3"/><stop offset="1" stop-color="#3B82D6"/></linearGradient>
+    <radialGradient id="core" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#F5A623" stop-opacity="0.35"/><stop offset="1" stop-color="#F5A623" stop-opacity="0"/></radialGradient>
+    <marker id="arVB" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#3B82D6"/></marker>
+    <marker id="arBO" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#6C5CE7"/></marker>
+    <marker id="arOV" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0FA3A3"/></marker>
+    <marker id="arGrey" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#8CA0BF"/></marker>
+  </defs>
+  <rect width="960" height="760" fill="#F7FAFF"/>
+  <text x="480" y="46" text-anchor="middle" font-size="24" font-weight="800" fill="#1B2A4A">铁三角：三门课程的能力流关系</text>
+  <text x="480" y="72" text-anchor="middle" font-size="13" fill="#5A6B8C">顶点 = 课程 · 边 = 能力流（传递什么）· 圆心 = 共享方法论内核 · 外圈 = 学生成长路径</text>
+
+  <circle cx="480" cy="420" r="290" fill="none" stroke="#C9D8EE" stroke-width="2" stroke-dasharray="6 7"/>
+  <path d="M 480 130 A 290 290 0 0 1 763 535" fill="none" stroke="#8CA0BF" stroke-width="2.5" marker-end="url(#arGrey)"/>
+  <text x="800" y="180" font-size="13" fill="#5A6B8C" text-anchor="middle">入门</text>
+  <text x="850" y="390" font-size="13" fill="#5A6B8C" text-anchor="middle">筑基</text>
+  <text x="760" y="640" font-size="13" fill="#5A6B8C" text-anchor="middle">上岗交付</text>
+
+  <path d="M 400 300 Q 330 340 305 430" fill="none" stroke="url(#gVB)" stroke-width="7" opacity="0.9" marker-end="url(#arVB)"/>
+  <path d="M 380 500 Q 480 545 585 505" fill="none" stroke="url(#gBO)" stroke-width="7" opacity="0.9" marker-end="url(#arBO)"/>
+  <path d="M 630 420 Q 620 330 545 290" fill="none" stroke="url(#gOV)" stroke-width="7" opacity="0.9" stroke-dasharray="14 8" marker-end="url(#arOV)"/>
+
+  <g><rect x="200" y="335" width="150" height="58" rx="10" fill="#FFFFFF" stroke="#DCE7F5"/>
+    <text x="275" y="358" text-anchor="middle" font-size="13" font-weight="700" fill="#1E5AA8">① 作品 → 判断力</text>
+    <text x="275" y="377" text-anchor="middle" font-size="11.5" fill="#5A6B8C">创作中遇到"知识乱、AI 幻觉"</text>
+    <text x="275" y="391" text-anchor="middle" font-size="11.5" fill="#5A6B8C">→ 需要建模与校验</text></g>
+  <g><rect x="405" y="520" width="150" height="58" rx="10" fill="#FFFFFF" stroke="#DCE7F5"/>
+    <text x="480" y="543" text-anchor="middle" font-size="13" font-weight="700" fill="#6C5CE7">② 判断力 → 交付</text>
+    <text x="480" y="562" text-anchor="middle" font-size="11.5" fill="#5A6B8C">判据 / 验收标准 / 归因能力</text>
+    <text x="480" y="576" text-anchor="middle" font-size="11.5" fill="#5A6B8C">→ 交付与验收的地基</text></g>
+  <g><rect x="618" y="330" width="160" height="58" rx="10" fill="#FFFFFF" stroke="#DCE7F5" stroke-dasharray="4 3"/>
+    <text x="698" y="353" text-anchor="middle" font-size="13" font-weight="700" fill="#0FA3A3">③ 复盘 → 反哺创作</text>
+    <text x="698" y="372" text-anchor="middle" font-size="11.5" fill="#5A6B8C">失败案例与真实需求</text>
+    <text x="698" y="386" text-anchor="middle" font-size="11.5" fill="#5A6B8C">→ 回到入口，定义更好的问题</text></g>
+
+  <g><ellipse cx="480" cy="235" rx="150" ry="72" fill="#EAF2FF" stroke="#3B82D6" stroke-width="2.5"/>
+    <text x="480" y="212" text-anchor="middle" font-size="15" font-weight="800" fill="#1E5AA8">① 氛围编程与AI应用创作</text>
+    <text x="480" y="234" text-anchor="middle" font-size="12.5" fill="#3B82D6" font-weight="700">入口层 · Vibe Coding</text>
+    <text x="480" y="254" text-anchor="middle" font-size="12" fill="#5A6B8C">能力模型：定 — 驭 — 验 — 交</text>
+    <text x="480" y="272" text-anchor="middle" font-size="11.5" fill="#8CA0BF">产出：作品三件套（可直接进简历）</text>
+    <circle cx="355" cy="185" r="15" fill="#3B82D6"/><text x="355" y="190" text-anchor="middle" font-size="13" font-weight="800" fill="#fff">A</text></g>
+
+  <g><ellipse cx="300" cy="505" rx="150" ry="72" fill="#F1EEFF" stroke="#6C5CE7" stroke-width="2.5"/>
+    <text x="300" y="482" text-anchor="middle" font-size="15" font-weight="800" fill="#4B3BC7">② 基于大模型本体建模及应用分析</text>
+    <text x="300" y="504" text-anchor="middle" font-size="12.5" fill="#6C5CE7" font-weight="700">底座层 · 本体论</text>
+    <text x="300" y="524" text-anchor="middle" font-size="12" fill="#5A6B8C">能力模型：会读 — 会建 — 会校 — 会判</text>
+    <text x="300" y="542" text-anchor="middle" font-size="11.5" fill="#8CA0BF">产出：可运行校验的知识工程件</text>
+    <circle cx="175" cy="455" r="15" fill="#6C5CE7"/><text x="175" y="460" text-anchor="middle" font-size="13" font-weight="800" fill="#fff">B</text></g>
+
+  <g><ellipse cx="660" cy="505" rx="150" ry="72" fill="#E7F8F6" stroke="#0FA3A3" stroke-width="2.5"/>
+    <text x="660" y="482" text-anchor="middle" font-size="15" font-weight="800" fill="#0B7C7C">③ GIS工程项目管理与实践</text>
+    <text x="660" y="504" text-anchor="middle" font-size="12.5" fill="#0FA3A3" font-weight="700">出口层 · FDE 前沿部署工程师</text>
+    <text x="660" y="524" text-anchor="middle" font-size="12" fill="#5A6B8C">能力模型：诊 — 建 — 交 — 复</text>
+    <text x="660" y="542" text-anchor="middle" font-size="11.5" fill="#8CA0BF">产出：端到端交付包 + 失败复盘</text>
+    <circle cx="785" cy="455" r="15" fill="#0FA3A3"/><text x="785" y="460" text-anchor="middle" font-size="13" font-weight="800" fill="#fff">C</text></g>
+
+  <circle cx="480" cy="420" r="95" fill="url(#core)"/>
+  <circle cx="480" cy="420" r="62" fill="#FFFFFF" stroke="#F5A623" stroke-width="2.5"/>
+  <text x="480" y="400" text-anchor="middle" font-size="13.5" font-weight="800" fill="#B57B0A">共享方法论内核</text>
+  <text x="480" y="420" text-anchor="middle" font-size="12" fill="#B57B0A">FDE × OPC</text>
+  <text x="480" y="440" text-anchor="middle" font-size="10.5" fill="#8CA0BF">成果即证据 · 验收先行</text>
+  <text x="480" y="455" text-anchor="middle" font-size="10.5" fill="#8CA0BF">留痕采信 · 交付三件套</text>
+
+  <line x1="480" y1="420" x2="330" y2="380" stroke="#F5A623" stroke-width="1.5" stroke-dasharray="3 4" opacity="0.6"/>
+  <line x1="480" y1="420" x2="480" y2="512" stroke="#F5A623" stroke-width="1.5" stroke-dasharray="3 4" opacity="0.6"/>
+  <line x1="480" y1="420" x2="630" y2="395" stroke="#F5A623" stroke-width="1.5" stroke-dasharray="3 4" opacity="0.6"/>
+
+  <g><rect x="48" y="648" width="864" height="76" rx="14" fill="#FFFFFF" stroke="#E3ECF7"/>
+    <text x="70" y="676" font-size="13" font-weight="800" fill="#1B2A4A">如何读这张图</text>
+    <text x="70" y="698" font-size="12" fill="#5A6B8C">① 实线箭头 = 正向能力流：作品催生判断需求（A→B），判断力托起交付（B→C）；</text>
+    <text x="70" y="716" font-size="12" fill="#5A6B8C">② 虚线箭头 = 反哺闭环：真实交付中的失败与需求（C→A）回到入口重新定义问题；</text>
+    <text x="580" y="698" font-size="12" fill="#5A6B8C">③ 圆心 = 三课共用同一套纪律基因，是铁三角"铁"的来源；</text>
+    <text x="580" y="716" font-size="12" fill="#5A6B8C">④ 外圈虚线 = 学生成长时间轴：入门 → 筑基 → 上岗交付。</text></g>
+</svg>
+<figcaption>图 1 · 铁三角能力流关系图：关系画在"边"上而非"卡片"里——实线是正向能力流，虚线是复盘反哺闭环，圆心是三课共享的方法论内核，外圈是学生成长时间轴。</figcaption>
+</figure>
+</section>
+
+<section>
+<h2>三、"铁"在哪：三个咬合点，缺一即散</h2>
+<h3>咬合一 · 能力链互补，无重叠断档</h3>
+<p>图 1 里那三条边就是证据：作品催生建模需求（A→B），判据托起交付（B→C），交付复盘反哺创作（C→A）。<b>三角之所以是三角而不是三根棍，就是因为边上有流。</b></p>
+<h3>咬合二 · 口径天然同源</h3>
+<p>"成果即证据""验收标准先行""过程留痕采信""反代写 / 反漂移""作品 / 交付三件套"——三课共用同一套纪律基因。这不是巧合，是同一方法论（FDE×OPC）在三个海拔的投影。所以铁三角不是三门课的拼盘，而是<b>一套方法论的三个教学切面</b>。图 1 的圆心画的就是这个：三根黄色支撑线，撑起同一个内核。</p>
+<h3>咬合三 · 受众漏斗与成长出口</h3>
+<table>
+  <tr><th>漏斗层</th><th>课程</th><th>出口（可核验的证据）</th></tr>
+  <tr><td>入口（最热）</td><td>vibe 课：热词 + 作品集导向 + 零成本</td><td>学科竞赛 / 毕设</td></tr>
+  <tr><td>底座</td><td>本体论课：方法论骨架</td><td>知识库工程实习</td></tr>
+  <tr><td>出口</td><td>FDE 课：真实交付与就业</td><td>OPC 项目梯队（影子层→梯队层）</td></tr>
+</table>
+<blockquote>图 1 的外圈虚线就是这条漏斗的可视化：学生沿外圈走一圈——入门（vibe）→ 筑基（本体）→ 上岗交付（FDE）——每一层都有出口，<b>迷茫的解药不是鸡汤，是路线图</b>。</blockquote>
+</section>
+
+<section>
+<h2>四、正在学 vibe coding 的你：三剂清醒药</h2>
+<h3>1. 一个词的诞生与两次改口</h3>
+<p>2025 年 2 月，Karpathy 发帖描述自己"完全顺着感觉让 AI 写代码、几乎不看 diff"的工作方式，并起名 vibe coding——注意原初语境带自嘲："用来做周末玩具很爽，用来写正经代码很危险。"十四个月后，同一个人站在风险投资年度大会上，宣布严肃软件工程需要四项全新技能，只字未提"忘了代码的存在"。<b>概念提出者本人一年内两次改写口径——这不是术语游戏，是一次能力重估的完整记录。</b></p>
+<blockquote>"忘了代码的存在"隐含三个前提：产物可随时抛弃、错误没有代价、下周可推倒重来。三个前提在玩具场景同时成立，在交付场景同时不成立——这就是同一句话在两种语境下价值相反的原因。<b>真实的>漂亮的。</b></blockquote>
+<h3>2. 你的权责分界：让渡 how，保留 what 与 why</h3>
+<div class="role">
+  <div><div class="t">你保留（不可让渡）</div>① 判断"对不对"——验收标准<br>② 决定做什么、不做什么——边界<br>③ 承担后果——责任与署名<br>④ 品味——什么算"好"的最终裁定</div>
+  <div><div class="t">你让渡（放心交出）</div>① 语法、样板代码、查文档<br>② 重复劳动、格式、迁移适配<br>③ 方案初稿——它只是"候选"<br>④ 知识广度——它读过的你不必读</div>
+</div>
+<p>一句话：<b>AI 负责"手"，你负责"眼和心"</b>——手快慢无所谓，眼花心歪则项目报废。把"指挥 AI"理解成躺平当甩手掌柜，是这门课最危险的误读。</p>
+<h3>3. 三层方法，别混用</h3>
+<p>把 AI 当成"记性只有一屏、但读文件比人快一万倍的实习生"：<b>提示词</b>是当面的口头吩咐（治"指令结构松散"）；<b>上下文</b>是交接文档（治"聊着聊着忘了约定"）；<b>Harness</b> 是门禁卡加操作规程（治"自信地违反规则、悄悄简化"）。2023-2024 热议 Prompt，2025 转向 Context，2026 起 Harness 成为严肃工程共识——<b>三层是叠加不是替代</b>。</p>
+</section>
+
+<section>
+<h2>五、想了解 FDE 的你：出口处长什么样</h2>
+<p>FDE（Forward Deployed Engineer，前沿部署工程师）的核心不是"会调模型"，而是把 AI 接入具体业务环节并对结果负责。FDE 课程的专题结构就是一张岗位能力地图：</p>
+<table>
+  <tr><th>专题</th><th>内容</th><th>作用</th></tr>
+  <tr><td>一</td><td>FDE 与 GIS/遥感交付的本质</td><td>认知底座</td></tr>
+  <tr><td>二 ★</td><td>对象建模与两条分界线</td><td>判据来源（全书地基）</td></tr>
+  <tr><td>三</td><td>适配性自检与组织落地</td><td>决策能力</td></tr>
+  <tr><td>四 ★</td><td>五步法与需求诊断</td><td>方法主干</td></tr>
+  <tr><td>五 ★</td><td>实施管控与验收交付</td><td>交付核心</td></tr>
+  <tr><td>六</td><td>失败复盘、复用与规模化</td><td>反向校准与复利</td></tr>
+</table>
+<p>注意专题二"对象建模与两条分界线"被标注为<b>全书地基</b>——这正是本体论课存在的原因：FDE 的交付核心能力（判据、验收、归因）需要知识工程做底座。对照图 1 的 B→C 边：<b>底座层不是概念堆砌，是岗位能力的先后依赖，图上那条边就是这么来的。</b></p>
+<blockquote>本体论课主锚案例是真实工程：教师自主开发的猪中人平台八模型（对象 23 / 行为 78 / 规则 33 / 角色 7 / 权限 77 / 流程 7 / 场景 12 / 报表 15），校验史首跑 98 条硬错误 → 补全后归零。学生看到的是"带伤疤的工程"，不是教科书上的完美样板——"共识靠判错"，失败案例与成功案例同权重进课堂。<b>靠谱 > 聪明，伤疤 > 样板。</b></blockquote>
+</section>
+
+<section>
+<h2>六、陷入迷茫的你：把焦虑翻译成动作</h2>
+<h3>常见误区与解药</h3>
+<div class="myth">
+  <div class="item"><b>误区①</b>"会用 AI 聊天 = 会 vibe coding"。错。缺了可交付目标与验收责任，只是聊天。解药：每做一个东西，先写四条可打勾的验收标准，再动手。<b>验收标准先行。</b></div>
+  <div class="item"><b>误区②</b>"学了 Agentic 就不用写 Spec 了"。错。范式三阶段（Vibe→Spec→Agentic）是能力叠加而非替换——Agentic 时代依然需要规格与验收。</div>
+  <div class="item"><b>误区③</b>"只当提需求的人，不验收"。这是 vibe 课考核制度专门打击的行为：模糊词不计分、现场改需求再生成。完成不是"做完了"，是<b>"验证过且归零了"</b>。</div>
+  <div class="item"><b>误区④</b>"迷茫是因为不知道学哪门"。其实你缺的不是课程，是<b>路线图</b>：vibe 入口 → 本体底座 → FDE 出口（图 1 外圈），三道沟对应三门课，每一层都有可核验的出口。</div>
+</div>
+<h3>三步行动清单（每步都产出"证据"）</h3>
+<table>
+  <tr><th>阶段</th><th>动作</th><th>产出（成果即证据）</th></tr>
+  <tr><td>第 1 步 · 入口</td><td>做一个真实的小项目（哪怕个人主页），全程留痕：版本快照 × prompt 记录 × 验收记录，时间戳对齐</td><td>作品三件套（本体 + 文档 + 复盘）</td></tr>
+  <tr><td>第 2 步 · 底座</td><td>给同一个业务域做一次"会读—会建—会校—会判"的本体建模，跑通一致性校验</td><td>可运行校验的本体文件 + 校验报告</td></tr>
+  <tr><td>第 3 步 · 出口</td><td>把 1+2 的积累装进一个端到端交付：需求诊断 → 实施管控 → 验收 → 失败复盘</td><td>交付包 + 复盘文档，进作品集 / 梯队</td></tr>
+</table>
+<blockquote>结果叙事说"做成了什么"，证据叙事说"凭什么信"。交付的不是代码，是<b>一套可审计的信任</b>。你的档案，就是你在 AI 时代的通行证——<b>成果依赖档案，非记忆。</b></blockquote>
+</section>
+
+<section>
+<h2>七、结语：三角稳定，因为三个顶点各有其职</h2>
+<p>回到图 1。三角之所以稳定，是因为三个顶点缺一不可：只有 vibe，你是"碰运气的高产创作者"，作品经不起追问；只有本体论，你是"懂判定的旁观者"，没有作品与战场；只有 FDE，你是"方法论在背的空降兵"，缺入口的创作体验与底座的判断力。三课合一，才是完整的人才路径：<b>会创作（有作品）→ 会判定（有骨架）→ 会交付（有结果）</b>。</p>
+<p>写给年轻朋友的最后一句话：<b>别追新词，追问题。</b>工具的界面每月一换，但"结构化输入决定结构化输出""验收能力升值为核心能力"的原理不变。把方法层练扎实，把每一份产出沉淀为可核验的档案——风往哪吹，你都有锚。</p>
+</section>
+
+<footer>铁三角研究报告 · 基于课程开发档案与铁三角方案整理 · 2026-09-29</footer>
+</div>
+</body>
+</html>

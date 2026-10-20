@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>铁三角·AI时代大学生三位一体的体识体系（v2）</title>
+<style>
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;background:#05060c;color:#e6edf3;
+    font-family:system-ui,-apple-system,'Microsoft YaHei',sans-serif;overflow:hidden;}
+  #wrap{position:fixed;inset:0;}
+  canvas{display:block;}
+  .title{position:fixed;top:14px;left:16px;z-index:5;pointer-events:none;}
+  .title h1{margin:0;font-size:15px;font-weight:700;}
+  .title .sub{font-size:11px;color:#8b949e;margin-top:3px;}
+  #hint{position:fixed;bottom:12px;left:16px;z-index:5;font-size:11px;color:#8b949e;
+    background:rgba(5,6,12,.6);padding:5px 10px;border:1px solid #21262d;border-radius:8px;pointer-events:none;}
+  #legend{position:fixed;left:16px;top:110px;z-index:5;width:172px;
+    background:rgba(10,12,20,.82);border:1px solid #21262d;border-radius:10px;padding:10px;}
+  #legend .lt{font-size:10px;color:#8b949e;letter-spacing:.8px;margin-bottom:6px;}
+  #search{position:fixed;left:16px;top:76px;z-index:7;width:172px;}
+  #searchInput{width:100%;box-sizing:border-box;background:rgba(10,12,20,.9);border:1px solid #30363d;
+    border-radius:8px;color:#e6edf3;padding:6px 9px;font-size:12px;outline:none;}
+  #searchInput:focus{border-color:#58a6ff;}
+  #results{position:absolute;top:100%;left:0;right:0;background:rgba(13,17,23,.97);border:1px solid #30363d;
+    border-radius:8px;margin-top:4px;max-height:280px;overflow-y:auto;display:none;box-shadow:0 8px 24px rgba(0,0,0,.5);}
+  #results.on{display:block;}
+  #results .srow{display:flex;align-items:center;gap:6px;width:100%;text-align:left;background:none;border:none;
+    color:#e6edf3;font-size:11.5px;padding:4px 8px;cursor:pointer;}
+  #results .srow:hover{background:#21262d;}
+  #results .srow .rdot{width:7px;height:7px;border-radius:50%;flex:none;}
+  #results .srow .rt{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  #results .srow .ra{font-family:ui-monospace,Consolas,monospace;font-size:9.5px;color:#8b949e;flex:none;}
+  .chip{display:flex;align-items:center;gap:6px;padding:3px 6px;border-radius:6px;cursor:pointer;
+    font-size:11.5px;line-height:1.5;user-select:none;}
+  .chip:hover{background:#161b22;}
+  .chip.off{opacity:.28;}
+  .chip .sw{width:8px;height:8px;border-radius:50%;flex:none;}
+  .chip .nm{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .chip .ct{font-family:ui-monospace,Consolas,monospace;font-size:10px;color:#8b949e;}
+  #tip{position:fixed;z-index:6;display:none;max-width:240px;background:rgba(13,17,23,.96);
+    border:1px solid #30363d;border-radius:10px;padding:8px 10px;font-size:11px;pointer-events:none;line-height:1.5;}
+  #tip.on{display:block;}
+  #tip .sw{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:-1px;}
+  #tip .ts{color:#8b949e;font-size:10px;}
+  #tip .ttl{font-weight:600;margin:2px 0;}
+  #tip .q{color:#c9d1d9;}
+  #card{position:fixed;right:14px;top:14px;bottom:14px;width:296px;z-index:6;display:none;
+    background:rgba(13,17,23,.96);border:1px solid #30363d;border-radius:12px;flex-direction:column;overflow:hidden;}
+  #card.on{display:flex;}
+  #card .chead{padding:10px 12px;border-bottom:1px solid #21262d;display:flex;align-items:center;gap:8px;}
+  #card .sw{width:12px;height:12px;border-radius:50%;flex:none;}
+  #card .cs{font-size:10.5px;color:#8b949e;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  #card .ib{background:none;border:1px solid #30363d;color:#8b949e;border-radius:6px;padding:2px 7px;cursor:pointer;font-size:11px;}
+  #card .ib:hover{color:#e6edf3;}
+  #card .cbody{flex:1;overflow-y:auto;padding:10px 12px;font-size:12px;}
+  #card .ctl{font-size:15px;font-weight:700;margin:2px 0 6px;}
+  #card .stat{display:flex;gap:14px;margin:8px 0;padding:8px 10px;background:#161b22;border-radius:8px;}
+  #card .stat b{font-size:17px;color:#58a6ff;display:block;}
+  #card .stat span{font-size:10px;color:#8b949e;}
+  #card .sec{margin:8px 0 4px;font-weight:600;font-size:11px;color:#8b949e;}
+  #card .row{display:flex;align-items:center;gap:6px;padding:3px 4px;border-radius:5px;cursor:pointer;width:100%;text-align:left;background:none;border:none;color:#e6edf3;font-size:11.5px;}
+  #card .row:hover{background:#21262d;}
+  #card .row .rdot{width:7px;height:7px;border-radius:50%;flex:none;}
+  #card .row .rt{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  #card .row .ra{font-family:ui-monospace,Consolas,monospace;font-size:9.5px;color:#8b949e;flex:none;}
+  #card .empty{color:#8b949e;font-size:11px;padding:3px 4px;}
+  #card .missing{color:#f85149;font-size:11px;margin:2px 0;}
+  #card .def{color:#c9d1d9;font-size:11.5px;line-height:1.6;}
+  #card .meta{color:#8b949e;font-size:11px;margin-top:6px;}
+  #relLegend{position:fixed;left:16px;bottom:44px;z-index:5;width:172px;
+    background:rgba(10,12,20,.82);border:1px solid #21262d;border-radius:10px;padding:8px 10px;font-size:10px;color:#8b949e;display:none;}
+  #relLegend.on{display:block;}
+  #relLegend .lt{font-size:10px;letter-spacing:.8px;margin-bottom:4px;color:#8b949e;}
+  #relLegend .rc{display:flex;align-items:center;gap:6px;padding:2px 0;line-height:1.4;}
+  #relLegend .rc .ln{flex:1;color:#c9d1d9;}
+  #relLegend .rc .sw2{width:16px;height:0;flex:none;border-top:2px solid;}
+  #subtitle{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:6;display:none;
+    background:rgba(13,17,23,.94);border:1px solid #30363d;border-radius:10px;padding:7px 14px;
+    font-size:12px;color:#c9d1d9;pointer-events:none;max-width:60%;text-align:center;}
+  #subtitle.on{display:block;}
+  #subtitle .st-badge{display:inline-block;background:#21262d;color:#58a6ff;border-radius:4px;padding:1px 6px;font-size:10px;margin-right:6px;}
+  #homeLink{position:fixed;top:10px;left:12px;z-index:9;background:rgba(22,27,34,.92);border:1px solid #30363d;color:#58a6ff;border-radius:8px;padding:6px 12px;font-size:12.5px;text-decoration:none;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.3);}
+  #homeLink:hover{background:#21262d;}
+</style>
+</head>
+<body>
+<a id="homeLink" href="铁三角研究报告：AI_时代的成长航线.html">📖 ← 返回总纲（铁三角研究报告）</a>
+<div class="title">
+  <h1>铁三角·AI时代大学生三位一体的体识体系（v2）</h1>
+  <div class="sub">以铁三角课程体系（氛围编程入口层、本体论底座层、FDE出口层）为对象，用OBR本体论把三门课程的知识、能力与成长路径建模为可校验、可四视图呈现的统一体识体系。v2 在三门课完整素材基础上大幅丰富节点与关系：每门课按专题（L3）与实体（L4）两级拆解，专题承载培养能力目标/教学重点难点/教学方法/主要内容简介/原理逻辑（认知行教学思路），跨课建立"作品→判断力→交付→复盘反哺"的能力流关系，共享 FDE×OPC 方法论内核，服务课程建设、教学实施与学生成长导航。</div>
+</div>
+<div id="search">
+  <input id="searchInput" placeholder="🔍 搜索知识点…" autocomplete="off">
+  <div id="results"></div>
+</div>
+<div id="legend">
+  <div class="lt">领域 · 点击切换</div>
+</div>
+<div id="hint"><b>拖拽</b>旋转 · <b>滚轮</b>缩放 · <b>点击</b>知识点：先看前置链逐层点亮，再自动展开"含义与关系"</div>
+<div id="relLegend"></div>
+<div id="subtitle"></div>
+<div id="tip"></div>
+<div id="card">
+  <div class="chead">
+    <span class="sw"></span><span class="cs"></span>
+    <button class="ib" id="replayBtn" style="display:none">▶ 重播</button>
+    <button class="ib" id="backBtn" style="display:none">← 返回</button>
+    <button class="ib" id="closeBtn">✕</button>
+  </div>
+  <div class="cbody">
+    <div class="ctl"></div>
+    <div class="stat">
+      <div><b class="n"></b><span>前置链总数</span></div>
+      <div><b class="d"></b><span>直接前置</span></div>
+      <div><b class="u"></b><span>解锁下一步</span></div>
+    </div>
+    <div class="sec">定义</div><div class="def"></div>
+    <div class="sec">评估提问 assessmentPrompt</div><div class="aq"></div>
+    <div class="sec">掌握标准 evidence（降级）</div><div class="ev"></div>
+    <div class="sec">Builds directly on（直接前置）</div><div class="rows-pre"></div>
+    <div class="sec">Unlocks next（解锁）</div><div class="rows-next"></div>
+    <div class="meta"></div>
+  </div>
+</div>
+<div id="wrap"><canvas id="cv"></canvas></div>
+<script id="graphdata" type="application/json">{"groups":["氛围编程·入口层","本体论·底座层","FDE交付·出口层","共享方法论内核"],"gcol":["#3B82D6","#6C5CE7","#0FA3A3","#F5A623"],"H":1200.0,"nodes":[{"x":496.4,"y":943.02,"z":-500.71,"g":3,"a":3,"c":0.98,"col":"#F5A623","dm":"共享方法论内核","t":"铁三角·三位一体的体识体系","id":"iron_triangle","q":"定义问题大于解题","qsrc":"evidence","stage":"元方法·全程","evidence":["定义问题大于解题","三课共用一套纪律基因","会创作→会判定→会交付"],"def":"以氛围编程（入口）、本体论（底座）、FDE交付（出口）为三顶点、以FDE×OPC共享方法论为内核的大学生成长体系。","imp":1.0,"diff":2.0,"time":60.0,"outdeg":0},{"x":-15.85,"y":-340.69,"z":157.23,"g":0,"a":0,"c":0.9,"col":"#3B82D6","dm":"氛围编程·入口层","t":"氛围编程与AI应用创作（入口层）","id":"vibe_coding","q":"不教语法教指挥","qsrc":"evidence","stage":"入门","evidence":["不教语法教指挥","结课即作品集","零编程基础可入"],"def":"不教编程语言、教\"指挥AI创造软件\"的公选课，能力模型为定—驭—验—交。","imp":0.95,"diff":2.0,"time":120.0,"outdeg":3},{"x":25.73,"y":-363.25,"z":336.64,"g":1,"a":1,"c":0.9,"col":"#6C5CE7","dm":"本体论·底座层","t":"基于大模型本体建模及应用分析（底座层）","id":"ontology_course","q":"不教框架教判定","qsrc":"evidence","stage":"筑基","evidence":["不教框架教判定","共识靠判错","知识可判定"],"def":"把本体论从哲学名词讲成可操作工程件的公选课，能力模型为会读—会建—会校—会判。","imp":0.94,"diff":2.0,"time":120.0,"outdeg":5},{"x":487.14,"y":258.81,"z":204.02,"g":2,"a":2,"c":0.9,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"企业AI落地与FDE现场交付（出口层）","id":"fde_course","q":"模型之外的那80%","qsrc":"evidence","stage":"上岗交付","evidence":["模型之外的那80%","交付等于经营结果负责","端到端交付包加复盘"],"def":"不教编码实现、教交付与验收的专业选修课，能力模型为诊—建—交—复。","imp":0.93,"diff":3.0,"time":120.0,"outdeg":1},{"x":470.31,"y":984.48,"z":-571.17,"g":3,"a":3,"c":0.9,"col":"#F5A623","dm":"共享方法论内核","t":"共享方法论内核（FDE×OPC）","id":"shared_core","q":"一套方法论三个切面","qsrc":"evidence","stage":"元方法·全程","evidence":["一套方法论三个切面","靠谱大于聪明","成果依赖档案非记忆"],"def":"三课共用的纪律基因与身份出口，是铁三角\"铁\"的来源。","imp":0.92,"diff":2.0,"time":90.0,"outdeg":1},{"x":22.2,"y":-199.05,"z":241.23,"g":0,"a":0,"c":0.18,"col":"#3B82D6","dm":"氛围编程·入口层","t":"定·范式觉醒与规格定义","id":"vibe_define","q":"想到什么说什么的代价","qsrc":"evidence","stage":"入门","evidence":["想到什么说什么的代价","规格是给AI的合同"],"def":"建立范式认知并把模糊想法写成可验收规格的能力模块。","imp":0.85,"diff":2.0,"time":90.0,"outdeg":1},{"x":-12.37,"y":-302.47,"z":187.75,"g":0,"a":0,"c":0.18,"col":"#3B82D6","dm":"氛围编程·入口层","t":"驭·上下文工程","id":"vibe_harness","q":"三层进化叠加","qsrc":"evidence","stage":"入门","evidence":["三层进化叠加","说明书承载长程上下文","给AI装护栏"],"def":"从提示词到上下文再到驾驭工程的完整方法链。","imp":0.88,"diff":3.0,"time":90.0,"outdeg":1},{"x":-3.16,"y":-290.21,"z":189.28,"g":0,"a":0,"c":0.18,"col":"#3B82D6","dm":"氛围编程·入口层","t":"验·AI结对与审查","id":"vibe_verify","q":"AI写人审","qsrc":"evidence","stage":"入门","evidence":["AI写人审","反模式图鉴","审查是新的地基"],"def":"把人审diff训练成本能的能力模块，教程中最硬的一卷。","imp":0.88,"diff":3.0,"time":90.0,"outdeg":1},{"x":0.73,"y":-263.83,"z":208.04,"g":0,"a":0,"c":0.18,"col":"#3B82D6","dm":"氛围编程·入口层","t":"交·作品集交付","id":"vibe_deliver","q":"作品自己说话","qsrc":"evidence","stage":"入门","evidence":["作品自己说话","三线对齐留痕","验收指挥过程"],"def":"从项目实战到路演交付的能力模块，全教程的会师卷。","imp":0.86,"diff":2.0,"time":90.0,"outdeg":1},{"x":32.64,"y":-180.37,"z":272.91,"g":0,"a":0,"c":0.24,"col":"#3B82D6","dm":"氛围编程·入口层","t":"范式五级模型","id":"vibe_ladder","q":"术语半年一换代","qsrc":"evidence","stage":"入门","evidence":["术语半年一换代","能力叠加不是替换","历史正在发生"],"def":"Karpathy谱系：vibe coding→spec→context→harness→agentic engineering的五级能力演进。","imp":0.85,"diff":2.0,"time":50.0,"outdeg":2},{"x":74.83,"y":-103.05,"z":308.96,"g":0,"a":0,"c":0.24,"col":"#3B82D6","dm":"氛围编程·入口层","t":"指挥伦理","id":"commander_ethics","q":"手快慢无所谓","qsrc":"evidence","stage":"入门","evidence":["手快慢无所谓","眼花心歪则项目报废","责任不可让渡"],"def":"指挥官不等于旁观者：让渡how，保留what与why的权责分界。","imp":0.82,"diff":2.0,"time":40.0,"outdeg":2},{"x":41.41,"y":-161.88,"z":266.56,"g":0,"a":0,"c":0.3,"col":"#3B82D6","dm":"氛围编程·入口层","t":"规格四要素","id":"spec_quartet","q":"验收标准先行","qsrc":"evidence","stage":"入门","evidence":["验收标准先行","非目标清单防范围蔓延","反例判据校准"],"def":"用户故事、验收标准、边界声明、非目标清单构成的规格写作四件套。","imp":0.85,"diff":2.0,"time":50.0,"outdeg":3},{"x":254.14,"y":126.28,"z":387.08,"g":0,"a":0,"c":0.18,"col":"#3B82D6","dm":"氛围编程·入口层","t":"Mom Test需求访谈","id":"mom_test","q":"问过去不问未来","qsrc":"evidence","stage":"入门","evidence":["问过去不问未来","追问投入量","识别开口要的非真实卡点"],"def":"谈经历不谈方案、问过去不问未来、追问投入量的需求验证三原则。","imp":0.72,"diff":3.0,"time":40.0,"outdeg":1},{"x":91.08,"y":-82.0,"z":319.67,"g":0,"a":0,"c":0.18,"col":"#3B82D6","dm":"氛围编程·入口层","t":"提示词五件套","id":"prompt_kit","q":"结构治松散","qsrc":"evidence","stage":"入门","evidence":["结构治松散","约束显式化","示例即验收锚"],"def":"角色、任务、约束、格式、示例五段结构化提示词写法。","imp":0.82,"diff":2.0,"time":40.0,"outdeg":1},{"x":13.43,"y":-239.12,"z":241.87,"g":0,"a":0,"c":0.24,"col":"#3B82D6","dm":"氛围编程·入口层","t":"上下文工程","id":"context_engineering","q":"上下文即源代码","qsrc":"evidence","stage":"入门","evidence":["上下文即源代码","交接文档越全返工越少","腐化要回收"],"def":"上下文窗口经济学、说明书文件与上下文腐化回收的方法体系。","imp":0.86,"diff":3.0,"time":60.0,"outdeg":2},{"x":126.66,"y":-18.5,"z":341.34,"g":0,"a":0,"c":0.18,"col":"#3B82D6","dm":"氛围编程·入口层","t":"Harness驾驭工程","id":"harness_engineering","q":"门禁加规程","qsrc":"evidence","stage":"入门","evidence":["门禁加规程","工程共识2026起","技能生态即样本库"],"def":"给AI装护栏的工程化实践：规则文件、检查脚本、验收钩子。","imp":0.8,"diff":3.0,"time":50.0,"outdeg":1},{"x":145.3,"y":9.6,"z":355.91,"g":0,"a":0,"c":0.24,"col":"#3B82D6","dm":"氛围编程·入口层","t":"AI结对思维模型","id":"pair_review","q":"人审diff","qsrc":"evidence","stage":"入门","evidence":["人审diff","角色重排","审查即地基"],"def":"AI结对区别于人人结对的三个差异与驾驶者、导航者角色重排。","imp":0.8,"diff":2.0,"time":40.0,"outdeg":2},{"x":103.8,"y":-46.86,"z":318.84,"g":0,"a":0,"c":0.24,"col":"#3B82D6","dm":"氛围编程·入口层","t":"五查清单","id":"five_check","q":"逐查可执行","qsrc":"evidence","stage":"入门","evidence":["逐查可执行","配反欺骗手法","清单即可复用资产"],"def":"需求符合性、边界条件、安全性、性能、可维护性的逐查审查清单。","imp":0.82,"diff":2.0,"time":40.0,"outdeg":2},{"x":180.71,"y":42.78,"z":357.14,"g":0,"a":0,"c":0.18,"col":"#3B82D6","dm":"氛围编程·入口层","t":"八类反模式图鉴","id":"anti_patterns","q":"症状到预防四段","qsrc":"evidence","stage":"入门","evidence":["症状到预防四段","越快生成越快堆积","判例比说教保值"],"def":"幻构API、静默失败、过度自信注释、复制粘贴伪修复等八类AI编程缺陷判例。","imp":0.78,"diff":3.0,"time":50.0,"outdeg":1},{"x":211.41,"y":79.46,"z":375.26,"g":0,"a":0,"c":0.18,"col":"#3B82D6","dm":"氛围编程·入口层","t":"98→0校验纪律移植","id":"zero_bug_ritual","q":"完成等于归零","qsrc":"evidence","stage":"入门","evidence":["完成等于归零","校验器当风格警察","跨课互引"],"def":"把本体论课校验史方法论移植到vibe场景的lint、checklist、回归三件套。","imp":0.75,"diff":3.0,"time":40.0,"outdeg":1},{"x":60.76,"y":-126.09,"z":302.47,"g":0,"a":0,"c":0.18,"col":"#3B82D6","dm":"氛围编程·入口层","t":"作品三件套","id":"portfolio_trio","q":"作品自己说话","qsrc":"evidence","stage":"入门","evidence":["作品自己说话","档案即通行证","与交付三件套同构"],"def":"作品本体、文档、复盘构成的结课交付标准，可直接进简历。","imp":0.85,"diff":2.0,"time":50.0,"outdeg":1},{"x":166.29,"y":25.12,"z":360.1,"g":0,"a":0,"c":0.3,"col":"#3B82D6","dm":"氛围编程·入口层","t":"过程留痕三线对齐","id":"trace_three_lines","q":"三线对齐","qsrc":"evidence","stage":"入门","evidence":["三线对齐","时间戳可核验","反代写的技术基础"],"def":"版本快照、prompt记录、验收记录三线对齐且时间戳一致的过程档案。","imp":0.8,"diff":2.0,"time":40.0,"outdeg":3},{"x":309.95,"y":181.48,"z":391.73,"g":0,"a":0,"c":0.18,"col":"#3B82D6","dm":"氛围编程·入口层","t":"路演三页模板","id":"roadshow_template","q":"三页结构","qsrc":"evidence","stage":"入门","evidence":["三页结构","说得清楚","作品到演示"],"def":"模型图、过程档案、复盘结论三页结构与五分钟陈述预演模板。","imp":0.7,"diff":2.0,"time":30.0,"outdeg":1},{"x":174.31,"y":-141.97,"z":450.02,"g":1,"a":1,"c":0.18,"col":"#6C5CE7","dm":"本体论·底座层","t":"会读·概念与知识资产","id":"onto_read","q":"首课不出现希腊词","qsrc":"evidence","stage":"筑基","evidence":["首课不出现希腊词","三层标尺分级","知识资产化"],"def":"把哲学词读成工程件、把文档堆读成知识资产的能力模块。","imp":0.85,"diff":2.0,"time":90.0,"outdeg":1},{"x":63.01,"y":-295.56,"z":380.94,"g":1,"a":1,"c":0.24,"col":"#6C5CE7","dm":"本体论·底座层","t":"会建·OBR建模","id":"onto_model","q":"三要素判定","qsrc":"evidence","stage":"筑基","evidence":["三要素判定","模型间闭包","生成后必须校核"],"def":"用对象、行为、规则三要素建出业务域八模型本体的能力模块。","imp":0.9,"diff":3.0,"time":120.0,"outdeg":2},{"x":91.16,"y":-246.63,"z":397.65,"g":1,"a":1,"c":0.18,"col":"#6C5CE7","dm":"本体论·底座层","t":"会校·七步实操与校验","id":"onto_verify","q":"报告三段读法","qsrc":"evidence","stage":"筑基","evidence":["报告三段读法","归零才算完成","漂移发生时像进展"],"def":"跑校验器、读报告、修硬错误、识别漂移的工程闭环能力模块。","imp":0.88,"diff":3.0,"time":90.0,"outdeg":1},{"x":129.16,"y":-204.64,"z":412.9,"g":1,"a":1,"c":0.18,"col":"#6C5CE7","dm":"本体论·底座层","t":"会判·应用分析与决策","id":"onto_decide","q":"五问决策卡","qsrc":"evidence","stage":"筑基","evidence":["五问决策卡","失败语汇","诚实度可扣分"],"def":"五问法决策该不该上本体、识别失败模式、完成大模型应用分析的能力模块。","imp":0.87,"diff":3.0,"time":90.0,"outdeg":1},{"x":264.68,"y":-36.64,"z":460.65,"g":1,"a":1,"c":0.24,"col":"#6C5CE7","dm":"本体论·底座层","t":"本体三副面孔","id":"ontology_faces","q":"哲学词落地","qsrc":"evidence","stage":"筑基","evidence":["哲学词落地","工程件身份","破冰设计"],"def":"哲学词、概念模型、工程件三副面孔：本体论从哲学名词到可操作工程件的身份转换。","imp":0.82,"diff":2.0,"time":40.0,"outdeg":2},{"x":544.35,"y":215.82,"z":426.64,"g":1,"a":1,"c":0.24,"col":"#6C5CE7","dm":"本体论·底座层","t":"工程定义与最小要件","id":"engineering_definition","q":"共识显式可机读","qsrc":"evidence","stage":"筑基","evidence":["共识显式可机读","要件即判据","工程定义非哲学定义"],"def":"共识、显式、可机读三要件构成的本体工程定义。","imp":0.78,"diff":2.0,"time":40.0,"outdeg":2},{"x":301.94,"y":-17.02,"z":481.57,"g":1,"a":1,"c":0.24,"col":"#6C5CE7","dm":"本体论·底座层","t":"三库三层","id":"three_libs","q":"谁在用怎么复用","qsrc":"evidence","stage":"筑基","evidence":["谁在用怎么复用","是否沉淀模式","资产观先行"],"def":"知识库、经验库、模式库的三层资产模型及流转升级路径。","imp":0.82,"diff":2.0,"time":50.0,"outdeg":2},{"x":1017.14,"y":744.39,"z":-112.86,"g":1,"a":1,"c":0.18,"col":"#6C5CE7","dm":"本体论·底座层","t":"RAG视角","id":"rag_view","q":"检索质量靠结构","qsrc":"evidence","stage":"筑基","evidence":["检索质量靠结构","非结构化放大幻觉","桥接大模型应用"],"def":"从检索增强生成视角解释为什么大模型需要结构化知识源。","imp":0.7,"diff":3.0,"time":40.0,"outdeg":1},{"x":75.0,"y":-277.69,"z":401.24,"g":1,"a":1,"c":0.18,"col":"#6C5CE7","dm":"本体论·底座层","t":"OBR三要素","id":"obr_triad","q":"有什么能做什么受什么约束","qsrc":"evidence","stage":"筑基","evidence":["有什么能做什么受什么约束","三栏清单","建模最小完备集"],"def":"对象（有什么）、行为（能做什么）、规则（受什么约束）的建模三问。","imp":0.9,"diff":2.0,"time":50.0,"outdeg":1},{"x":44.53,"y":-318.85,"z":359.3,"g":1,"a":1,"c":0.85,"col":"#6C5CE7","dm":"本体论·底座层","t":"八模型全图","id":"eight_models","q":"七模型分工","qsrc":"evidence","stage":"筑基","evidence":["七模型分工","引用与闭包","真实规模锚定"],"def":"M1对象、M2行为、M3规则、M4场景、M5角色权限、M6流程、M7报表构成的全图模型族。","imp":0.92,"diff":3.0,"time":80.0,"outdeg":2},{"x":713.66,"y":368.64,"z":334.64,"g":1,"a":1,"c":0.18,"col":"#6C5CE7","dm":"本体论·底座层","t":"行为与规则辨析","id":"behavior_vs_rule","q":"行为做什么","qsrc":"evidence","stage":"筑基","evidence":["行为做什么","规则判定对不对","混淆即无法校验"],"def":"行为描述做什么、规则判定对不对的约束关系辨析。","imp":0.75,"diff":3.0,"time":40.0,"outdeg":1},{"x":577.85,"y":245.78,"z":413.46,"g":1,"a":1,"c":0.18,"col":"#6C5CE7","dm":"本体论·底座层","t":"大模型辅助建模两段式","id":"llm_modeling_two_stage","q":"先生成后校核","qsrc":"evidence","stage":"筑基","evidence":["先生成后校核","生成不可信是前提","未校核不进校验"],"def":"先生成后校核的提示词模板纪律，校核清单人手一份。","imp":0.78,"diff":3.0,"time":40.0,"outdeg":1},{"x":318.57,"y":8.38,"z":469.48,"g":1,"a":1,"c":0.24,"col":"#6C5CE7","dm":"本体论·底座层","t":"七步实操法","id":"seven_steps","q":"每步有检查点","qsrc":"evidence","stage":"筑基","evidence":["每步有检查点","流水线非灵感","与五步法同构"],"def":"从业务域识别到本体漂移监控的七步标准作业流程。","imp":0.82,"diff":3.0,"time":50.0,"outdeg":2},{"x":409.44,"y":97.06,"z":463.36,"g":1,"a":1,"c":0.18,"col":"#6C5CE7","dm":"本体论·底座层","t":"校验器与报告三段读法","id":"validator_report","q":"分类定位修复复跑","qsrc":"evidence","stage":"筑基","evidence":["分类定位修复复跑","报告是待办清单","修复赛工具"],"def":"结构检查脚本的使用与错误分类、定位、修复、复跑的报告解读法。","imp":0.8,"diff":3.0,"time":50.0,"outdeg":1},{"x":202.91,"y":-117.65,"z":456.25,"g":1,"a":1,"c":0.85,"col":"#6C5CE7","dm":"本体论·底座层","t":"98→0校验史","id":"bug98_history","q":"共识靠判错","qsrc":"evidence","stage":"筑基","evidence":["共识靠判错","伤疤大于样板","全课程第一证据"],"def":"猪中人平台首跑98条硬错误、补全后归零的真实工程留痕。","imp":0.85,"diff":2.0,"time":50.0,"outdeg":2},{"x":612.61,"y":277.99,"z":413.2,"g":1,"a":1,"c":0.24,"col":"#6C5CE7","dm":"本体论·底座层","t":"闭包与本体漂移","id":"closure_drift","q":"漂移像进展","qsrc":"evidence","stage":"筑基","evidence":["漂移像进展","渐进式腐败","自己造自己抓"],"def":"模型闭包的完整性要求与语义随迭代渐进偏移的现象及监控。","imp":0.78,"diff":4.0,"time":50.0,"outdeg":2},{"x":449.17,"y":119.96,"z":464.07,"g":1,"a":1,"c":0.18,"col":"#6C5CE7","dm":"本体论·底座层","t":"诚实条款","id":"honesty_clause","q":"查不到就写查不到","qsrc":"evidence","stage":"筑基","evidence":["查不到就写查不到","编造倒扣","诚信可执行"],"def":"查不到就写查不到、不打勾的计分纪律，编造数据倒扣全分。","imp":0.8,"diff":2.0,"time":30.0,"outdeg":1},{"x":222.2,"y":-101.93,"z":455.7,"g":1,"a":1,"c":0.3,"col":"#6C5CE7","dm":"本体论·底座层","t":"五问法决策卡","id":"five_questions","q":"价值资产变化复用维护","qsrc":"evidence","stage":"筑基","evidence":["价值资产变化复用维护","三开四直通两不上","判据先行"],"def":"价值、资产、变化、复用、维护五问构成的上不上本体决策卡。","imp":0.85,"diff":3.0,"time":50.0,"outdeg":3},{"x":921.02,"y":573.35,"z":127.17,"g":1,"a":1,"c":0.24,"col":"#6C5CE7","dm":"本体论·底座层","t":"六线扫描与三档开关","id":"six_lines_scan","q":"六线找机会","qsrc":"evidence","stage":"筑基","evidence":["六线找机会","三档配资源","决策到配置"],"def":"从六个业务线扫描本体机会并按三档开关配置投入强度的决策工具。","imp":0.72,"diff":3.0,"time":40.0,"outdeg":2},{"x":346.54,"y":32.8,"z":467.39,"g":1,"a":1,"c":0.24,"col":"#6C5CE7","dm":"本体论·底座层","t":"四种死法","id":"four_deaths","q":"渴撑饿瘦","qsrc":"evidence","stage":"筑基","evidence":["渴撑饿瘦","共同根源是脱离价值","失败语汇即判断力"],"def":"渴死、撑死、饿死、瘦死四种本体项目失败模式及共同根源。","imp":0.82,"diff":3.0,"time":50.0,"outdeg":2},{"x":924.76,"y":601.03,"z":93.43,"g":1,"a":1,"c":0.24,"col":"#6C5CE7","dm":"本体论·底座层","t":"四栏卡判例法","id":"four_column_case","q":"背景建模校验效果","qsrc":"evidence","stage":"筑基","evidence":["背景建模校验效果","对号入座非听故事","数字可溯源"],"def":"背景、建模、校验、效果四栏结构的案例分析方法，含潮安算盘账真实数据。","imp":0.72,"diff":3.0,"time":40.0,"outdeg":2},{"x":740.72,"y":390.51,"z":309.66,"g":1,"a":1,"c":0.18,"col":"#6C5CE7","dm":"本体论·底座层","t":"外推边界诚实度","id":"extrapolation_boundary","q":"结论要说清边界","qsrc":"evidence","stage":"筑基","evidence":["结论要说清边界","夸大扣分","可信度稀缺"],"def":"结论适用范围与外推边界的显式声明，纳入考核且可为负分。","imp":0.75,"diff":3.0,"time":40.0,"outdeg":1},{"x":523.58,"y":285.97,"z":188.5,"g":2,"a":2,"c":0.18,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"诊·需求诊断与对象建模","id":"fde_diagnose","q":"客户开口要的非真实卡点","qsrc":"evidence","stage":"上岗交付","evidence":["客户开口要的非真实卡点","对象加关系加度量","判据来源"],"def":"把模糊业务需求还原为可建模对象结构并判断企业适配性的能力模块。","imp":0.9,"diff":3.0,"time":120.0,"outdeg":1},{"x":549.46,"y":342.28,"z":155.6,"g":2,"a":2,"c":0.18,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"建·落地五步法","id":"fde_build","q":"五步是数据流","qsrc":"evidence","stage":"上岗交付","evidence":["五步是数据流","两个型变点","评测即分界线"],"def":"按五步数据流组织AI落地并识别两个型变点的能力模块。","imp":0.88,"diff":3.0,"time":90.0,"outdeg":1},{"x":645.67,"y":484.86,"z":47.82,"g":2,"a":2,"c":0.18,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"交·实施管控与验收","id":"fde_deliver","q":"形状与属性","qsrc":"evidence","stage":"上岗交付","evidence":["形状与属性","条款开工前谈","经验工程化八成验收"],"def":"组织利益平衡、条款前置与经验工程化的交付推动能力模块。","imp":0.86,"diff":4.0,"time":90.0,"outdeg":1},{"x":672.38,"y":492.72,"z":30.07,"g":2,"a":2,"c":0.24,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"复·失败复盘与机制","id":"fde_review","q":"事前验尸","qsrc":"evidence","stage":"上岗交付","evidence":["事前验尸","会计结构","机制防单点"],"def":"事前验尸、失败解剖与六台机制设计的反向校准能力模块。","imp":0.85,"diff":4.0,"time":90.0,"outdeg":2},{"x":678.83,"y":522.3,"z":6.84,"g":2,"a":2,"c":0.24,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"FDE本质与交付边界","id":"fde_essence","q":"交付物边界","qsrc":"evidence","stage":"上岗交付","evidence":["交付物边界","能力面非岗位","野外分直觉"],"def":"FDE交付的是运行中的系统加可量化的业务结果，不是方案与建议。","imp":0.85,"diff":2.0,"time":50.0,"outdeg":2},{"x":792.77,"y":725.46,"z":-236.2,"g":2,"a":2,"c":0.24,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"最后一公里根因","id":"last_mile","q":"技术非头号死因","qsrc":"evidence","stage":"上岗交付","evidence":["技术非头号死因","组织与数据排前","换模型无效"],"def":"企业AI卡在从演示到规模化最后一段的根因排序：技术不是头号死因。","imp":0.8,"diff":3.0,"time":50.0,"outdeg":2},{"x":590.15,"y":363.93,"z":140.44,"g":2,"a":2,"c":0.24,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"三问法","id":"three_questions","q":"推导非罗列","qsrc":"evidence","stage":"上岗交付","evidence":["推导非罗列","度量问是FDE增量","与OBR同源"],"def":"对象、关系、度量三问把模糊业务需求还原为可建模结构的推导方法。","imp":0.88,"diff":3.0,"time":50.0,"outdeg":2},{"x":534.32,"y":319.56,"z":178.05,"g":2,"a":2,"c":0.85,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"五类核心对象与两条分界线","id":"five_objects","q":"全书地基","qsrc":"evidence","stage":"上岗交付","evidence":["全书地基","企业语义不可外包","分界线是行动判据"],"def":"五类核心对象的划分与视图层数据层、业务技术层两条分界线，全书地基。","imp":0.9,"diff":4.0,"time":60.0,"outdeg":2},{"x":768.94,"y":660.92,"z":-149.81,"g":2,"a":2,"c":0.24,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"适配性四项自检","id":"fit_check","q":"四项全中","qsrc":"evidence","stage":"上岗交付","evidence":["四项全中","部分中即错","判据先行"],"def":"环境动态性、结果可量化性、多项目复用需求、组织接受度四项必须全中的自检。","imp":0.82,"diff":3.0,"time":50.0,"outdeg":2},{"x":591.35,"y":390.34,"z":119.56,"g":2,"a":2,"c":0.18,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"落地五步法","id":"five_steps","q":"数据流非流程图","qsrc":"evidence","stage":"上岗交付","evidence":["数据流非流程图","顺序不可颠倒","模型反而不关键"],"def":"立项体检、现场盘点、组装七组件、评测门禁、上线闭环的落地数据流。","imp":0.88,"diff":3.0,"time":60.0,"outdeg":1},{"x":713.24,"y":558.58,"z":-23.18,"g":2,"a":2,"c":0.24,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"两个型变点","id":"two_transitions","q":"交付成立与复利成立","qsrc":"evidence","stage":"上岗交付","evidence":["交付成立与复利成立","判据加举证","演示非交付"],"def":"PoC转生产意味着交付成立、feature转积木意味着复利成立的两个质变关卡。","imp":0.85,"diff":3.0,"time":50.0,"outdeg":2},{"x":715.81,"y":585.23,"z":-45.19,"g":2,"a":2,"c":0.24,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"评测体系","id":"eval_gate","q":"指标可度量","qsrc":"evidence","stage":"上岗交付","evidence":["指标可度量","基线值必备","飞轮轴承"],"def":"可量化验收指标加基线值的门禁设计，是玩具与产品的分界线。","imp":0.85,"diff":3.0,"time":50.0,"outdeg":2},{"x":706.0,"y":1105.12,"z":-784.73,"g":2,"a":2,"c":0.24,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"Agent七组件","id":"agent_seven","q":"标准件加特有接口","qsrc":"evidence","stage":"上岗交付","evidence":["标准件加特有接口","适配即价值","双闭环参照"],"def":"平台只提供标准件、难点在把标准件接到客户环境特有接口的组件观。","imp":0.75,"diff":3.0,"time":40.0,"outdeg":2},{"x":800.09,"y":833.53,"z":-391.89,"g":2,"a":2,"c":0.24,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"组织利益平衡","id":"org_benefit_balance","q":"形状与属性","qsrc":"evidence","stage":"上岗交付","evidence":["形状与属性","利益必须动","混合镜像型"],"def":"架构可以不动但利益分配必须动的形状与属性原理。","imp":0.78,"diff":4.0,"time":50.0,"outdeg":2},{"x":687.2,"y":1115.58,"z":-805.09,"g":2,"a":2,"c":0.18,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"IP数据权责开工前谈","id":"ip_terms_first","q":"开工前谈","qsrc":"evidence","stage":"上岗交付","evidence":["开工前谈","建完无议价权","伦理前置"],"def":"IP、数据与权责条款必须在开工前谈定的工程伦理纪律。","imp":0.75,"diff":3.0,"time":40.0,"outdeg":1},{"x":776.39,"y":756.18,"z":-266.28,"g":2,"a":2,"c":0.24,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"案例五栏卡拆解","id":"case_five_column","q":"五栏拆解","qsrc":"evidence","stage":"上岗交付","evidence":["五栏拆解","缺口比亮点重要","口径三级可信度"],"def":"场景、卡点、做法、结果、可迁移五栏的案例拆解法与数字口径核验。","imp":0.8,"diff":3.0,"time":50.0,"outdeg":2},{"x":792.89,"y":785.94,"z":-320.98,"g":2,"a":2,"c":0.24,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"经验工程化","id":"experience_engineering","q":"八成验收","qsrc":"evidence","stage":"上岗交付","evidence":["八成验收","定制量递减","双环复利"],"def":"把老师傅直觉变成新人可执行清单，验收标准是达到八成水平。","imp":0.8,"diff":3.0,"time":50.0,"outdeg":2},{"x":552.85,"y":1264.1,"z":-1008.66,"g":2,"a":2,"c":0.18,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"FDE+FDR双环","id":"dual_loop","q":"两环咬合","qsrc":"evidence","stage":"上岗交付","evidence":["两环咬合","积木供给","防各自空转"],"def":"部署环与研究环咬合的双闭环机制，参照Echo-Delta模式。","imp":0.72,"diff":4.0,"time":40.0,"outdeg":1},{"x":792.75,"y":859.54,"z":-413.71,"g":2,"a":2,"c":0.24,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"事前验尸","id":"pre_mortem","q":"假设已失败","qsrc":"evidence","stage":"上岗交付","evidence":["假设已失败","反推致死路径","止损点前移"],"def":"假设项目已失败、反推致死路径与最早可观测时点的风险预演方法。","imp":0.78,"diff":4.0,"time":50.0,"outdeg":2},{"x":759.67,"y":685.48,"z":-165.58,"g":2,"a":2,"c":0.24,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"失败会计结构","id":"failure_accounting","q":"钱不是一次亏掉","qsrc":"evidence","stage":"上岗交付","evidence":["钱不是一次亏掉","go/no-go关卡","组织权责排第一"],"def":"四个POC只活一个时支出从15万美元膨胀到90万美元的分阶段预算结构。","imp":0.82,"diff":4.0,"time":50.0,"outdeg":2},{"x":796.46,"y":890.59,"z":-470.81,"g":2,"a":2,"c":0.24,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"π型人才与八维能力","id":"pi_talent","q":"乘法非加法","qsrc":"evidence","stage":"上岗交付","evidence":["乘法非加法","横线最易卡","死守五项可补两项"],"def":"两竖腿加一横线的能力结构，价值是乘法不是加法。","imp":0.78,"diff":3.0,"time":50.0,"outdeg":2},{"x":659.33,"y":1142.7,"z":-853.22,"g":2,"a":2,"c":0.24,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"六台机制与十条红线","id":"six_machines","q":"机制对风险","qsrc":"evidence","stage":"上岗交付","evidence":["机制对风险","红线可观测","飞轮轴承"],"def":"把一个人扛不住的结构变成可运转系统的六台机制与触线即停的十条红线。","imp":0.75,"diff":4.0,"time":50.0,"outdeg":2},{"x":633.5,"y":1182.65,"z":-892.52,"g":2,"a":2,"c":0.18,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"度量只认工时递减","id":"hours_metric","q":"工时递减","qsrc":"evidence","stage":"上岗交付","evidence":["工时递减","不在场交付数","不可替代度下降"],"def":"只认交付工时递减、不认客户数量的最硬规模化指标。","imp":0.75,"diff":3.0,"time":40.0,"outdeg":1},{"x":468.57,"y":1011.57,"z":-604.71,"g":3,"a":3,"c":0.18,"col":"#F5A623","dm":"共享方法论内核","t":"纪律基因","id":"core_discipline","q":"一套纪律三处投影","qsrc":"evidence","stage":"元方法·全程","evidence":["一套纪律三处投影","口径联席复查","铁的来源"],"def":"三课共用的四条工程纪律，是铁三角铁的来源。","imp":0.9,"diff":2.0,"time":60.0,"outdeg":1},{"x":196.65,"y":1336.02,"z":-937.7,"g":3,"a":3,"c":0.18,"col":"#F5A623","dm":"共享方法论内核","t":"身份与出口","id":"core_identity","q":"能力即契约","qsrc":"evidence","stage":"元方法·全程","evidence":["能力即契约","品牌等式","梯队出口"],"def":"FDE×OPC品牌等式与交付三件套构成的学生身份出口。","imp":0.82,"diff":2.0,"time":60.0,"outdeg":1},{"x":496.91,"y":964.03,"z":-547.27,"g":3,"a":3,"c":0.9,"col":"#F5A623","dm":"共享方法论内核","t":"成果即证据","id":"evidence_first","q":"数字可溯源","qsrc":"evidence","stage":"元方法·全程","evidence":["数字可溯源","只画实测点","档案非记忆"],"def":"凡写入文档的数字皆可溯源，图的证据强度不超过留痕的证据强度。","imp":0.95,"diff":2.0,"time":40.0,"outdeg":2},{"x":453.98,"y":1037.4,"z":-642.26,"g":3,"a":3,"c":0.24,"col":"#F5A623","dm":"共享方法论内核","t":"验收标准先行","id":"acceptance_first","q":"先验收后动手","qsrc":"evidence","stage":"元方法·全程","evidence":["先验收后动手","可打勾","完成等于归零"],"def":"动手之前先写可打勾的验收标准，完成等于验证过且归零。","imp":0.9,"diff":2.0,"time":40.0,"outdeg":2},{"x":380.0,"y":1156.1,"z":-735.15,"g":3,"a":3,"c":0.18,"col":"#F5A623","dm":"共享方法论内核","t":"过程留痕采信","id":"trace_trust","q":"三线对齐","qsrc":"evidence","stage":"元方法·全程","evidence":["三线对齐","信任有据","课堂数据原料"],"def":"版本快照、prompt记录、验收记录三线对齐的时间戳档案体系。","imp":0.85,"diff":2.0,"time":40.0,"outdeg":1},{"x":366.78,"y":1180.53,"z":-780.72,"g":3,"a":3,"c":0.18,"col":"#F5A623","dm":"共享方法论内核","t":"反代写反漂移","id":"anti_ghostwrite","q":"验收过程非产物","qsrc":"evidence","stage":"元方法·全程","evidence":["验收过程非产物","漂移悄悄发生","留痕加复查"],"def":"验收指挥过程而非产物、监控语义渐进偏移的双向纪律。","imp":0.85,"diff":3.0,"time":40.0,"outdeg":1},{"x":156.94,"y":1353.01,"z":-966.79,"g":3,"a":3,"c":0.24,"col":"#F5A623","dm":"共享方法论内核","t":"FDE×OPC品牌等式","id":"fde_opc_brand","q":"端到端交付者","qsrc":"evidence","stage":"元方法·全程","evidence":["端到端交付者","身份锚点","对接梯队"],"def":"前沿部署工程师乘以一人企业等于端到端AI落地交付者的身份等式。","imp":0.8,"diff":2.0,"time":40.0,"outdeg":2},{"x":132.89,"y":1372.28,"z":-974.34,"g":3,"a":3,"c":0.24,"col":"#F5A623","dm":"共享方法论内核","t":"交付三件套","id":"delivery_trio","q":"工具文档Skill","qsrc":"evidence","stage":"元方法·全程","evidence":["工具文档Skill","能力即契约","与作品三件套同构"],"def":"工具、文档、Skill三件构成的标准化交付物，能力即契约的物化。","imp":0.8,"diff":2.0,"time":40.0,"outdeg":2},{"x":48.37,"y":1434.53,"z":-1026.05,"g":3,"a":3,"c":0.18,"col":"#F5A623","dm":"共享方法论内核","t":"靠谱大于聪明","id":"reliable_over_clever","q":"可托付大于可炫技","qsrc":"evidence","stage":"元方法·全程","evidence":["可托付大于可炫技","计分奖励靠谱","伤疤大于样板"],"def":"三课共用的终极筛选标准：可托付大于可炫技。","imp":0.78,"diff":2.0,"time":30.0,"outdeg":1},{"x":282.11,"y":163.43,"z":395.91,"g":0,"a":0,"c":0.7,"col":"#3B82D6","dm":"氛围编程·入口层","t":"专题·范式谱系与术语漂移","id":"vibe_t_term_evolution","q":"培养目标：能说清术语来源与口径漂移，不被热词带着走","qsrc":"evidence","stage":"入门","evidence":["培养目标：能说清术语来源与口径漂移，不被热词带着走","教学重点：三阶段叠加而非替换的关系","教学难点：纠正把三阶段当三个不相干流派的误读","教学方法：时间线讲授＋口径原文对照讨论","原理逻辑：术语会换代，规格与验收的方法层不过时"],"def":"梳理 Vibe Coding 一词的起源、口径三次漂移与 Vibe→Spec→Agentic 三阶段叠加关系，培养学生追问题不追新词的范式辨识力。","imp":0.72,"diff":2.0,"time":60.0,"outdeg":0},{"x":405.44,"y":281.04,"z":390.81,"g":0,"a":0,"c":0.18,"col":"#3B82D6","dm":"氛围编程·入口层","t":"实体·术语三次口径漂移","id":"vibe_e_term_drift","q":"培养目标：建立读原文、看口径的溯源习惯","qsrc":"evidence","stage":"入门","evidence":["培养目标：建立读原文、看口径的溯源习惯","教学重点：三次口径各新增了什么约束","教学难点：区分媒体热炒与发明人本意","教学方法：原文对照＋时间线标注","原理逻辑：概念成熟的标志是约束增多而非辞藻变美"],"def":"追踪 vibe coding 一词从 Karpathy 2025-02 发明到一年内两次自我修正的口径变化，训练区分\"口号\"与\"可操作方法\"。","imp":0.66,"diff":2.0,"time":40.0,"outdeg":1},{"x":318.58,"y":209.73,"z":385.63,"g":0,"a":0,"c":0.18,"col":"#3B82D6","dm":"氛围编程·入口层","t":"实体·三阶段叠加非替换","id":"vibe_e_stack_not_replace","q":"培养目标：建立叠加式技术史观","qsrc":"evidence","stage":"入门","evidence":["培养目标：建立叠加式技术史观","教学重点：每层对下层的依赖关系","教学难点：学生以为新层出现即淘汰旧层","教学方法：反例举证＋层次图绘制","原理逻辑：能力栈是累加的，不是换代清零"],"def":"阐明 Vibe→Spec→Agentic 是能力叠加嵌套关系，Agentic 时代依然需要 Spec 与验收，破除\"学了高级阶段就不用练基础\"的误区。","imp":0.7,"diff":2.0,"time":35.0,"outdeg":1},{"x":224.81,"y":96.62,"z":372.71,"g":0,"a":0,"c":0.18,"col":"#3B82D6","dm":"氛围编程·入口层","t":"实体·最小指挥循环与生成验收剪刀差","id":"vibe_e_minimal_command_loop","q":"培养目标：跑通第一轮意图—生成—验收循环","qsrc":"evidence","stage":"入门","evidence":["培养目标：跑通第一轮意图—生成—验收循环","教学重点：结构化反馈而非情绪抱怨","教学难点：把能用的错觉当完成","教学方法：现场演示一轮循环并计时","原理逻辑：循环闭合点在人的验收动作"],"def":"掌握\"表达意图→跑起来→看结果→报问题→再问一轮\"的最小指挥循环，识别生成速度与验收能力之间的剪刀差。","imp":0.74,"diff":1.0,"time":30.0,"outdeg":1},{"x":356.23,"y":233.16,"z":397.11,"g":0,"a":0,"c":0.68,"col":"#3B82D6","dm":"氛围编程·入口层","t":"专题·工具生态与六维选型","id":"vibe_t_tool_selection","q":"培养目标：能按任务特征匹配工具形态","qsrc":"evidence","stage":"入门","evidence":["培养目标：能按任务特征匹配工具形态","教学重点：六维判据与反向关系","教学难点：用哪个最强替代哪个合适","教学方法：决策树演练＋同类工具对比表","原理逻辑：选型是风险匹配不是品牌崇拜"],"def":"认识一体化平台、AI原生编辑器、编程Agent三类工具形态，掌握按六维标准为任务选工具的决策方法，破除\"哪个最强\"的选型迷信。","imp":0.7,"diff":2.0,"time":50.0,"outdeg":0},{"x":380.93,"y":258.41,"z":383.22,"g":0,"a":0,"c":0.18,"col":"#3B82D6","dm":"氛围编程·入口层","t":"实体·工具三形态与可控性反向","id":"vibe_e_tool_threeforms","q":"培养目标：建立三形态地图","qsrc":"evidence","stage":"入门","evidence":["培养目标：建立三形态地图","教学重点：每形态的适用与边界","教学难点：自动化与可控性反向的直觉建立","教学方法：案例归类练习","原理逻辑：放权越多，验收闸门越要前置"],"def":"区分对话式/一体化平台、IDE式AI原生编辑器、Agent式三类工具形态，理解自动化程度越高、人逐点可控性越低的反向关系。","imp":0.68,"diff":2.0,"time":35.0,"outdeg":1},{"x":436.53,"y":312.64,"z":384.46,"g":0,"a":0,"c":0.24,"col":"#3B82D6","dm":"氛围编程·入口层","t":"实体·六维选型决策","id":"vibe_e_sixdim_select","q":"培养目标：产出自己的选型优先级排序","qsrc":"evidence","stage":"入门","evidence":["培养目标：产出自己的选型优先级排序","教学重点：六维逐项过堂","教学难点：为维度排自己的优先级而非照搬","教学方法：同一任务六维打分对比","原理逻辑：合适=任务风险结构与工具能力匹配"],"def":"用闭环、控制、验证、迁移、协作、成本六个维度评估工具，结合任务复杂度×可控性需求×成本完成排序选型。","imp":0.64,"diff":2.0,"time":30.0,"outdeg":2},{"x":450.34,"y":336.8,"z":375.98,"g":0,"a":0,"c":0.18,"col":"#3B82D6","dm":"氛围编程·入口层","t":"实体·平台依赖与迁移成本","id":"vibe_e_platform_lockin","q":"培养目标：养成问搬走会怎样的习惯","qsrc":"evidence","stage":"入门","evidence":["培养目标：养成问搬走会怎样的习惯","教学重点：数据归属与导出能力核查","教学难点：忽略隐性持续成本","教学方法：选型清单逐项打勾","原理逻辑：资产可带走，作品才是自己的"],"def":"评估平台对认证、数据库、部署与专有组件的封装深度，判断停止订阅后应用能否继续运行与维护。","imp":0.6,"diff":2.0,"time":25.0,"outdeg":1},{"x":-25.63,"y":93.98,"z":340.16,"g":0,"a":1,"c":0.82,"col":"#3B82D6","dm":"氛围编程·入口层","t":"专题·规范驱动开发与规格生命周期","id":"vibe_t_spec_engineering","q":"培养目标：写出可冻结、可变更追溯的规格","qsrc":"evidence","stage":"筑基","evidence":["培养目标：写出可冻结、可变更追溯的规格","教学重点：冻结制度与变更三行式","教学难点：冻结后偷偷改造成基准漂移","教学方法：E2 Spec 工作坊＋版本链实操","原理逻辑：规格是团队与AI共用的契约基准"],"def":"在规格四要素基础上向上接通 SDD 规范驱动开发工具链，向下管理 Spec 版本生命周期与变更记录，培养可审查、可冻结、可追溯的规格工程能力。","imp":0.85,"diff":3.0,"time":90.0,"outdeg":0},{"x":543.62,"y":716.5,"z":479.43,"g":0,"a":1,"c":0.18,"col":"#3B82D6","dm":"氛围编程·入口层","t":"实体·SDD框架谱系与选型","id":"vibe_e_sdd_toolchain","q":"培养目标：按缺口匹配工具而非追新","qsrc":"evidence","stage":"筑基","evidence":["培养目标：按缺口匹配工具而非追新","教学重点：六工具定位差异","教学难点：把工具当方法本身","教学方法：工具定位对照表填选","原理逻辑：工具补短板，不补认知"],"def":"了解 OpenSpec、Spec Kit、Kiro Specs、GSD、BMad、Task Master 六类 SDD 工具的定位与边界，先判断项目缺规格、缺上下文还是缺任务拆分再","imp":0.66,"diff":3.0,"time":40.0,"outdeg":1},{"x":3.27,"y":140.37,"z":383.57,"g":0,"a":1,"c":0.18,"col":"#3B82D6","dm":"氛围编程·入口层","t":"实体·Spec版本生命周期与变更三行式","id":"vibe_e_spec_lifecycle","q":"培养目标：建立版本冻结与变更留痕习惯","qsrc":"evidence","stage":"筑基","evidence":["培养目标：建立版本冻结与变更留痕习惯","教学重点：三行式字段写全","教学难点：冻结后偷偷改","教学方法：E2工作坊版本链作业","原理逻辑：基准可信，后续比对才有意义"],"def":"按 v0.1草稿→甲方质询≥3条有效意见→修订→v1.0冻结的节奏管理Spec，冻结后每次改动用变更三行式（为什么改/影响哪些验收标准/日期）留痕。","imp":0.8,"diff":3.0,"time":45.0,"outdeg":1},{"x":290.6,"y":470.12,"z":515.25,"g":0,"a":1,"c":0.18,"col":"#3B82D6","dm":"氛围编程·入口层","t":"实体·双AI实测规格歧义检验","id":"vibe_e_dual_ai_probe","q":"培养目标：主动找规格歧义而非等返工","qsrc":"evidence","stage":"筑基","evidence":["培养目标：主动找规格歧义而非等返工","教学重点：分叉点回写成明确判据","教学难点：把歧义当AI发挥放过","教学方法：双模型对照＋歧义清单回写","原理逻辑：歧义在纸面暴露比在返工中暴露便宜"],"def":"把同一份规格喂给两个不同AI，比较产出分叉以暴露规格歧义，并用反例判据（什么算错）提前堵解释空间。","imp":0.72,"diff":3.0,"time":35.0,"outdeg":1},{"x":17.85,"y":161.54,"z":399.29,"g":0,"a":1,"c":0.74,"col":"#3B82D6","dm":"氛围编程·入口层","t":"专题·需求工作坊与模糊词治理","id":"vibe_t_requirement_gym","q":"培养目标：把愿望改写成可测需求","qsrc":"evidence","stage":"筑基","evidence":["培养目标：把愿望改写成可测需求","教学重点：质询先复述再回应，狩猎只对词不对人","教学难点：质询变夸夸群或吵架","教学方法：E2工作坊角色扮演甲方","原理逻辑：需求是按字段采出来的，不是聊出来的"],"def":"通过甲方质询三句式、全班模糊词狩猎与MVP最小版本圈定三件制度化练习，把\"我想要个XX\"挤成可验收、可动手的需求。","imp":0.8,"diff":3.0,"time":70.0,"outdeg":0},{"x":74.46,"y":245.23,"z":447.47,"g":0,"a":1,"c":0.18,"col":"#3B82D6","dm":"氛围编程·入口层","t":"实体·模糊词狩猎与禁词清单","id":"vibe_e_fuzzy_hunting","q":"培养目标：对模糊词形成条件反射","qsrc":"evidence","stage":"筑基","evidence":["培养目标：对模糊词形成条件反射","教学重点：禁词→判据的改写动作","教学难点：挑得出改不出","教学方法：全班狩猎上墙＋现场改写","原理逻辑：可测才有验收，形容词无法验收"],"def":"建立禁词清单（良好/合理/完善/美观/易用/流畅/友好/快速/稳定/尽量/大概），凡出现即该条0分，当场改写成过/不过两态判据。","imp":0.78,"diff":2.0,"time":30.0,"outdeg":1},{"x":469.82,"y":632.86,"z":509.81,"g":0,"a":1,"c":0.18,"col":"#3B82D6","dm":"氛围编程·入口层","t":"实体·甲方质询三句式","id":"vibe_e_client_qa3","q":"培养目标：会提指向条目的有效意见","qsrc":"evidence","stage":"筑基","evidence":["培养目标：会提指向条目的有效意见","教学重点：先复述后回应的规则","教学难点：质询变尬吹或吵架","教学方法：角色扮演＋句式卡","原理逻辑：结构化质询比自由讨论更易挤出自以为是"],"def":"用\"验收标准怎么测/功能给谁用/砍掉它还成立吗\"三条固定句式攻击规格具体条目，配合\"先复述对方意见再回应\"规则完成互审。","imp":0.7,"diff":2.0,"time":30.0,"outdeg":1},{"x":315.71,"y":504.24,"z":520.95,"g":0,"a":1,"c":0.18,"col":"#3B82D6","dm":"氛围编程·入口层","t":"实体·MVP最小版本圈定","id":"vibe_e_mvp_scope","q":"培养目标：敢砍功能、圈定首版","qsrc":"evidence","stage":"筑基","evidence":["培养目标：敢砍功能、圈定首版","教学重点：核心流程一条线跑通","教学难点：首版就想做全功能","教学方法：一页产品说明圈范围","原理逻辑：小范围才能早验证真问题"],"def":"从具体问题与使用场景出发划定最小可用产品范围，用尽可能少的功能跑通一条核心流程验证是否真解决问题。","imp":0.72,"diff":2.0,"time":30.0,"outdeg":1},{"x":93.57,"y":270.67,"z":457.93,"g":0,"a":1,"c":0.72,"col":"#3B82D6","dm":"氛围编程·入口层","t":"专题·提示词实验法与一致性复现","id":"vibe_t_prompt_lab","q":"培养目标：设计有基线、单变量、可打分的实验","qsrc":"evidence","stage":"筑基","evidence":["培养目标：设计有基线、单变量、可打分的实验","教学重点：控制变量三纪律","教学难点：10组写成10种心情随笔、变量全在漂","教学方法：E3/E4实验任务单＋当堂互评","原理逻辑：对比出因果，记录出结论"],"def":"用控制变量的对比实验方法研究提示词结构，并通过无说明书/带说明书各两次生成的一致性复现验证上下文价值，培养\"用数据判断哪句更好\"的实验思维。","imp":0.78,"diff":3.0,"time":80.0,"outdeg":0},{"x":347.41,"y":533.98,"z":515.19,"g":0,"a":1,"c":0.18,"col":"#3B82D6","dm":"氛围编程·入口层","t":"实体·变量矩阵与控制变量","id":"vibe_e_variable_matrix","q":"培养目标：会搭有基线的变量矩阵","qsrc":"evidence","stage":"筑基","evidence":["培养目标：会搭有基线的变量矩阵","教学重点：单变量隔离与组号引用","教学难点：多变量同时变化无法归因","教学方法：E3实验报告O3-1","原理逻辑：控制变量把主观偏好变成可比较数据"],"def":"以R/C/S/F四二元变量搭10组问法矩阵，设全裸基线、单变量对照与组合组，用三判据打分让\"哪句更好\"有数据答案。","imp":0.72,"diff":3.0,"time":40.0,"outdeg":1},{"x":191.67,"y":369.19,"z":501.14,"g":0,"a":1,"c":0.24,"col":"#3B82D6","dm":"氛围编程·入口层","t":"实体·一致性复现四维判据","id":"vibe_e_consistency_repro","q":"培养目标：完成一次规范的对照复现","qsrc":"evidence","stage":"筑基","evidence":["培养目标：完成一次规范的对照复现","教学重点：四维判据与新会话纪律","教学难点：追求逐字节一致的误解","教学方法：E4实验＋归因讨论","原理逻辑：一致性是上下文价值的可测证据"],"def":"同一功能句在无说明书与带说明书条件下各开新会话生成2次，按配色/结构/命名/存储四维0-2分对比，验证上下文能否钉住关键决策。","imp":0.74,"diff":3.0,"time":40.0,"outdeg":2},{"x":496.54,"y":666.8,"z":498.59,"g":0,"a":1,"c":0.18,"col":"#3B82D6","dm":"氛围编程·入口层","t":"实体·两段式提示词先对齐后执行","id":"vibe_e_two_stage_prompt","q":"培养目标：养成先对齐再开工的习惯","qsrc":"evidence","stage":"筑基","evidence":["培养目标：养成先对齐再开工的习惯","教学重点：复述内容与计划可核对","教学难点：跳过对齐直接要成品","教学方法：复杂任务两段式改写练习","原理逻辑：误解在对齐阶段修正成本最低"],"def":"复杂任务先让AI复述理解并给出计划（对齐段），确认无误再进入执行段，把误解挡在开工前。","imp":0.68,"diff":2.0,"time":25.0,"outdeg":1},{"x":32.12,"y":190.84,"z":402.56,"g":0,"a":1,"c":0.76,"col":"#3B82D6","dm":"氛围编程·入口层","t":"专题·信息载体与Skill沉淀","id":"vibe_t_knowledge_carriers","q":"培养目标：按生命周期选载体、把经验沉淀为Skill","qsrc":"evidence","stage":"筑基","evidence":["培养目标：按生命周期选载体、把经验沉淀为Skill","教学重点：四载体分工与说明书五区","教学难点：把上下文工程误解为写更长的提示词","教学方法：E4建说明书＋个人Skill卡沉淀","原理逻辑：稳定知识外置，会话只装本次任务"],"def":"区分 Prompt、Context、Rules、Skill 四类信息载体的生命周期，把重复经验沉淀为可复用Skill，并用说明书五区组织项目长期上下文。","imp":0.8,"diff":3.0,"time":75.0,"outdeg":0},{"x":360.93,"y":547.46,"z":511.52,"g":0,"a":1,"c":0.18,"col":"#3B82D6","dm":"氛围编程·入口层","t":"实体·四载体生命周期分工","id":"vibe_e_four_carriers","q":"培养目标：信息各归其位","qsrc":"evidence","stage":"筑基","evidence":["培养目标：信息各归其位","教学重点：生命周期判断","教学难点：什么都塞进长提示词","教学方法：载体归类分拣练习","原理逻辑：分层存放才能跨会话复用"],"def":"按会话级（Prompt）、资料级（Context）、长期规则级（Rules）、可复用流程级（Skill）四类生命周期安排信息，稳定内容不进每次对话。","imp":0.72,"diff":2.0,"time":30.0,"outdeg":1},{"x":212.67,"y":407.94,"z":503.69,"g":0,"a":1,"c":0.18,"col":"#3B82D6","dm":"氛围编程·入口层","t":"实体·Skill沉淀与按需加载","id":"vibe_e_skill_sediment","q":"培养目标：会沉淀并维护个人Skill卡","qsrc":"evidence","stage":"筑基","evidence":["培养目标：会沉淀并维护个人Skill卡","教学重点：六要素写全与按需加载","教学难点：Skill装完不维护直至失效","教学方法：把本课程一个流程写成Skill卡","原理逻辑：经验流程化才可重复调用"],"def":"把反复出现的流程按\"适用场景/输入/步骤/脚本模板/失败处理/验证标准\"沉淀为专属Skill，先采用可信官方件，通用件长期启用、专项件随技术栈加载，并持续测试审查更新。","imp":0.74,"diff":3.0,"time":40.0,"outdeg":1},{"x":114.0,"y":299.21,"z":454.24,"g":0,"a":1,"c":0.18,"col":"#3B82D6","dm":"氛围编程·入口层","t":"实体·说明书五区与腐化对策","id":"vibe_e_manual_zones","q":"培养目标：写出五区齐备的说明书","qsrc":"evidence","stage":"筑基","evidence":["培养目标：写出五区齐备的说明书","教学重点：独有术语与不要清单","教学难点：说明书写成需求复述","教学方法：E4说明书互评＋腐化观察","原理逻辑：外置约定对抗窗口遗忘"],"def":"用项目卡、技术约定、工作规则、术语表、变更日志指针五区组织项目说明书，并识别上下文腐化三信号（遗忘约定、风格漂移、越权改动）配三对策。","imp":0.76,"diff":3.0,"time":35.0,"outdeg":1},{"x":-5.74,"y":123.35,"z":355.96,"g":0,"a":1,"c":0.78,"col":"#3B82D6","dm":"氛围编程·入口层","t":"专题·审查工艺与骗术识别","id":"vibe_t_review_craft","q":"培养目标：按工序审查并留结构化记录","qsrc":"evidence","stage":"筑基","evidence":["培养目标：按工序审查并留结构化记录","教学重点：冷启动三步与骗术特征","教学难点：被流畅演示与注释带着走","教学方法：病变片段当堂读＋记录卡实操","原理逻辑：审查是工序不是灵感"],"def":"掌握三分钟冷启动审查法、五种AI高频骗术识别与四行式审查记录卡，把凭感觉的\"看看\"升级为有工序、有记录、可复核的审查工艺。","imp":0.82,"diff":3.0,"time":70.0,"outdeg":0},{"x":401.03,"y":579.97,"z":506.64,"g":0,"a":1,"c":0.18,"col":"#3B82D6","dm":"氛围编程·入口层","t":"实体·三分钟冷启动审查","id":"vibe_e_cold_start","q":"培养目标：3分钟进入审查状态","qsrc":"evidence","stage":"筑基","evidence":["培养目标：3分钟进入审查状态","教学重点：先跑后读的顺序","教学难点：上来逐行读导致瘫痪","教学方法：新产物冷启动计时演练","原理逻辑：行为证据先于文本印象"],"def":"拿到AI产物先跑再看、再扫Diff范围、再入清单的三分钟启动法，避免一上来逐行读代码被淹没。","imp":0.72,"diff":2.0,"time":25.0,"outdeg":1},{"x":59.3,"y":224.65,"z":425.53,"g":0,"a":1,"c":0.18,"col":"#3B82D6","dm":"氛围编程·入口层","t":"实体·五种高频骗术与高仿信号","id":"vibe_e_five_decoys","q":"培养目标：对五类骗术形成识别反射","qsrc":"evidence","stage":"筑基","evidence":["培养目标：对五类骗术形成识别反射","教学重点：每类的病症与验证动作","教学难点：被精致外观放松警惕","教学方法：五段骗术病变片段比对","原理逻辑：符合规格才是好，精致只是包装"],"def":"识别实现近亲、顺手重构、测试值残留、happy path完美、平行宇宙五种AI产物骗术，掌握高仿三件套（格式漂亮/注释齐全/演示顺畅）的升档警惕信号。","imp":0.8,"diff":3.0,"time":35.0,"outdeg":1},{"x":228.19,"y":426.31,"z":498.8,"g":0,"a":1,"c":0.18,"col":"#3B82D6","dm":"氛围编程·入口层","t":"实体·四行式审查记录卡","id":"vibe_e_review_log","q":"培养目标：每条发现有证据有闭环","qsrc":"evidence","stage":"筑基","evidence":["培养目标：每条发现有证据有闭环","教学重点：复跑行不可省","教学难点：修完不复测直接交付","教学方法：记录卡模板填空","原理逻辑：留痕让审查结论可被他人复核"],"def":"每条发现按查项、发现、处理、复跑四行记录，修正后必须复测并把判例入库，使审查可复核、可累积。","imp":0.74,"diff":2.0,"time":30.0,"outdeg":1},{"x":153.92,"y":344.37,"z":481.49,"g":0,"a":1,"c":0.7,"col":"#3B82D6","dm":"氛围编程·入口层","t":"专题·对抗排雷、故障演练与判例法学习","id":"vibe_t_red_team","q":"培养目标：在对抗中内化审查手感","qsrc":"evidence","stage":"筑基","evidence":["培养目标：在对抗中内化审查手感","教学重点：证据计分与判例三段","教学难点：误报损伤公信力、误诊相近病症","教学方法：E5竞赛＋赛后缺陷谱复盘","原理逻辑：手感=清单工序×判例库存×误报敬畏"],"def":"通过E5埋雷排雷竞赛、主动故障演练与判例法三段式学习，在对抗与制造失败中训练审查手感，并把经验工程化为可换域迁移的判例。","imp":0.75,"diff":3.0,"time":80.0,"outdeg":0},{"x":427.91,"y":609.08,"z":523.61,"g":0,"a":1,"c":0.18,"col":"#3B82D6","dm":"氛围编程·入口层","t":"实体·E5八雷竞赛与证据计分","id":"vibe_e_mine_contest","q":"培养目标：在限时压力下结构化排雷","qsrc":"evidence","stage":"筑基","evidence":["培养目标：在限时压力下结构化排雷","教学重点：三要素证据与复现裁决","教学难点：无证据直觉与误诊大战","教学方法：100分钟竞赛＋缺陷谱复盘","原理逻辑：证据优先，公信力来自不误报"],"def":"在预置八雷的记账小工具上30分钟限时排雷，按三要素齐备计分，交叉验证抓误诊加分，修复复测无回归再计分，诚实报告没排出的雷不扣分。","imp":0.72,"diff":3.0,"time":40.0,"outdeg":1},{"x":513.43,"y":682.63,"z":499.52,"g":0,"a":1,"c":0.18,"col":"#3B82D6","dm":"氛围编程·入口层","t":"实体·故障演练与错误指数","id":"vibe_e_fault_drill","q":"培养目标：主动制造失败而非被动等崩","qsrc":"evidence","stage":"筑基","evidence":["培养目标：主动制造失败而非被动等崩","教学重点：失败姿势记录与停止叠加","教学难点：不舍得停止打补丁","教学方法：课堂故障注入小实验","原理逻辑：错误指数放大，早停比硬修便宜"],"def":"主动向AI产物制造故障（删配置、喂坏数据、断网）观察失败姿势，理解每轮未修错使错误概率指数累积的p^n困境，建立小步验证纪律。","imp":0.68,"diff":3.0,"time":30.0,"outdeg":1},{"x":318.12,"y":1217.29,"z":691.83,"g":0,"a":3,"c":0.18,"col":"#3B82D6","dm":"氛围编程·入口层","t":"实体·判例法三段与换域检验","id":"vibe_e_case_law","q":"培养目标：把单次经验沉淀为可迁移判例","qsrc":"evidence","stage":"元方法·全程","evidence":["培养目标：把单次经验沉淀为可迁移判例","教学重点：三段记录与换域检验","教学难点：把个案当普遍规律","教学方法：五份工程实录整编为判例库","原理逻辑：判例经换域才升格为规律"],"def":"按条件—动作—结果三段记录判例，做换域检验确认规律可迁移，跨案提炼升一层、落文字、设对账三条规律并守住三条红线。","imp":0.76,"diff":5.0,"time":45.0,"outdeg":1},{"x":72.42,"y":627.43,"z":538.74,"g":0,"a":2,"c":0.85,"col":"#3B82D6","dm":"氛围编程·入口层","t":"专题·校验自动化与评测循环","id":"vibe_t_eval_automation","q":"培养目标：拥有可自动重跑的质量体系","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：拥有可自动重跑的质量体系","教学重点：三级分工与四步闭环","教学难点：把评测集当一次性作业","教学方法：最小校验器安装＋E6判例转样例","原理逻辑：评测集测的是需求不是模型，贬值最慢"],"def":"从20分钟可装的最小校验器起步，把验收标准推向文档/脚本/评测集三级自动化，用评测循环让机器验收机器，累积自己的翻车化石层。","imp":0.88,"diff":4.0,"time":90.0,"outdeg":0},{"x":251.46,"y":442.79,"z":503.65,"g":0,"a":1,"c":0.18,"col":"#3B82D6","dm":"氛围编程·入口层","t":"实体·二十分钟最小校验器","id":"vibe_e_minimal_checker","q":"培养目标：20分钟拥有第一条自动校验","qsrc":"evidence","stage":"筑基","evidence":["培养目标：20分钟拥有第一条自动校验","教学重点：只选规则明确的判据","教学难点：追求大框架迟迟不动手","教学方法：跟着规程当堂装完并跑通","原理逻辑：最小可用先于完美体系"],"def":"用20分钟为项目装一个只检查规则明确部分的最小check.py，建立\"零点\"存档，迈出自动化验收第一步。","imp":0.74,"diff":2.0,"time":30.0,"outdeg":1},{"x":87.79,"y":636.59,"z":546.81,"g":0,"a":2,"c":0.18,"col":"#3B82D6","dm":"氛围编程·入口层","t":"实体·评测循环四步与翻车化石层","id":"vibe_e_eval_loop","q":"培养目标：维护一个越跑越厚的评测集","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：维护一个越跑越厚的评测集","教学重点：第④步回写闭合循环","教学难点：跑完不回写、集子不生长","教学方法：E6五雷转样例＋自补五条翻车","原理逻辑：化石层永远属于本人，不随框架过时"],"def":"备样例→跑产物→对期望→回写四步闭合的评测循环，每次翻车变一条样例，累积属于自己的翻车化石层。","imp":0.86,"diff":4.0,"time":50.0,"outdeg":1},{"x":139.97,"y":328.38,"z":471.49,"g":0,"a":1,"c":0.18,"col":"#3B82D6","dm":"氛围编程·入口层","t":"实体·工程验证与防放水","id":"vibe_e_engineer_verify","q":"培养目标：不轻信已完成声明","qsrc":"evidence","stage":"筑基","evidence":["培养目标：不轻信已完成声明","教学重点：逐项对应验收与放水识别","教学难点：把测试通过等同于质量合格","教学方法：对照清单核验收","原理逻辑：验证权在人，测试可被操纵"],"def":"按任务类型运行静态检查、类型检查、单元集成测试、构建与真实功能测试并逐项对应验收标准，独立检查Agent是否删测试、降要求、绕场景放水。","imp":0.76,"diff":3.0,"time":35.0,"outdeg":1},{"x":107.2,"y":678.38,"z":544.79,"g":0,"a":2,"c":0.8,"col":"#3B82D6","dm":"氛围编程·入口层","t":"专题·项目节奏与最小可交付","id":"vibe_t_project_rhythm","q":"培养目标：每个阶段都交出可判定版本","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：每个阶段都交出可判定版本","教学重点：最小可交付三要素与里程碑判定","教学难点：把思路/截图当交付、里程碑写成阶段感觉","教学方法：工作坊任务单＋站立会＋当堂验收","原理逻辑：可运行可判定才渡得过可交付性之河"],"def":"以最小可交付为最高原则，用M1-M4判定台阶管理项目节奏，用分层任务卡与15分钟站立会应对两极分化，把\"想清楚了\"变成\"打开试试\"。","imp":0.85,"diff":3.0,"time":85.0,"outdeg":0},{"x":140.96,"y":687.79,"z":562.59,"g":0,"a":2,"c":0.24,"col":"#3B82D6","dm":"氛围编程·入口层","t":"实体·最小可交付三要素","id":"vibe_e_min_deliverable","q":"培养目标：每阶段交出别人能打开的版本","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：每阶段交出别人能打开的版本","教学重点：三要素逐条核对","教学难点：用截图和思路代替作品","教学方法：当堂互开互测","原理逻辑：可判定才能被验收"],"def":"当前阶段能被别人打开、试用并给出能用/不能用结论的版本，具备有载体、可运行、可判定三要素，使用说明一体交付。","imp":0.84,"diff":2.0,"time":30.0,"outdeg":2},{"x":188.68,"y":746.51,"z":567.04,"g":0,"a":2,"c":0.24,"col":"#3B82D6","dm":"氛围编程·入口层","t":"实体·M1-M4判定台阶","id":"vibe_e_milestones","q":"培养目标：逐级过判定门而非追百分比","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：逐级过判定门而非追百分比","教学重点：每级判定人、操作、现象","教学难点：跳级与感觉式里程碑","教学方法：个人里程碑表v1＋逐级验收","原理逻辑：台阶可检验，进度才可管理"],"def":"把做完项目翻译成M1原型→M2功能完整→M3数据接入→M4自测通过四级可检验台阶，每级写明谁操作什么、看到什么算过。","imp":0.8,"diff":3.0,"time":35.0,"outdeg":2},{"x":396.93,"y":932.69,"z":588.72,"g":0,"a":2,"c":0.18,"col":"#3B82D6","dm":"氛围编程·入口层","t":"实体·分层任务卡与站立会","id":"vibe_e_task_cards","q":"培养目标：分层不掉队、兜底有复盘","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：分层不掉队、兜底有复盘","教学重点：同一底线与报告转化","教学难点：把基础版当差生标签、把兜底当免费午餐","教学方法：工作坊发卡＋站立会巡回","原理逻辑：差异化深度，统一验收底线"],"def":"同一交付闭环分基础/标准/进阶三种深度任务卡，配合15分钟站立会与需补交分析报告的预置成果包，制度化应对两极分化。","imp":0.66,"diff":2.0,"time":25.0,"outdeg":1},{"x":242.9,"y":807.12,"z":603.39,"g":0,"a":2,"c":0.66,"col":"#3B82D6","dm":"氛围编程·入口层","t":"专题·真实数据接入与Agent初体验","id":"vibe_t_data_agent","q":"培养目标：选对通道、守住合规、体验Agent边界","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：选对通道、守住合规、体验Agent边界","教学重点：选型三问与白名单","教学难点：选炫不选对、把演示流畅当自己掌握","教学方法：选型单＋课堂演示＋边界书写","原理逻辑：验收标准未定义就交给Agent等于放大判断力缺席"],"def":"掌握API/本地文件/用户上传三条合法数据通道与合规白名单，并在课堂完成\"拆调看接\"的Agent循环初体验，明确体验边界与不该交付给Agent的事。","imp":0.76,"diff":3.0,"time":60.0,"outdeg":0},{"x":304.11,"y":851.08,"z":587.86,"g":0,"a":2,"c":0.24,"col":"#3B82D6","dm":"氛围编程·入口层","t":"实体·数据三通道与选型三问","id":"vibe_e_three_channels","q":"培养目标：按风险结构选通道","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：按风险结构选通道","教学重点：三问与验收要点","教学难点：为显高级全选API","教学方法：选型单三问填表","原理逻辑：通道选择是风险管理不是难度竞赛"],"def":"API实时请求、本地JSON/CSV自带、用户上传解析三条数据通道，按数据在哪、多久更新、谁来维护三问选择风险结构。","imp":0.72,"diff":3.0,"time":30.0,"outdeg":2},{"x":364.25,"y":912.53,"z":599.51,"g":0,"a":2,"c":0.18,"col":"#3B82D6","dm":"氛围编程·入口层","t":"实体·数据白名单与兜底三要点","id":"vibe_e_data_whitelist","q":"培养目标：合规取数与异常兜底","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：合规取数与异常兜底","教学重点：白名单边界与三要点","教学难点：便利优先于合规","教学方法：自查清单逐条过","原理逻辑：合规是不可逾越的交付前提"],"def":"只用公开数据集、课程知识库、自造数据、免key服务四类合规来源，落实失败有兜底、换机可跑、空表错列不崩三要点，禁止硬编码密钥。","imp":0.7,"diff":2.0,"time":25.0,"outdeg":1},{"x":420.13,"y":956.54,"z":598.82,"g":0,"a":2,"c":0.18,"col":"#3B82D6","dm":"氛围编程·入口层","t":"实体·拆调看接Agent初体验","id":"vibe_e_agent_firstlook","q":"培养目标：建立Agent循环的直观认识","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：建立Agent循环的直观认识","教学重点：人在环上的验收责任","教学难点：把Agent当万能钥匙","教学方法：教师演示＋边界清单书写","原理逻辑：自主程度越高，前置验收越关键"],"def":"课堂体验Agent自主拆子任务、调用工具、观察结果、接续下一步的四步循环（ReAct简化版），明确验收标准未定义不交付，写下现在还不该交给Agent的事。","imp":0.66,"diff":2.0,"time":25.0,"outdeg":1},{"x":212.57,"y":1141.23,"z":669.75,"g":0,"a":3,"c":0.72,"col":"#3B82D6","dm":"氛围编程·入口层","t":"专题·Agentic入门与编排安全","id":"vibe_t_orchestration","q":"培养目标：看懂编排放大关系并诚实定级","qsrc":"evidence","stage":"元方法·全程","evidence":["培养目标：看懂编排放大关系并诚实定级","教学重点：四技能映射与宪法三条","教学难点：以为L4要学全新地基","教学方法：对位实测表自评＋宪法自查","原理逻辑：AI时代安全工程一半是旧纪律翻译"],"def":"认知L4四技能（规格设计/变更审查/评测循环/安全监督）是旧功课的编排放大，识别编排三风险并守住编排宪法三条，为后续进阶建立诚实定级地图。","imp":0.8,"diff":4.0,"time":70.0,"outdeg":0},{"x":274.3,"y":1196.24,"z":675.87,"g":0,"a":3,"c":0.18,"col":"#3B82D6","dm":"氛围编程·入口层","t":"实体·L4四技能放大对应","id":"vibe_e_l4_skills","q":"培养目标：用映射表给自己诚实定级","qsrc":"evidence","stage":"元方法·全程","evidence":["培养目标：用映射表给自己诚实定级","教学重点：每项放大对应的旧功课","教学难点：虚报级数或能力恐慌","教学方法：找差距补一步自评","原理逻辑：每级只差一件事，分级是路线图不是标签"],"def":"把规格设计、变更审查、评测循环、安全监督四技能逐项对位本书第3-5章功课，确认每项都是放大十倍而非新建，hold不住处即下一步学习清单。","imp":0.78,"diff":4.0,"time":35.0,"outdeg":1},{"x":351.43,"y":1247.8,"z":683.48,"g":0,"a":3,"c":0.24,"col":"#3B82D6","dm":"氛围编程·入口层","t":"实体·编排三风险","id":"vibe_e_orch_risks","q":"培养目标：预见三类新攻击面","qsrc":"evidence","stage":"元方法·全程","evidence":["培养目标：预见三类新攻击面","教学重点：风险-对策一一对应","教学难点：以为对策需要新技术","教学方法：三风险案例对照","原理逻辑：对策全是旧纪律换位置站岗"],"def":"识别提示注入、越权生成、串联雪崩三类编排新攻击面，对策分别为权限最小化、Harness硬边界、级间校验。","imp":0.74,"diff":3.0,"time":30.0,"outdeg":2},{"x":246.88,"y":1170.94,"z":682.74,"g":0,"a":3,"c":0.18,"col":"#3B82D6","dm":"氛围编程·入口层","t":"实体·编排宪法三条","id":"vibe_e_constitution","q":"培养目标：把三条变成可执行准入清单","qsrc":"evidence","stage":"元方法·全程","evidence":["培养目标：把三条变成可执行准入清单","教学重点：三条的具体边界","教学难点：便利冲动越过底线","教学方法：宪法自查表＋课堂补开关","原理逻辑：底线与工具无关，因此不过时"],"def":"不可撤销操作不交给AI、密钥不进AI可读上下文、自动化链每级有人可叫停开关，三条与工具无关的编排底线。","imp":0.8,"diff":2.0,"time":25.0,"outdeg":1},{"x":156.36,"y":712.31,"z":559.06,"g":0,"a":2,"c":0.78,"col":"#3B82D6","dm":"氛围编程·入口层","t":"专题·交付叙事与公开表达","id":"vibe_t_delivery_story","q":"培养目标：把作品讲清楚、答得住、翻不了车","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：把作品讲清楚、答得住、翻不了车","教学重点：五字段五段与结论证据边界","教学难点：念PPT背稿、赌气防御、死磕现场","教学方法：E8彩排分段卡点＋正式答辩制","原理逻辑：留痕不再是作业，是作品集的肉"],"def":"用作品集信息架构五字段组织证据，按电梯路演五段结构表达，用结论-证据-边界应对三类质询，并备好演示翻车三件保险，把留痕变现为可被相信的交付叙事。","imp":0.83,"diff":2.0,"time":70.0,"outdeg":0},{"x":220.41,"y":767.79,"z":592.88,"g":0,"a":2,"c":0.18,"col":"#3B82D6","dm":"氛围编程·入口层","t":"实体·作品集信息架构五字段","id":"vibe_e_ia_fivefields","q":"培养目标：搭出60秒可读的作品集骨架","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：搭出60秒可读的作品集骨架","教学重点：五字段齐全与动线","教学难点：留痕藏太深无处可点","教学方法：终版对照检查表清点","原理逻辑：作品集即简历，证据可点才可信"],"def":"作品集按课程信息区、作品展示区、迭代记录总汇组织，每个作品卡含链接、一句话介绍、技术栈、迭代亮点、留痕链接五字段，60秒走完阅读动线。","imp":0.78,"diff":2.0,"time":30.0,"outdeg":1},{"x":280.64,"y":818.13,"z":594.37,"g":0,"a":2,"c":0.18,"col":"#3B82D6","dm":"氛围编程·入口层","t":"实体·电梯路演五段结构","id":"vibe_e_elevator_five","q":"培养目标：3分钟讲清一个作品","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：3分钟讲清一个作品","教学重点：时间分配与演示段","教学难点：超时、念稿、背稿","教学方法：分段卡点彩排＋合并计时","原理逻辑：注意力经济，演示建立信任"],"def":"300秒固定预算五段讲法：问题30s、方案30s、演示60s、亮点30s、迭代计划30s，演示段独占三分之一且必须真实运行。","imp":0.74,"diff":2.0,"time":30.0,"outdeg":1},{"x":338.19,"y":877.9,"z":611.66,"g":0,"a":2,"c":0.18,"col":"#3B82D6","dm":"氛围编程·入口层","t":"实体·质询三类与结论证据边界","id":"vibe_e_qa_three","q":"培养目标：三类问题都有应答框架","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：三类问题都有应答框架","教学重点：结论证据边界顺序","教学难点：绕圈、赌气、不懂装懂","教学方法：E8每人至少1问、三类轮换","原理逻辑：承认边界比硬撑更可信"],"def":"应答技术选择、过程真实、延展三类问题，统一用结论→证据→边界结构，过程真实类必须指着留痕讲，不懂就诚实说没测过。","imp":0.72,"diff":3.0,"time":25.0,"outdeg":1},{"x":465.7,"y":982.13,"z":604.86,"g":0,"a":2,"c":0.18,"col":"#3B82D6","dm":"氛围编程·入口层","t":"实体·演示翻车三件保险","id":"vibe_e_fallback_plan","q":"培养目标：翻车时有序切换不失态","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：翻车时有序切换不失态","教学重点：彩排期备好三件保险","教学难点：现场死磕与掩饰","教学方法：预案写入交付清单第7项","原理逻辑：诚实加留痕也是能力"],"def":"录屏备份、备用设备、话术三步（诚实宣布→切换备份→指着留痕继续讲）构成的演示故障预案，彩排期备好而非现场即兴。","imp":0.66,"diff":1.0,"time":20.0,"outdeg":1},{"x":391.76,"y":58.85,"z":469.21,"g":1,"a":1,"c":0.78,"col":"#6C5CE7","dm":"本体论·底座层","t":"专题·AI时代真难点：模型越强为何落地越难","id":"onto_t_ai_real_difficulty","q":"培养目标：说清模型越强落地越难的共识缺失机制","qsrc":"evidence","stage":"筑基","evidence":["培养目标：说清模型越强落地越难的共识缺失机制","教学重点：六大卡点一根病根——语义未显性化","教学难点：把不可见的共识缺失讲成可见事故","教学方法：行业试点复盘对照 + 肌肉骨骼比喻破题","原理逻辑：语义不显性，数据/集成/流程/合规/评测全部失据"],"def":"解释大模型试点\"演示惊艳、业务不动\"的病根在于业务语义从未显性化，培养学生判断\"为什么光有模型不够、必须立约\"的问题意识。","imp":0.82,"diff":3.0,"time":75.0,"outdeg":1},{"x":160.37,"y":-49.28,"z":80.2,"g":1,"a":0,"c":0.8,"col":"#6C5CE7","dm":"本体论·底座层","t":"专题·业务域识别与三要素提取（C1）","id":"onto_t_business_identify","q":"培养目标：15分钟内对500字陌生业务列出达标三要素清单","qsrc":"evidence","stage":"入门","evidence":["培养目标：15分钟内对500字陌生业务列出达标三要素清单","教学重点：行为（做什么）与规则（判对不对）的分类","教学难点：边界个案的归属判定与诚实标注","教学方法：教师示范跟做 + 个人作业 + 同桌互查","原理逻辑：错误出生在识别阶段，后面修补代价翻倍"],"def":"教会学生从一段真实业务描述中亲手捞出对象、行为、规则三类要素并标注待定，是全课程动手的第一环（协作课C1）。","imp":0.78,"diff":2.0,"time":90.0,"outdeg":2},{"x":800.43,"y":443.09,"z":265.57,"g":1,"a":1,"c":0.72,"col":"#6C5CE7","dm":"本体论·底座层","t":"专题·知识资产家底盘点与三层诊断（C2）","id":"onto_t_asset_diagnosis","q":"培养目标：能用三级判据评估任意知识资产并画层级剖面","qsrc":"evidence","stage":"筑基","evidence":["培养目标：能用三级判据评估任意知识资产并画层级剖面","教学重点：存不等于用，30秒定位才是过关","教学难点：区分装饰层与真动能层","教学方法：带自己的库现场实测 + 三级判据逐条打分","原理逻辑：层级决定能力，改造既有层优于另起炉灶"],"def":"用三级过关判据给既有知识库做实测家底盘点与层级剖面诊断，产出可执行的\"不新建库、新建层\"改造方案（协作课C2）。","imp":0.74,"diff":3.0,"time":90.0,"outdeg":1},{"x":456.21,"y":144.82,"z":454.03,"g":1,"a":1,"c":0.8,"col":"#6C5CE7","dm":"本体论·底座层","t":"专题·建模路线选择与分级推理","id":"onto_t_model_route","q":"培养目标：能为所选业务选对推理路线并设计分级推理","qsrc":"evidence","stage":"筑基","evidence":["培养目标：能为所选业务选对推理路线并设计分级推理","教学重点：确定性与柔性分家，LLM只接柔性段","教学难点：判断哪段该硬、哪段可软","教学方法：路线对照 + 最小闭包限时上手","原理逻辑：硬的走规则、软的走模型，各司其职才不翻车"],"def":"在动手建模前选对技术路线（演绎vs逆向寻优）并落实确定性与柔性分家的分级推理原则，同时先做最小闭包而非铺全量。","imp":0.8,"diff":4.0,"time":100.0,"outdeg":1},{"x":149.22,"y":-180.31,"z":430.0,"g":1,"a":1,"c":0.88,"col":"#6C5CE7","dm":"本体论·底座层","t":"专题·八模型家族分工与编号决断","id":"onto_t_model_family","q":"培养目标：说清八模型各自职责与引用边界","qsrc":"evidence","stage":"筑基","evidence":["培养目标：说清八模型各自职责与引用边界","教学重点：M5主体权限、M7报表、MU界面的归属","教学难点：理解M4/ME并入是决断而非缺漏","教学方法：环形全图走读 + 主锚规模实测表对照","原理逻辑：互相引用的模型只能用环形表达关系网"],"def":"讲清八模型家族（M1对象/M2行为/M3规则/M5主体/M6流程/M7报表/MU界面/M8模式）各自边界，以及M4场景并入M6、ME事件并入M2的有意编号决断。","imp":0.86,"diff":4.0,"time":110.0,"outdeg":1},{"x":709.34,"y":351.41,"z":351.27,"g":1,"a":1,"c":0.76,"col":"#6C5CE7","dm":"本体论·底座层","t":"专题·取证式建模最小工作环EFML（喂问收）","id":"onto_t_efml","q":"培养目标：能独立跑完一个EFML最小环并产出合规规则","qsrc":"evidence","stage":"筑基","evidence":["培养目标：能独立跑完一个EFML最小环并产出合规规则","教学重点：第2步必须手写考题、第4步记理由不对","教学难点：区分结论撞对与逻辑正确","教学方法：40分钟限时环 + gaps.md逐环互评","原理逻辑：反例成本坍塌后，让AI先答你再判差是最便宜的萃取"],"def":"用40分钟五文件的取证式最小环（选现场→手写考题→盲测→算差值→写规则→回测→记账）把隐性知识钓成可判规则。","imp":0.76,"diff":4.0,"time":120.0,"outdeg":1},{"x":1022.77,"y":759.86,"z":-136.95,"g":1,"a":1,"c":0.7,"col":"#6C5CE7","dm":"本体论·底座层","t":"专题·本体与OO/UML形似神不似的五道分水岭","id":"onto_t_vs_oo_uml","q":"培养目标：能用五道分水岭判出一个模型是OO还是本体","qsrc":"evidence","stage":"筑基","evidence":["培养目标：能用五道分水岭判出一个模型是OO还是本体","教学重点：规则一等公民与逆向闭环","教学难点：事件独立命名与订阅关系的建立","教学方法：拿自己的模型过五道实测 + OO翻OBR四步操练","原理逻辑：长得像不支持推理，推理需要规则独立成网"],"def":"用五道可判据的分水岭把本体建模与面向对象/UML讲清，防止学生把本体建成又一套OO类图。","imp":0.7,"diff":5.0,"time":110.0,"outdeg":1},{"x":109.37,"y":-225.08,"z":414.68,"g":1,"a":1,"c":0.86,"col":"#6C5CE7","dm":"本体论·底座层","t":"专题·植错修复赛与错误分类复跑（C5/C6）","id":"onto_t_error_repair","q":"培养目标：修复≥80%硬错误并复跑归零、写出漂移分析","qsrc":"evidence","stage":"筑基","evidence":["培养目标：修复≥80%硬错误并复跑归零、写出漂移分析","教学重点：错误分类（悬空/漂移）与复跑归零纪律","教学难点：区分校验器误报与真实错误","教学方法：植错赛限时对抗 + 撒谎窗口推演","原理逻辑：共识靠判错，修复率与归零是硬证据"],"def":"在植错本体上完成错误分类、定位、修复与复跑归零，并区分悬空与漂移两种病，写出个人漂移分析（协作课C5/C6）。","imp":0.88,"diff":4.0,"time":120.0,"outdeg":1},{"x":950.62,"y":643.45,"z":37.68,"g":1,"a":1,"c":0.7,"col":"#6C5CE7","dm":"本体论·底座层","t":"专题·四条工程纪律与一致性门禁","id":"onto_t_engineering_discipline","q":"培养目标：能为自己的模型配置门禁与维护纪律","qsrc":"evidence","stage":"筑基","evidence":["培养目标：能为自己的模型配置门禁与维护纪律","教学重点：唯一真相源与变更先改本体","教学难点：把纪律从倡议变成可执行检查","教学方法：纪律清单上墙 + 门禁脚本演示","原理逻辑：纪律进机制不进自觉，才不会随人走样"],"def":"把可执行（非倡议）的四条工程纪律与机器能跑的一致性门禁立为建模后的长期维护规则。","imp":0.72,"diff":3.0,"time":80.0,"outdeg":1},{"x":520.9,"y":705.31,"z":319.96,"g":1,"a":2,"c":0.76,"col":"#6C5CE7","dm":"本体论·底座层","t":"专题·五条坑解剖与护栏失效识别","id":"onto_t_five_pits","q":"培养目标：能识别五条坑与护栏失效形态并快筛","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：能识别五条坑与护栏失效形态并快筛","教学重点：过度建模与AI代抽私域语义","教学难点：看出看起来像进展的坑","教学方法：翻车案例逐条解剖 + 四问快筛自测","原理逻辑：失败与成功同权重进课堂，坑比方案更先学"],"def":"解剖本体应用中五个最常见的失败坑，识别两道护栏（source/counter_example）的失效形态，配合四问快筛防翻车。","imp":0.79,"diff":3.0,"time":85.0,"outdeg":2},{"x":413.48,"y":582.02,"z":348.37,"g":1,"a":2,"c":0.82,"col":"#6C5CE7","dm":"本体论·底座层","t":"专题·五案判例合看与三条规律（C7）","id":"onto_t_five_cases","q":"培养目标：用四栏卡解剖判例并合看归纳规律","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：用四栏卡解剖判例并合看归纳规律","教学重点：可迁移的是体例不是行业内容","教学难点：选对反例并诚实对照自己的灯色","教学方法：五案册页走读 + C7小组判例分析","原理逻辑：单案是故事，五案才是规律"],"def":"用四栏卡体例解剖五个真实跑通项目，合看归纳三条规律，完成带≥3案例（含≥1反例）的应用分析（协作课C7）。","imp":0.83,"diff":3.0,"time":100.0,"outdeg":2},{"x":630.28,"y":1148.06,"z":319.61,"g":1,"a":3,"c":0.74,"col":"#6C5CE7","dm":"本体论·底座层","t":"专题·意义判据七问与防假上","id":"onto_t_meaning_seven","q":"培养目标：动手前用七问拦掉假上与壁画","qsrc":"evidence","stage":"元方法·全程","evidence":["培养目标：动手前用七问拦掉假上与壁画","教学重点：插入点、使用者、产物三件事","教学难点：区分真价值与自我感动式建模","教学方法：七问打钩清单 + 正反十例对照","原理逻辑：意义在敲钉子时显现，不在模型漂亮程度"],"def":"在五问判地形之后、动手之前加七问意义判据，防\"地形对了却假上\"，建立本体价值在使用情境显现的判断观。","imp":0.77,"diff":4.0,"time":80.0,"outdeg":1},{"x":387.1,"y":556.1,"z":349.64,"g":1,"a":2,"c":0.83,"col":"#6C5CE7","dm":"本体论·底座层","t":"专题·本体×FDE交付桥接：三件套投影与判卷","id":"onto_t_fde_bridge","q":"培养目标：把个人模型讲成可签合同的交付物","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：把个人模型讲成可签合同的交付物","教学重点：判卷题作为可验证证据","教学难点：从形容词话术转到可复算证据","教学方法：九十天路线图演练 + 三句承诺口径背诵","原理逻辑：客户能自己动手复算，话术才敢签合同"],"def":"把课堂本体成果接成企业AI赋能交付：三件套是本体三维投影、第四件判卷题是唯一可验证话术、九十天路线步步有验收物。","imp":0.85,"diff":4.0,"time":90.0,"outdeg":1},{"x":461.52,"y":641.99,"z":336.89,"g":1,"a":2,"c":0.78,"col":"#6C5CE7","dm":"本体论·底座层","t":"专题·综合交付装配：报告四段、答辩三页与三红线（C8）","id":"onto_t_final_pack","q":"培养目标：完成报告四段装订与三页答辩并守住红线","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：完成报告四段装订与三页答辩并守住红线","教学重点：校验史与证据链在答辩中的呈现","教学难点：外推边界的诚实表达不吹牛","教学方法：C8当堂答辩 + 三红线自查提示词","原理逻辑：同一套证据两种装订，说服力来自可对账"],"def":"把C1-C7散点产出装配成个人综合分析报告与期末答辩，同一套证据两种装订，并执行对外叙事三红线（协作课C8收官）。","imp":0.8,"diff":2.0,"time":100.0,"outdeg":0},{"x":813.67,"y":474.08,"z":242.95,"g":1,"a":1,"c":0.12,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·六大卡点与一根病根","id":"onto_e_six_blockers","q":"培养目标：能把试点失败归到语义未显性化这根病根","qsrc":"evidence","stage":"筑基","evidence":["培养目标：能把试点失败归到语义未显性化这根病根","教学重点：六卡点的结构而非清单背诵","教学难点：识别跨卡点的同根性","教学方法：行业复盘六卡点对号入座","原理逻辑：一根病根六个症状，分头买药治不好"],"def":"把试点失败归纳为六个反复出现的卡点，并指出六者同根于业务语义从未被显性化。","imp":0.74,"diff":3.0,"time":35.0,"outdeg":0},{"x":1029.73,"y":790.58,"z":-186.69,"g":1,"a":1,"c":0.18,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·肌肉与骨骼嵌合论","id":"onto_e_muscle_bone","q":"培养目标：用肌肉骨骼向非技术方讲清本体价值","qsrc":"evidence","stage":"筑基","evidence":["培养目标：用肌肉骨骼向非技术方讲清本体价值","教学重点：嵌合优于拼装的纠正","教学难点：不把比喻当结论","教学方法：比喻讲完即讲失效点","原理逻辑：可替换的是模型，沉淀的是语义资产"],"def":"大模型是租来的肌肉年年换代，本体是企业自己的骨骼资产，且两者是嵌合而非拼装关系。","imp":0.7,"diff":2.0,"time":25.0,"outdeg":1},{"x":980.98,"y":664.32,"z":8.75,"g":1,"a":1,"c":0.18,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·向量相似度不等于逻辑相关","id":"onto_e_vec_semantic_gap","q":"培养目标：说清向量检索为何会编造","qsrc":"evidence","stage":"筑基","evidence":["培养目标：说清向量检索为何会编造","教学重点：字面近与逻辑相关的差别","教学难点：向学生解释距离度量局限","教学方法：同题两段检索对照演示","原理逻辑：相似度度量替代不了规则判断"],"def":"传统RAG按向量距离找最近段落，字面主题近不等于业务逻辑相关，这是编造答案的根源。","imp":0.72,"diff":3.0,"time":30.0,"outdeg":1},{"x":1058.59,"y":994.52,"z":-549.3,"g":1,"a":1,"c":0.18,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·反例成本坍塌","id":"onto_e_counter_collapse","q":"培养目标：理解为什么现在能低成本钓隐性知识","qsrc":"evidence","stage":"筑基","evidence":["培养目标：理解为什么现在能低成本钓隐性知识","教学重点：执行者四特征（无限供应/听话/无上下文/不补洞）","教学难点：区分AI辅助与AI代劳","教学方法：盲测现场实录","原理逻辑：反例成本坍塌让判卷式萃取可行"],"def":"LLM是历史上第一批无限供应、听话到愚蠢、不带上下文、不会替你补洞的执行者，使找反例的成本坍塌到历史最低。","imp":0.68,"diff":3.0,"time":30.0,"outdeg":1},{"x":198.46,"y":4.48,"z":84.17,"g":1,"a":0,"c":0.18,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·四步识别法（读业务/抓名词/抓动词/标待定）","id":"onto_e_identify_four_step","q":"培养目标：按四步独立完成三要素提取","qsrc":"evidence","stage":"入门","evidence":["培养目标：按四步独立完成三要素提取","教学重点：名词动词分流与待定标注","教学难点：规则与行为边界个案","教学方法：教师示范跟做后个人作业","原理逻辑：先捞全再归类，别在识别时脑补"],"def":"从业务原话出发的四步识别动作：会读业务、抓名词成对象、抓动词成行为、拿不准标待定。","imp":0.76,"diff":2.0,"time":40.0,"outdeg":1},{"x":207.33,"y":32.71,"z":79.38,"g":1,"a":0,"c":0.12,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·单一业务环节原则","id":"onto_e_scope_single_chain","q":"培养目标：会把大话题收成可建模的小环节","qsrc":"evidence","stage":"入门","evidence":["培养目标：会把大话题收成可建模的小环节","教学重点：规模信号（>30对象即过大）","教学难点：学生贪大求全","教学方法：现场收缩练习 + 选题库分流","原理逻辑：小闭环才能跑通闭包"],"def":"业务域必须收到一个单一业务环节，选太大（超过30个对象）就缩到小域或换选题库。","imp":0.66,"diff":1.0,"time":20.0,"outdeg":0},{"x":179.24,"y":-21.32,"z":81.69,"g":1,"a":0,"c":0.18,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·43→78识别漏项教训","id":"onto_e_gap43_to_78","q":"培养目标：建立错误出生在识别阶段的意识","qsrc":"evidence","stage":"入门","evidence":["培养目标：建立错误出生在识别阶段的意识","教学重点：漏项的时间归因","教学难点：理解修补与补全的差别","教学方法：猪中人首版清单对照终版","原理逻辑：上游漏一项，下游所有层跟着缺"],"def":"猪中人首版只列43个行为，校验后补到78个，漏项错误出生在识别阶段，事后修补只是掩盖。","imp":0.78,"diff":3.0,"time":30.0,"outdeg":1},{"x":230.01,"y":52.48,"z":77.59,"g":1,"a":0,"c":0.18,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·同桌互查与误分≤2处","id":"onto_e_peer_check","q":"培养目标：通过互查把误分压到≤2处","qsrc":"evidence","stage":"入门","evidence":["培养目标：通过互查把误分压到≤2处","教学重点：只查行为规则这一类错","教学难点：互查不走过场","教学方法：定点互查 + 修正留痕","原理逻辑：第二双眼睛是最便宜的校验"],"def":"C1清单交前同桌互查，专查行为vs规则误分，互查修正记录写进清单，最终误分≤2处。","imp":0.62,"diff":1.0,"time":15.0,"outdeg":1},{"x":1043.54,"y":822.09,"z":-237.02,"g":1,"a":1,"c":0.24,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·13库实测家底盘点（499/1249/312）","id":"onto_e_inventory13","q":"培养目标：按实测而非印象盘点自己的库","qsrc":"evidence","stage":"筑基","evidence":["培养目标：按实测而非印象盘点自己的库","教学重点：只认脚本与记录","教学难点：面对未评估层的诚实标注","教学方法：13库照表逐项打勾","原理逻辑：家底是测出来的不是估出来的"],"def":"对13个既有库逐一脚本实测，只认记录不做估计，得到499/1249/312三层分布。","imp":0.7,"diff":2.0,"time":35.0,"outdeg":2},{"x":787.49,"y":433.86,"z":289.85,"g":1,"a":1,"c":0.12,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·三级过关判据（30秒/新人照做/三问法）","id":"onto_e_three_gauges","q":"培养目标：用三把尺子给每层打分","qsrc":"evidence","stage":"筑基","evidence":["培养目标：用三把尺子给每层打分","教学重点：动态层三问法质询","教学难点：区分记录与想象","教学方法：现场抽库测试计时","原理逻辑：层级过关必须可测可判"],"def":"三层各配可测过关判据：语义层30秒定位原文、动能层新人照做、动态层三问法（source/counter_example/调用记录）。","imp":0.75,"diff":3.0,"time":35.0,"outdeg":0},{"x":1041.73,"y":1018.6,"z":-601.92,"g":1,"a":1,"c":0.18,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·不新建库新建层（00/91/92元层）","id":"onto_e_meta_layer_rebuild","q":"培养目标：给旧库设计元层改造方案","qsrc":"evidence","stage":"筑基","evidence":["培养目标：给旧库设计元层改造方案","教学重点：元层目录命名与归属","教学难点：劝住学生新建库冲动","教学方法：诊断报告改进建议改写","原理逻辑：改造成本远低于重建且资产连续"],"def":"改造既有知识库时不另起炉灶建库，只加00-本体层/91-经验层/92-产出层三个元层目录。","imp":0.68,"diff":2.0,"time":30.0,"outdeg":1},{"x":976.74,"y":683.21,"z":-16.11,"g":1,"a":1,"c":0.12,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·模式库三问法门槛（不许AI直接生成）","id":"onto_e_pattern_gate","q":"培养目标：守住模式库的人拍板红线","qsrc":"evidence","stage":"筑基","evidence":["培养目标：守住模式库的人拍板红线","教学重点：gap长出 vs AI生成的判别","教学难点：抵制AI批量产出诱惑","教学方法：三问法逐条质询","原理逻辑：模式库是个人资产，公共常识替不了"],"def":"动态模式库最严格，不许AI直接生成，每条必须从个人gap长出并过source/counter_example/调用三问。","imp":0.72,"diff":3.0,"time":25.0,"outdeg":0},{"x":1038.43,"y":843.17,"z":-277.76,"g":1,"a":1,"c":0.18,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·演绎推理vs逆向寻优选路","id":"onto_e_deductive_vs_reverse","q":"培养目标：为业务选出合适推理范式","qsrc":"evidence","stage":"筑基","evidence":["培养目标：为业务选出合适推理范式","教学重点：两类范式的适用判据","教学难点：混合业务拆段选路","教学方法：五案逐一判定路线","原理逻辑：路线定结构，结构定校验"],"def":"建模前判断业务该走演绎（规则推结论）还是逆向寻优（结果反推条件），选错路线全盘返工。","imp":0.7,"diff":4.0,"time":35.0,"outdeg":1},{"x":501.18,"y":169.61,"z":450.03,"g":1,"a":1,"c":0.12,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·分级推理三段分离","id":"onto_e_tiered_inference","q":"培养目标：把业务拆成硬软两段并配三约束","qsrc":"evidence","stage":"筑基","evidence":["培养目标：把业务拆成硬软两段并配三约束","教学重点：确定性与柔性的分界","教学难点：柔性段三约束落进模板","教学方法：小店电商三段拆解演示","原理逻辑：硬的可复算，软的可解释，不混线"],"def":"确定性判断走规则引擎/SQL，柔性归因报告走LLM并带推理轨迹/数据来源/人工复核三硬约束。","imp":0.8,"diff":4.0,"time":40.0,"outdeg":0},{"x":849.84,"y":509.95,"z":219.37,"g":1,"a":1,"c":0.18,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·最小闭包与60分钟上手检查单","id":"onto_e_minimal_closure","q":"培养目标：限时跑通一个最小闭包","qsrc":"evidence","stage":"筑基","evidence":["培养目标：限时跑通一个最小闭包","教学重点：闭包三引用方向齐全","教学难点：克制铺全量冲动","教学方法：60分钟限时检查单当堂完成","原理逻辑：小闭环验证过，扩量才不塌"],"def":"先跑最小闭包（1对象+≤5原子行为+≥3规则）验证闭环，七问答不出就回最小闭包，不铺全量。","imp":0.74,"diff":3.0,"time":40.0,"outdeg":1},{"x":1036.16,"y":1050.7,"z":-645.83,"g":1,"a":1,"c":0.18,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·M4场景并入M6、ME事件并入M2的决断","id":"onto_e_model_merge","q":"培养目标：解释编号缺失是决断而非错误","qsrc":"evidence","stage":"筑基","evidence":["培养目标：解释编号缺失是决断而非错误","教学重点：事件独立命名补法","教学难点：从行为句里识别事件","教学方法：编号对照表 + 补法操练","原理逻辑：编号服从工程需要而非理论完整"],"def":"v9.0有意移除独立M4场景层与ME事件层：场景并入M6流程、事件并入M2行为，并给出事件独立命名的补法。","imp":0.68,"diff":3.0,"time":30.0,"outdeg":1},{"x":1063.1,"y":872.74,"z":-306.72,"g":1,"a":1,"c":0.24,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·M5主体与权限模型（谁能做什么）","id":"onto_e_m5_perm","q":"培养目标：独立建出角色权限矩阵","qsrc":"evidence","stage":"筑基","evidence":["培养目标：独立建出角色权限矩阵","教学重点：actor挂钩与权限独立","教学难点：避免权限散进行为","教学方法：主锚权限表照建","原理逻辑：主体独立可审计，改权不改行为"],"def":"M5主体模型回答\"谁能做什么\"，由角色清单与权限矩阵构成，猪中人实例为7角色77权限。","imp":0.7,"diff":3.0,"time":30.0,"outdeg":2},{"x":1052.05,"y":967.31,"z":-486.43,"g":1,"a":1,"c":0.18,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·M7报表/MU界面/M8模式三模型边界","id":"onto_e_m7_mu_m8","q":"培养目标：分清三个非核心模型的归属","qsrc":"evidence","stage":"筑基","evidence":["培养目标：分清三个非核心模型的归属","教学重点：M7一对一约束","教学难点：UI层误塞语义","教学方法：边界清单逐条核对","原理逻辑：引用层不重复语义，避免双写漂移"],"def":"M7报表只绑M1M2一对一QUERY、MU界面纯引用层、M8模式库存gap长出的经验，三者各守边界。","imp":0.69,"diff":3.0,"time":30.0,"outdeg":1},{"x":998.75,"y":1132.8,"z":-781.92,"g":1,"a":1,"c":0.18,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·环形引用而非树形","id":"onto_e_ring_not_tree","q":"培养目标：用环形表达模型互引关系","qsrc":"evidence","stage":"筑基","evidence":["培养目标：用环形表达模型互引关系","教学重点：互引与归属的差别","教学难点：改不掉树形思维","教学方法：环形全图临摹","原理逻辑：知识网络是网状不是树状"],"def":"八模型互相引用，必须画成环形关系网；树形一画就断，因为模型间不是父子归属而是网状互引。","imp":0.66,"diff":2.0,"time":25.0,"outdeg":1},{"x":652.8,"y":293.65,"z":395.62,"g":1,"a":1,"c":0.18,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·EFML七步取证环（40分钟5文件）","id":"onto_e_efml_loop","q":"培养目标：40分钟独立跑完一环","qsrc":"evidence","stage":"筑基","evidence":["培养目标：40分钟独立跑完一环","教学重点：手写考题与记理由不对","教学难点：忍住不让AI代出考题","教学方法：当堂限时环 + gaps互评","原理逻辑：取证+判卷结构比环名重要"],"def":"选现场→手写考题→零上下文盲测→算差值gaps→写规则→新案例回测→决策记账的40分钟七步最小环。","imp":0.78,"diff":4.0,"time":50.0,"outdeg":1},{"x":527.62,"y":197.34,"z":437.5,"g":1,"a":1,"c":0.12,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·规则四硬字段（source/counter_example/scope/confidence）","id":"onto_e_rule_four_fields","q":"培养目标：写出四字段齐全的原子规则","qsrc":"evidence","stage":"筑基","evidence":["培养目标：写出四字段齐全的原子规则","教学重点：反例与scope两道闸","教学难点：给confidence诚实打分","教学方法：样例仿写 + 缺字段退改","原理逻辑：先有来历再谈对错，举不出反例等于没写"],"def":"每条规则最小格式带source、counter_example、scope、confidence四硬字段，缺任一即空规则或过度泛化。","imp":0.8,"diff":3.0,"time":35.0,"outdeg":0},{"x":969.39,"y":1145.55,"z":-837.83,"g":1,"a":1,"c":0.18,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·喂问收三动作工位","id":"onto_e_feed_ask_collect","q":"培养目标：在对话中找到本体插入工位","qsrc":"evidence","stage":"筑基","evidence":["培养目标：在对话中找到本体插入工位","教学重点：三动作顺序与留痕","教学难点：收差值而不是收结论","教学方法：三轮对话演练三工位","原理逻辑：插入点明确，本体才进得了流程"],"def":"人机一轮闭环的三个工位：喂（五段固定开场给本体）、问（结论标编号让AI判）、收（空白抄进gaps）。","imp":0.66,"diff":2.0,"time":25.0,"outdeg":1},{"x":994.49,"y":716.86,"z":-57.14,"g":1,"a":1,"c":0.18,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·五道分水岭总表","id":"onto_e_five_watershed","q":"培养目标：用五道判据做模型定性","qsrc":"evidence","stage":"筑基","evidence":["培养目标：用五道判据做模型定性","教学重点：五道判据逐条可测","教学难点：第五道语义纯度的日常执行","教学方法：总表答疑 + 自测打分","原理逻辑：形似不支持推理，神在五道可判处"],"def":"建模目的/规则身份/设计态运行态/正向逆向/语义纯度五道可判据分水岭，区分本体与OO/UML。","imp":0.72,"diff":4.0,"time":35.0,"outdeg":1},{"x":870.62,"y":520.25,"z":177.46,"g":1,"a":1,"c":0.12,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·规则一等公民判据","id":"onto_e_rule_first_class","q":"培养目标：用计数判据识别规则是否独立","qsrc":"evidence","stage":"筑基","evidence":["培养目标：用计数判据识别规则是否独立","教学重点：重复即独立信号","教学难点：从方法体里抽出规则","教学方法：代码片段抽规则练习","原理逻辑：规则独立才可被推理机消费"],"def":"规则独立命名成层即一等公民；判据为独立命名规则条数，同一条校验写过2次以上就该独立出来。","imp":0.74,"diff":3.0,"time":30.0,"outdeg":0},{"x":1048.26,"y":897.44,"z":-351.75,"g":1,"a":1,"c":0.12,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·OO翻成OBR四步操作规程","id":"onto_e_oo_to_obr","q":"培养目标：照四步完成一次OO到OBR转换","qsrc":"evidence","stage":"筑基","evidence":["培养目标：照四步完成一次OO到OBR转换","教学重点：事件独立命名与订阅计数","教学难点：第四道闭环最难被跳过","教学方法：拿自己模型走四步","原理逻辑：转换是操作规程不是理论辨析"],"def":"把既有OO模型翻成OBR的四步规程：抽规则独立、事件独立命名、建订阅闭环、清语义纯度。","imp":0.7,"diff":5.0,"time":40.0,"outdeg":0},{"x":741.64,"y":1247.82,"z":239.6,"g":1,"a":3,"c":0.18,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·置信度容忍度分界线","id":"onto_e_confidence_band","q":"培养目标：按容忍度而非场景热冷选技术","qsrc":"evidence","stage":"元方法·全程","evidence":["培养目标：按容忍度而非场景热冷选技术","教学重点：窄区间的不可替代性","教学难点：接受本体不万能","教学方法：象限图定位自己的业务","原理逻辑：抽离规则研究完整知识网络才是最大变化"],"def":"该不该上本体的分界线是置信度容忍度而非场景变不变；本体价值区间窄，但在窄区间提供规则知识网络。","imp":0.68,"diff":4.0,"time":25.0,"outdeg":1},{"x":249.28,"y":-68.67,"z":463.71,"g":1,"a":1,"c":0.18,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·C5植错修复赛（80%修复+复跑归零）","id":"onto_e_repair_contest","q":"培养目标：限时修复并复跑归零","qsrc":"evidence","stage":"筑基","evidence":["培养目标：限时修复并复跑归零","教学重点：先分类再修复的顺序","教学难点：抵制改校验器诱惑","教学方法：植错赛限时对抗","原理逻辑：归零是唯一硬证据，不是改绿灯"],"def":"一节课内对植错本体修复≥80%硬错误并复跑归零，评分修复率60%+分类30%+归零10%，放水0分。","imp":0.84,"diff":4.0,"time":50.0,"outdeg":1},{"x":663.85,"y":315.99,"z":360.3,"g":1,"a":1,"c":0.18,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·悬空与漂移两种病两套体检","id":"onto_e_dangling_vs_drift","q":"培养目标：给错误定性到悬空或漂移","qsrc":"evidence","stage":"筑基","evidence":["培养目标：给错误定性到悬空或漂移","教学重点：出生缺 vs 后来歪的区分","教学难点：漂移比悬空隐蔽","教学方法：两类病例对照读报告","原理逻辑：病因不同，体检与修复路径不同"],"def":"悬空是出生时就缺（引用不存在对象/行为），漂移是后来才歪（业务变规则没跟），两种病用两套体检。","imp":0.78,"diff":4.0,"time":35.0,"outdeg":1},{"x":1066.48,"y":910.35,"z":-423.21,"g":1,"a":1,"c":0.18,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·数据违例与工具违例","id":"onto_e_data_tool_violation","q":"培养目标：分清改本体还是改校验器","qsrc":"evidence","stage":"筑基","evidence":["培养目标：分清改本体还是改校验器","教学重点：误报识别","教学难点：不迷信工具输出","教学方法：三处误报案例判读","原理逻辑：校验器也是工件，同样会错"],"def":"区分数据违例（内容填错）与工具违例（校验器自身误报），三处误报证明校验器也要被检验。","imp":0.7,"diff":3.0,"time":25.0,"outdeg":1},{"x":1012.14,"y":1085.36,"z":-696.88,"g":1,"a":1,"c":0.18,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·四查人工核对清单","id":"onto_e_four_manual_check","q":"培养目标：用人工清单补机器盲区","qsrc":"evidence","stage":"筑基","evidence":["培养目标：用人工清单补机器盲区","教学重点：四查字段逐一过","教学难点：把提示当任务而非杂音","教学方法：纸质清单顶替故障脚本","原理逻辑：机器查结构，人查语义出处"],"def":"机器检查之外的人工四查：on_object、rules、state_change、source逐条对，18条提示当下一步工作而非噪声。","imp":0.68,"diff":2.0,"time":30.0,"outdeg":1},{"x":895.45,"y":550.2,"z":153.94,"g":1,"a":1,"c":0.12,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·四条工程纪律","id":"onto_e_four_disciplines","q":"培养目标：把四条纪律落成检查项","qsrc":"evidence","stage":"筑基","evidence":["培养目标：把四条纪律落成检查项","教学重点：变更先改本体","教学难点：长期坚持而非一次做到","教学方法：纪律清单上墙对照","原理逻辑：纪律进机制不进自觉"],"def":"唯一真相源/分级推理/一致性校验进CI/变更先改本体，四条可执行非倡议的工程纪律。","imp":0.74,"diff":3.0,"time":30.0,"outdeg":0},{"x":1071.45,"y":947.63,"z":-450.93,"g":1,"a":1,"c":0.18,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·一致性门禁与迭代回退","id":"onto_e_ci_gate","q":"培养目标：理解门禁作为常驻校验","qsrc":"evidence","stage":"筑基","evidence":["培养目标：理解门禁作为常驻校验","教学重点：检查项脚本化","教学难点：初期搭建门槛","教学方法：门禁脚本演示 + 清单迁移","原理逻辑：自动常驻比人工记得住"],"def":"机器能跑的检查不靠肉眼，一致性门禁自动跑闭包/悬空/口径检查，不过门禁不得回退放行。","imp":0.7,"diff":4.0,"time":30.0,"outdeg":1},{"x":995.87,"y":1111.05,"z":-732.03,"g":1,"a":1,"c":0.12,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·校验器自身也要被检验","id":"onto_e_validator_self_check","q":"培养目标：建立工具也是工件的意识","qsrc":"evidence","stage":"筑基","evidence":["培养目标：建立工具也是工件的意识","教学重点：误报定位流程","教学难点：不把工具输出当权威","教学方法：误报案例判读","原理逻辑：检验者也要被检验，递归成立"],"def":"自检脚本同样有bug，校验器自身要被检验，不能为绿灯改判据。","imp":0.68,"diff":3.0,"time":20.0,"outdeg":0},{"x":540.63,"y":722.17,"z":294.66,"g":1,"a":2,"c":0.18,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·五条坑逐个解剖","id":"onto_e_five_pits","q":"培养目标：认出自己业务正踩的坑","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：认出自己业务正踩的坑","教学重点：每条坑的识别信号","教学难点：坑看起来像进展","教学方法：翻车案例逐条解剖","原理逻辑：先学怎么死，再学怎么活"],"def":"过度建模/AI生成本体/过度依赖知识库/模式库空转/LLM非确定性五条操作坑，每条带实例。","imp":0.78,"diff":3.0,"time":35.0,"outdeg":1},{"x":749.92,"y":924.63,"z":150.31,"g":1,"a":2,"c":0.12,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·双护栏失效（装饰性sources/编号神学）","id":"onto_e_guardrail_failure","q":"培养目标：识别假护栏并快筛","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：识别假护栏并快筛","教学重点：两种失效形态对照","教学难点：形式完整的假象","教学方法：假规则挑错练习","原理逻辑：护栏必须可验，形式不算"],"def":"source与counter_example两道护栏缺一不可，失效形态为装饰性sources与编号神学。","imp":0.72,"diff":3.0,"time":25.0,"outdeg":0},{"x":681.4,"y":842.5,"z":223.57,"g":1,"a":2,"c":0.12,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·Q4举一反三强信号","id":"onto_e_q4_signal","q":"培养目标：识别Q4强信号并防自证","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：识别Q4强信号并防自证","教学重点：强信号直通规则","教学难点：手写考题防自证","教学方法：五问打分辅助演练","原理逻辑：举一反三只有规则网络给得出"],"def":"Q4举一反三是五问中唯一强信号，单独为是即可直通开闸，同时警惕AI自证陷阱。","imp":0.74,"diff":3.0,"time":25.0,"outdeg":0},{"x":484.31,"y":669.02,"z":319.31,"g":1,"a":2,"c":0.24,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·五案册页（5分钟/15020748/1→4/71-123-4/两类硬伤）","id":"onto_e_five_case_book","q":"培养目标：按四栏卡读通五案","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：按四栏卡读通五案","教学重点：可迁移点而非行业内容","教学难点：跨案找同构","教学方法：册页点击翻阅走读","原理逻辑：换行业变内容，不变体例"],"def":"五个真实跑通项目按四栏卡成册页：电商5分钟、低空15,020,748、孪生1→4、课程71-123-4、申报两类硬伤。","imp":0.8,"diff":2.0,"time":40.0,"outdeg":2},{"x":615.34,"y":796.88,"z":261.12,"g":1,"a":2,"c":0.12,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·五案合看三条规律","id":"onto_e_three_patterns","q":"培养目标：从单案故事升到跨案规律","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：从单案故事升到跨案规律","教学重点：可对账原则","教学难点：抵制只盯大项目","教学方法：五案合看填表归纳","原理逻辑：单案是故事，五案才是规律"],"def":"插入点各不同四栏恒同/最便宜案例杠杆最大/收益必须可对账，跨案归纳三条规律。","imp":0.76,"diff":3.0,"time":30.0,"outdeg":0},{"x":570.5,"y":738.03,"z":283.03,"g":1,"a":2,"c":0.18,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·潮安算盘账（描述型到推演型）","id":"onto_e_low_altitude_ledger","q":"培养目标：把描述结论升级为可对账推演","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：把描述结论升级为可对账推演","教学重点：乘数带出处与口径","教学难点：拒绝经验值三个字","教学方法：算盘账逐层抽问演练","原理逻辑：推演型结论=每个数都敢被对账"],"def":"低空可研把报告从描述型升级为推演型：1088.46km²×24次/年×575元=15,020,748元/年，每个乘数带出处可抽问。","imp":0.78,"diff":3.0,"time":30.0,"outdeg":1},{"x":787.45,"y":974.4,"z":93.8,"g":1,"a":2,"c":0.12,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·ArcPy 0/5反例","id":"onto_e_arcpy_counter","q":"培养目标：诚实选红选反例","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：诚实选红选反例","教学重点：有价值与该不该上是两问","教学难点：为好业务判不上","教学方法：六线扫描照做","原理逻辑：闸门对事不对人价值本身"],"def":"ArcPy脚本工具真有价值但五问0/5，瓶颈不在本体，是绿灯不等于全上的反例。","imp":0.7,"diff":3.0,"time":20.0,"outdeg":0},{"x":672.11,"y":1182.03,"z":304.66,"g":1,"a":3,"c":0.18,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·意义判据七问防假上","id":"onto_e_meaning_seven","q":"培养目标：动手前用七问打钩拦假上","qsrc":"evidence","stage":"元方法·全程","evidence":["培养目标：动手前用七问打钩拦假上","教学重点：插入点/使用者/产物","教学难点：对自己的项目诚实","教学方法：七问清单逐条打钩","原理逻辑：能判能打钩才防得住握锤子的自己"],"def":"五问判地形之后动手前加七问意义判据，五问过七问不过即假上，任一答不出回最小闭包。","imp":0.76,"diff":3.0,"time":30.0,"outdeg":1},{"x":679.21,"y":1197.86,"z":283.78,"g":1,"a":3,"c":0.12,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·公共知识库陷阱（通用本体≠私域本体）","id":"onto_e_public_kb_trap","q":"培养目标：拒绝AI代抽私域语义","qsrc":"evidence","stage":"元方法·全程","evidence":["培养目标：拒绝AI代抽私域语义","教学重点：通用与私域的不匹配","教学难点：省事诱惑","教学方法：通用本体套私域翻车演示","原理逻辑：公共常识替不了亲历判断"],"def":"AI生成的公共通用本体不等于你的私域本体，业务真实抽象必须由人拍板。","imp":0.74,"diff":3.0,"time":25.0,"outdeg":0},{"x":724.48,"y":1223.21,"z":266.56,"g":1,"a":3,"c":0.18,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·锤子存在论与壁画反模式","id":"onto_e_hammer_meaning","q":"培养目标：用使用情境判模型意义","qsrc":"evidence","stage":"元方法·全程","evidence":["培养目标：用使用情境判模型意义","教学重点：产物是否生成","教学难点：欣赏自己的模型漂亮","教学方法：正反十例对照册页","原理逻辑：意义在使用中显现不在图纸上"],"def":"锤子的意义在敲钉子时显现，本体意义在使用情境显现；建了大图零产物即壁画反模式。","imp":0.7,"diff":3.0,"time":25.0,"outdeg":1},{"x":594.59,"y":764.97,"z":277.09,"g":1,"a":2,"c":0.18,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·交付三件套本体三维投影","id":"onto_e_triple_projection","q":"培养目标：用投影关系解释三件套为何对","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：用投影关系解释三件套为何对","教学重点：三维投影对应","教学难点：反序组装","教学方法：投影对照图走读","原理逻辑：交付物是本体的影子，结构同源"],"def":"工具+文档+Skill三件套是本体三维投影：工具=行为投影、文档=对象+规则、Skill=行为+规则+上下文，组装顺序反过来。","imp":0.78,"diff":3.0,"time":25.0,"outdeg":1},{"x":438.3,"y":613.71,"z":333.66,"g":1,"a":2,"c":0.12,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·第四件交付物cq.md判卷题","id":"onto_e_cq_exam","q":"培养目标：会出判卷题并给结果","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：会出判卷题并给结果","教学重点：新题与跨场景防背答案","教学难点：题必须手写不许AI代","教学方法：个人业务出3题盲测","原理逻辑：客户能自己复算，话术才敢签合同"],"def":"第四件交付物是用客户历史案例出的判卷题cq.md连同判卷结果，唯一能被客户自己复算验证。","imp":0.82,"diff":4.0,"time":35.0,"outdeg":0},{"x":704.64,"y":873.31,"z":206.22,"g":1,"a":2,"c":0.18,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·九十天六步路线与三句承诺","id":"onto_e_ninety_day","q":"培养目标：排出步步有验收物的路线","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：排出步步有验收物的路线","教学重点：三句承诺口径","教学难点：不被客户要ROI数字带走","教学方法：路线图填表 + 承诺口径背诵","原理逻辑：成果即证据，承诺只给可核对的"],"def":"九十天路线图六步步步有验收物，对外只承诺三句：不承诺固定ROI、客户参与建模、五件套封顶。","imp":0.74,"diff":3.0,"time":25.0,"outdeg":1},{"x":798.6,"y":1005.47,"z":77.02,"g":1,"a":2,"c":0.12,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·三层级塔递归同构与技能元数据","id":"onto_e_three_tower","q":"培养目标：理解三层递归同构与报价落点","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：理解三层递归同构与报价落点","教学重点：同构所以方法学一遍","教学难点：区分三层交付物","教学方法：六层业务线对三层服务填表","原理逻辑：方法复用靠同构，不靠重复学"],"def":"工具/项目/系统三层级递归同构，报价¥5-30K/¥20-80K/¥50-150K；技能库三行元数据让AI自己挑工具。","imp":0.7,"diff":4.0,"time":25.0,"outdeg":0},{"x":661.25,"y":832.24,"z":237.99,"g":1,"a":2,"c":0.12,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·综合报告四段装订","id":"onto_e_report_four_parts","q":"培养目标：四段装订个人综合报告","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：四段装订个人综合报告","教学重点：校验史作为证据主体","教学难点：只用已有留痕不新编","教学方法：装配检查提示词逐项过","原理逻辑：报告是证据装订不是重新创作"],"def":"CO6-2综合报告按模型图+校验史+应用分析+外推边界四段装订，同一套证据的书面形态。","imp":0.76,"diff":2.0,"time":35.0,"outdeg":0},{"x":722.0,"y":912.81,"z":169.64,"g":1,"a":2,"c":0.18,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·答辩三页模板与5+3分钟","id":"onto_e_defense_three_pages","q":"培养目标：按三页完成限时答辩","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：按三页完成限时答辩","教学重点：校验史讲中间留白不编平滑","教学难点：边界段不吹牛","教学方法：C8当堂答辩互评","原理逻辑：三页逼出证据密度"],"def":"CO6-1答辩按模型图/校验史/分析结论+边界三页模板，5分钟陈述3分钟问答，外推边界诚实度10%可为负。","imp":0.74,"diff":2.0,"time":35.0,"outdeg":1},{"x":761.6,"y":946.99,"z":122.46,"g":1,"a":2,"c":0.12,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·对外案例三红线执法","id":"onto_e_three_redlines","q":"培养目标：答辩稿过三红线自查","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：答辩稿过三红线自查","教学重点：角色不夸大、数字带口径","教学难点：夸大表达的惯性","教学方法：三红线执法提示词自查","原理逻辑：公信力来自每栏可对账"],"def":"脱敏与数字二选一/不许参与说成主导/每个数字带口径日期，对外叙事三条红线。","imp":0.72,"diff":2.0,"time":20.0,"outdeg":0},{"x":823.4,"y":1039.05,"z":42.75,"g":1,"a":2,"c":0.18,"col":"#6C5CE7","dm":"本体论·底座层","t":"实体·八次协作课作品链C1→C8","id":"onto_e_work_chain","q":"培养目标：沿链走完八次当堂产出","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：沿链走完八次当堂产出","教学重点：环环输入输出衔接","教学难点：中期掉队补链","教学方法：作品链盘点清单回收","原理逻辑：过程留痕采信，期末从W2就开始"],"def":"八次协作课是一条作品链，每次产出是下次输入，缺一环后面全断，过程留痕全程采信。","imp":0.7,"diff":1.0,"time":20.0,"outdeg":1},{"x":165.67,"y":-61.02,"z":-53.35,"g":2,"a":0,"c":0.8,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"专题·交付本质与岗位边界认知","id":"fde_t_delivery_boundary","q":"培养目标：能界定FDE式交付与交作业、售前、外包的本质差别","qsrc":"evidence","stage":"入门","evidence":["培养目标：能界定FDE式交付与交作业、售前、外包的本质差别","教学重点：交付物边界三问（是什么/谁验收/凭什么验收）","教学难点：学生天然把代码写完等同于交付完成","教学方法：真实清单实物对比+先投票后公布的根因排序+岗位归位辨析","原理逻辑：交付=现场对象×适配关系×Outcome度量，传统驻场缺中间项、售前缺后两项"],"def":"建立\"什么才算交付完成\"的判断力，说清交付物是什么、谁验收、凭什么验收。","imp":0.82,"diff":2.0,"time":120.0,"outdeg":2},{"x":186.24,"y":-26.56,"z":-67.09,"g":2,"a":0,"c":0.24,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"交付公式：现场对象×适配关系×Outcome度量","id":"fde_e_delivery_formula","q":"培养目标：能用三因子检查一个项目是否构成完整交付","qsrc":"evidence","stage":"入门","evidence":["培养目标：能用三因子检查一个项目是否构成完整交付","教学重点：三因子相乘而非相加，缺一项即断","教学难点：理解适配关系是独立于系统与建议的中间项","教学方法：用驻场/售前/FDE三案例逐项对表","原理逻辑：乘法结构意味着任一因子为零则交付为零"],"def":"用三因子乘法结构界定一次完整交付，缺任一因子都不构成FDE式交付。","imp":0.78,"diff":2.0,"time":30.0,"outdeg":2},{"x":182.94,"y":4.78,"z":-74.74,"g":2,"a":0,"c":0.24,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"四组岗位对照：只问交付物是什么","id":"fde_e_role_compare","q":"培养目标：给定岗位描述能准确判归并说出交付物","qsrc":"evidence","stage":"入门","evidence":["培养目标：给定岗位描述能准确判归并说出交付物","教学重点：知识回流是FDE与高成本定制外包的最终分界","教学难点：把“会调模型”误当成FDE岗位能力","教学方法：五段描述归位小组辨析+全班汇总","原理逻辑：岗位差别不在工具栈，在交付物与验收标准"],"def":"用\"交付物是什么\"单一判据区分FDE与售前、顾问、驻场开发、外包。","imp":0.74,"diff":2.0,"time":30.0,"outdeg":2},{"x":210.76,"y":29.12,"z":-95.37,"g":2,"a":0,"c":0.18,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"三项目交付物规模对照（109/9841/14254）","id":"fde_e_scale_contrast","q":"培养目标：能解释文件数差异来自哪一层而非代码量","qsrc":"evidence","stage":"入门","evidence":["培养目标：能解释文件数差异来自哪一层而非代码量","教学重点：差异来自交付分层厚度","教学难点：把文件多误等同于交付好","教学方法：先猜后公布的实物冲击","原理逻辑：规模是分层厚度的可见投影"],"def":"用三个真实项目的文件数与文档数差异，让学生亲眼看见交付分层厚度。","imp":0.7,"diff":1.0,"time":25.0,"outdeg":1},{"x":203.65,"y":49.89,"z":-103.47,"g":2,"a":0,"c":0.24,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"FDE起源与能力面（Palantir嵌入现场）","id":"fde_e_origin_palantir","q":"培养目标：说清FDE不是AI热潮催生的新岗位","qsrc":"evidence","stage":"入门","evidence":["培养目标：说清FDE不是AI热潮催生的新岗位","教学重点：技术变量变了，到现场的岗位动因没变","教学难点：把市场抢人热度误当方法论依据","教学方法：起源史讲授+热口径与真口径对照","原理逻辑：环境复杂性是永恒约束，模型只是更新适配工具"],"def":"FDE动因比AI热潮早十年，岗位性质是嵌入现场解决环境复杂，不随模型换代改变。","imp":0.66,"diff":2.0,"time":20.0,"outdeg":2},{"x":340.04,"y":173.16,"z":-20.97,"g":2,"a":1,"c":0.9,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"专题·对象视角与企业语义翻译","id":"fde_t_object_view","q":"培养目标：从列功能清单升级为把客户一句话翻译成可判定对象结构","qsrc":"evidence","stage":"筑基","evidence":["培养目标：从列功能清单升级为把客户一句话翻译成可判定对象结构","教学重点：对象视角与企业语义翻译层的不可外包性","教学难点：把UI原型当项目核心资产、把需求清单直接当对象模型","教学方法：真实原文逐句标注+待澄清需求当场登记","原理逻辑：功能会变，对象与字段沉淀为资产，复用第一杠杆是复用对象模型"],"def":"把\"做功能\"的默认假设翻成\"建对象\"，并守住唯一不可外包的语义翻译层。","imp":0.9,"diff":4.0,"time":120.0,"outdeg":2},{"x":375.18,"y":199.4,"z":-40.54,"g":2,"a":1,"c":0.3,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"对象视角：功能是对象状态变化的外在表现","id":"fde_e_object_view","q":"培养目标：面对需求先抽对象字段而非功能列表","qsrc":"evidence","stage":"筑基","evidence":["培养目标：面对需求先抽对象字段而非功能列表","教学重点：功能是果不是因","教学难点：功能视角的惯性太强","教学方法：功能/对象左右对照板演","原理逻辑：资产沉淀在对象层，功能层不可复利"],"def":"以对象及其字段为长期维护资产，功能只是对象状态变化的外在表现。","imp":0.85,"diff":3.0,"time":35.0,"outdeg":3},{"x":401.57,"y":256.0,"z":-79.57,"g":2,"a":1,"c":0.24,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"企业语义翻译层：唯一不可外包的产出物","id":"fde_e_semantic_translation","q":"培养目标：识别哪一层工作可以外包、哪一层必须自留","qsrc":"evidence","stage":"筑基","evidence":["培养目标：识别哪一层工作可以外包、哪一层必须自留","教学重点：翻译是判断不是执行，转述即失真","教学难点：把语义翻译当成可交接的文档撰写","教学方法：行话到字段的现场翻译演练","原理逻辑：AI时代竞争力不在代码本身，在语义翻译判断力"],"def":"把客户行话翻译成字段名、字典值、状态机的判断层，外包方拿到的是转述过的二手语义。","imp":0.84,"diff":4.0,"time":35.0,"outdeg":2},{"x":444.89,"y":404.81,"z":-190.37,"g":2,"a":1,"c":0.24,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"需求原文逐句标注与待澄清需求登记","id":"fde_e_requirement_tagging","q":"培养目标：能把一段业务原文落到五类对象或待澄清栏","qsrc":"evidence","stage":"筑基","evidence":["培养目标：能把一段业务原文落到五类对象或待澄清栏","教学重点：原文标注而非凭印象画图","教学难点：漏掉事件、角色、任务、规则四类对象","教学方法：逐句标注工作坊+当场登记待澄清","原理逻辑：书面标注让判断可复查，避免语义在转述中丢失"],"def":"对真实需求原文逐句标注对象归属，标注不到对象的句子当场记为待澄清。","imp":0.76,"diff":3.0,"time":30.0,"outdeg":2},{"x":374.09,"y":225.78,"z":-51.15,"g":2,"a":1,"c":0.75,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"专题·交付物五层与合格量判定","id":"fde_t_deliverable_layers","q":"培养目标：能为项目列出五层交付物并写出五要素验收指标","qsrc":"evidence","stage":"筑基","evidence":["培养目标：能为项目列出五层交付物并写出五要素验收指标","教学重点：交付物五层解剖与指标五要素","教学难点：只认代码层、忽略报告层与标准符合性层","教学方法：三项目清单对照工作坊+指标卡改写互评","原理逻辑：分层让边界可清点，基线值让改变可证明"],"def":"把抽象交付边界落到可清点的五层文件结构，并写出带基线值的可量化指标。","imp":0.85,"diff":3.0,"time":90.0,"outdeg":2},{"x":408.86,"y":316.75,"z":-109.37,"g":2,"a":1,"c":0.24,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"交付物五层解剖（代码/文档/数据/报告/标准符合性）","id":"fde_e_five_layers","q":"培养目标：能把一份交付物清单逐层归位","qsrc":"evidence","stage":"筑基","evidence":["培养目标：能把一份交付物清单逐层归位","教学重点：报告层与标准符合性层最易漏","教学难点：把文件多等同于交付好","教学方法：真实规格逐条解剖范本教学","原理逻辑：缺口即进度，缺哪层说明没走到哪一步"],"def":"按代码、文档、数据、报告、标准符合性五层清点交付物，缺一层即未走到对应阶段。","imp":0.8,"diff":3.0,"time":30.0,"outdeg":2},{"x":410.88,"y":281.28,"z":-91.71,"g":2,"a":1,"c":0.24,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"可量化验收指标五要素（字段/判据/基线值/目标值/判定方式）","id":"fde_e_baseline_metric","q":"培养目标：写出五要素齐全、可独立判定的指标","qsrc":"evidence","stage":"筑基","evidence":["培养目标：写出五要素齐全、可独立判定的指标","教学重点：基线值必备与判定人独立","教学难点：习惯写提升类形容词而非字段数值","教学方法：指标卡互评+缺基线返工示范","原理逻辑：无基线则改变不可证明，无独立判定则验收无效"],"def":"一条能被第三方独立判定的指标须含五要素，基线值是最常被漏掉、扣分最重的一项。","imp":0.83,"diff":3.0,"time":30.0,"outdeg":2},{"x":471.1,"y":617.76,"z":-407.18,"g":2,"a":1,"c":0.24,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"标准现行状态核验（国标/行标废止检查）","id":"fde_e_standard_status","q":"培养目标：交付前核验所引标准的现行有效状态","qsrc":"evidence","stage":"筑基","evidence":["培养目标：交付前核验所引标准的现行有效状态","教学重点：标准现行状态核验动作","教学难点：以为引用过标准号即完成符合性","教学方法：废止标准反例辨析","原理逻辑：失效标准使符合性材料在验收时失效"],"def":"标准符合性层引用的国标行标必须核验现行状态，废止标准不得作为验收依据。","imp":0.66,"diff":2.0,"time":20.0,"outdeg":2},{"x":415.33,"y":344.35,"z":-125.01,"g":2,"a":1,"c":0.24,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"专题·适配性决策闸门","id":"fde_t_fit_gate","q":"培养目标：完成四项自检判定并附证据链，敢给出不建议自建结论","qsrc":"evidence","stage":"筑基","evidence":["培养目标：完成四项自检判定并附证据链，敢给出不建议自建结论","教学重点：四项合取全中与证据驱动","教学难点：把四项当条件满足数、忽略动态性否决权","教学方法：反向论证练习+每项≥2条证据检查","原理逻辑：自检是投入前的止损闸门，全中是被逐个证成的结果而非默认值"],"def":"投入持续人力前先过四项自检闸门，环境动态性是一票否决项。","imp":0.8,"diff":3.0,"time":60.0,"outdeg":2},{"x":426.31,"y":363.59,"z":-148.78,"g":2,"a":1,"c":0.18,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"环境动态性一票否决与边际价值曲线","id":"fde_e_dynamic_veto","q":"培养目标：判断环境动态性并说出否决理由","qsrc":"evidence","stage":"筑基","evidence":["培养目标：判断环境动态性并说出否决理由","教学重点：动态指规则/工况/需求在变","教学难点：把动态窄化为业务量增长","教学方法：边际价值曲线讲授+正反案例对照","原理逻辑：动态性决定持续投入筹码的边际价值，是闸门开关"],"def":"环境是否动态变化是四项自检中唯一的一票否决项，决定持续投入的边际价值。","imp":0.78,"diff":3.0,"time":25.0,"outdeg":1},{"x":479.48,"y":486.42,"z":-273.82,"g":2,"a":1,"c":0.3,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"证据驱动自检（每项≥2条可溯源证据）","id":"fde_e_evidence_selfcheck","q":"培养目标：为每项自检配证据链并敢写替代方案","qsrc":"evidence","stage":"筑基","evidence":["培养目标：为每项自检配证据链并敢写替代方案","教学重点：≥2条可溯源证据","教学难点：学生倾向全中了事","教学方法：证据检查清单+反向论证","原理逻辑：可溯源证据让决策可被他人复核"],"def":"每项自检结论必须附至少2条可溯源证据，凭印象打勾判不合格。","imp":0.72,"diff":2.0,"time":25.0,"outdeg":3},{"x":438.87,"y":385.92,"z":-170.87,"g":2,"a":1,"c":0.18,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"专题·交付形态选择与组织落地","id":"fde_t_mode_org","q":"培养目标：按业务环节性质选模式并说明买速度还是长能力","qsrc":"evidence","stage":"筑基","evidence":["培养目标：按业务环节性质选模式并说明买速度还是长能力","教学重点：四种模式适用逻辑与内部能力不可外购","教学难点：把模式当优劣排序背表格","教学方法：真实案例反推适用条件+三方角色博弈模拟","原理逻辑：模式与业务环节性质匹配，后台标准化适合买、一线关键工作流适合建"],"def":"判断以何种形态交付，并区分买速度与长能力、从人依赖走向架构依赖。","imp":0.78,"diff":3.0,"time":60.0,"outdeg":1},{"x":473.77,"y":472.46,"z":-256.41,"g":2,"a":1,"c":0.3,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"四种交付模式适用逻辑（嵌入/轮转/内部/POD）","id":"fde_e_four_modes","q":"培养目标：为给定场景匹配模式并说出换成别种的代价","qsrc":"evidence","stage":"筑基","evidence":["培养目标：为给定场景匹配模式并说出换成别种的代价","教学重点：适用逻辑而非优劣排序","教学难点：背表格不推适用条件","教学方法：案例反推+模式互换推演","原理逻辑：模式是对业务环节性质的响应，无绝对最优"],"def":"四种模式各胜在产品速度、跨行业广度、专有能力、架构可复制，按适用条件选择而非排序。","imp":0.74,"diff":3.0,"time":30.0,"outdeg":3},{"x":449.63,"y":443.19,"z":-210.84,"g":2,"a":1,"c":0.3,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"买速度与长能力裁决句","id":"fde_e_buy_vs_build","q":"培养目标：用裁决句区分外包场景与自建场景","qsrc":"evidence","stage":"筑基","evidence":["培养目标：用裁决句区分外包场景与自建场景","教学重点：复用需求是长能力的前提","教学难点：把买产品误当长能力","教学方法：裁决句判别练习+表面需求与隐含需求对照表","原理逻辑：一次性麻烦用外部速度解决，持续改变须内部资产承接"],"def":"解决具体麻烦可外包，改变运行方式并复用必须自建内部能力。","imp":0.76,"diff":2.0,"time":25.0,"outdeg":3},{"x":481.23,"y":518.74,"z":-303.76,"g":2,"a":1,"c":0.24,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"人依赖到架构依赖（内部能力与POD）","id":"fde_e_people_to_arch","q":"培养目标：区分个人驻场与架构化能力","qsrc":"evidence","stage":"筑基","evidence":["培养目标：区分个人驻场与架构化能力","教学重点：动态能力嵌入惯例、不可外购","教学难点：把招人等同于建能力","教学方法：人依赖/架构依赖对照讨论","原理逻辑：架构依赖让能力离开个人仍可运转"],"def":"POD小组制把交付从依赖某个人转为依赖一套可复制架构。","imp":0.72,"diff":3.0,"time":25.0,"outdeg":2},{"x":604.1,"y":431.54,"z":98.05,"g":2,"a":2,"c":0.85,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"专题·需求诊断与证据还原","id":"fde_t_need_diagnosis","q":"培养目标：逐句拆解需求原文，用证据写出客户原话到真实卡点还原报告","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：逐句拆解需求原文，用证据写出客户原话到真实卡点还原报告","教学重点：工具语言到结果语言的证据还原","教学难点：只读建设内容一章就下结论、把手段当目标","教学方法：真实需求文档逐句标注+原话/隐含需求对照","原理逻辑：错位是表述习惯非故意，证据出处让还原可复查"],"def":"用证据把客户的工具语言还原为结果语言，识别见不到实际需求方的需求隔层。","imp":0.88,"diff":4.0,"time":90.0,"outdeg":2},{"x":782.11,"y":718.44,"z":-214.97,"g":2,"a":2,"c":0.24,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"工具语言与结果语言（开口要的≠真实卡点）","id":"fde_e_tool_result_lang","q":"培养目标：区分原话工具语言与隐含结果语言","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：区分原话工具语言与隐含结果语言","教学重点：手段与目标的错位识别","教学难点：把影像/图斑这类手段当目标","教学方法：原话与隐含需求两栏对照","原理逻辑：错位源于表述习惯，可通过追问证据还原"],"def":"客户开口要的技术手段是工具语言，真实卡点在业务结果语言里，两者常写在同一文档不同章节。","imp":0.82,"diff":3.0,"time":30.0,"outdeg":2},{"x":784.75,"y":910.09,"z":-485.81,"g":2,"a":2,"c":0.24,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"证据还原：每条结论指到章节原话","id":"fde_e_evidence_trace","q":"培养目标：每条还原结论附原文出处","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：每条还原结论附原文出处","教学重点：证据出处可复查","教学难点：凭印象替客户总结","教学方法：逐句标注+出处编号对照","原理逻辑：书面出处让还原脱离猜测"],"def":"需求还原的每条结论都附文档章节或原句出处，凭印象推测判不合格。","imp":0.78,"diff":3.0,"time":30.0,"outdeg":2},{"x":759.68,"y":1003.83,"z":-616.93,"g":2,"a":2,"c":0.24,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"需求隔层：见不到实际需求方","id":"fde_e_demand_gap","q":"培养目标：识别需求隔层并穿透到一线使用者","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：识别需求隔层并穿透到一线使用者","教学重点：签约人、使用人、验收人分离","教学难点：只对接对接数字化团队","教学方法：F1/F2案例解剖+三问确权","原理逻辑：见不到使用方，交付物无人使用即失败"],"def":"最初需求方来自数字化团队，一线使用者在链条另一端，FDE可能根本见不到实际需求方。","imp":0.76,"diff":3.0,"time":25.0,"outdeg":2},{"x":739.61,"y":610.3,"z":-82.61,"g":2,"a":2,"c":0.24,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"专题·路线图关卡与工作量估算","id":"fde_t_roadmap_gate","q":"培养目标：画出带go/no-go关卡的路线图并完成标依据的人月估算","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：画出带go/no-go关卡的路线图并完成标依据的人月估算","教学重点：关卡三要素与估算三类漏项","教学难点：学生习惯有需求就开工、估算普遍系统性低估","教学方法：先估后公布真实参数+关卡强制设卡练习","原理逻辑：关卡在代价最小时止损，依据栏让估算可被质询"],"def":"在五步法路线图上制度化go/no-go关卡，并用人月估算加三类漏项对冲系统性低估。","imp":0.85,"diff":4.0,"time":90.0,"outdeg":2},{"x":792.12,"y":803.79,"z":-347.05,"g":2,"a":2,"c":0.24,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"go/no-go关卡（证据/判据/签字人三态）","id":"fde_e_gonogo_gate","q":"培养目标：为每个路线边界写清证据、判据、签字人","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：为每个路线边界写清证据、判据、签字人","教学重点：签字人要素与三态结果","教学难点：只写继续推进、不写什么情况下不推进","教学方法：强制设卡+缺卡判负互评","原理逻辑：制度化停权把止损点前移"],"def":"路线边界上由证据、判据、签字人构成的允许说停判断点，结果分Go/No-Go/有条件Go三态。","imp":0.8,"diff":3.0,"time":30.0,"outdeg":2},{"x":789.82,"y":951.4,"z":-534.89,"g":2,"a":2,"c":0.24,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"工作量估算与三类漏项（人月逐项标依据）","id":"fde_e_effort_estimate","q":"培养目标：产出带依据的人月估算表并标出最可能低估项","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：产出带依据的人月估算表并标出最可能低估项","教学重点：三类漏项与依据栏","教学难点：只算要做的、漏掉软性持续投入","教学方法：先估后公布真实参数演练","原理逻辑：低估来自漏项而非计算错误，依据让偏差可被质询"],"def":"把路线图换算成人月成本并逐项标依据，对冲范围蔓延、非编码工时、协同损耗三类系统性漏项。","imp":0.78,"diff":4.0,"time":30.0,"outdeg":2},{"x":502.0,"y":1299.56,"z":-1061.34,"g":2,"a":2,"c":0.18,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"先交最小可用与过度设计克制","id":"fde_e_minimum_viable","q":"培养目标：识别过度设计倾向并定义最小可用交付","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：识别过度设计倾向并定义最小可用交付","教学重点：克制是刻意纪律","教学难点：能力过剩者自然追求完整优雅","教学方法：四种死法归类讨论+最小可用裁剪练习","原理逻辑：完整优雅不是交付目标，可验收的最小可用才是"],"def":"能力过剩者须刻意克制，先交最小可用，避免做着做着跑成收不了尾的大项目。","imp":0.7,"diff":3.0,"time":20.0,"outdeg":1},{"x":742.74,"y":1024.97,"z":-650.08,"g":2,"a":2,"c":0.24,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"专题·实施管控四要素","id":"fde_t_process_control","q":"培养目标：建立四要素耦合的管控视图与变更记录表","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：建立四要素耦合的管控视图与变更记录表","教学重点：四要素耦合关系与过程指标","教学难点：把四要素当四张孤立清单分别填","教学方法：常见失控模式讲授+变更记录表单练习","原理逻辑：变更牵一动三，过程指标比终检结论更早暴露偏差"],"def":"同时盯住进度、质量、风险、变更四类耦合要素，保证方案按计划按质量变成交付物。","imp":0.76,"diff":3.0,"time":60.0,"outdeg":2},{"x":617.83,"y":1203.49,"z":-904.22,"g":2,"a":2,"c":0.24,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"进度/质量/风险/变更耦合管控","id":"fde_e_four_control","q":"培养目标：用过程指标替代终检依赖管控质量","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：用过程指标替代终检依赖管控质量","教学重点：四要素耦合非孤立清单","教学难点：质量只看终检结论","教学方法：失控模式案例剖析+耦合关系画图","原理逻辑：过程指标前置暴露偏差，终检只是结果汇总"],"def":"四类要素互相耦合，进度看里程碑、质量看过程指标、风险提前预案、变更统一入表。","imp":0.74,"diff":3.0,"time":25.0,"outdeg":2},{"x":464.71,"y":1327.47,"z":-1093.69,"g":2,"a":2,"c":0.18,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"变更无感发生与范围蔓延防控","id":"fde_e_change_log","q":"培养目标：坚持所有新增需求统一走变更记录","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：坚持所有新增需求统一走变更记录","教学重点：无感变更的隐蔽性","教学难点：熟人加需求不好意思记录","教学方法：变更表填写演练+蔓延案例复盘","原理逻辑：显性记录让范围变化可决策、可追责"],"def":"任何新增需求哪怕顺手加一个都须进同一张变更记录表，防止范围被悄悄改写。","imp":0.7,"diff":2.0,"time":20.0,"outdeg":1},{"x":639.22,"y":445.03,"z":84.9,"g":2,"a":2,"c":0.85,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"专题·可判定验收与质询答辩","id":"fde_t_verifiable_accept","q":"培养目标：把模糊标准改写为可判定版本并通过质询三问答辩","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：把模糊标准改写为可判定版本并通过质询三问答辩","教学重点：判定三件套（标准/方式/独立判定人）","教学难点：爱用形容词写标准、能讲方案不能应对质疑","教学方法：5条模糊标准即时改写互评+6分钟陈述4分钟质询演练","原理逻辑：自己判自己等于没有验收，第三方可复现才成立"],"def":"写出能被无关第三方独立判定的验收标准，并用质询三问完成答辩演练。","imp":0.88,"diff":4.0,"time":90.0,"outdeg":2},{"x":743.67,"y":633.89,"z":-117.51,"g":2,"a":2,"c":0.24,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"验收标准可判定性（标准/方式/独立判定人）","id":"fde_e_verifiable_std","q":"培养目标：完成模糊标准到可判定标准的改写","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：完成模糊标准到可判定标准的改写","教学重点：独立判定人要素","教学难点：形容词习惯难以清零","教学方法：即时改写互评","原理逻辑：可复现判定是验收成立的唯一条件"],"def":"验收标准须含标准、判定方式、独立判定人三件套，第三方照此能独立判出通过与否。","imp":0.84,"diff":3.0,"time":30.0,"outdeg":2},{"x":780.75,"y":963.7,"z":-580.22,"g":2,"a":2,"c":0.24,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"质询三问模板（凭什么这么估/失败怎么办/凭什么通过）","id":"fde_e_qa_three","q":"培养目标：能用三问模板回应答辩质询并举证","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：能用三问模板回应答辩质询并举证","教学重点：三问各自的举证要求","教学难点：只讲做了什么、不能回答凭什么","教学方法：角色演练+固定模板互评","原理逻辑：质询把自信还原为可举证依据"],"def":"答辩质询固定三问：凭什么这么估、失败怎么办、凭什么说验收通过了。","imp":0.78,"diff":3.0,"time":25.0,"outdeg":2},{"x":723.66,"y":1051.09,"z":-694.38,"g":2,"a":2,"c":0.24,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"缺口识别：字段服务判定链","id":"fde_e_gap_chain","q":"培养目标：用缺口识别定位项目走到哪一步","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：用缺口识别定位项目走到哪一步","教学重点：字段服务下游判定链而非采集方便","教学难点：以为有图斑字段等于能判定违法","教学方法：判定链套合推演+缺口定位","原理逻辑：交付物各层是判定链的环节，缺口即进度"],"def":"交付物字段必须服务业务判定链，缺一环整条链就断，缺哪段交付物说明没走到哪步。","imp":0.76,"diff":4.0,"time":25.0,"outdeg":2},{"x":707.47,"y":1069.97,"z":-136.96,"g":2,"a":3,"c":0.24,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"专题·失败四维根因解剖","id":"fde_t_failure_root","q":"培养目标：把失败原因强制归入四维且技术不超过一类","qsrc":"evidence","stage":"元方法·全程","evidence":["培养目标：把失败原因强制归入四维且技术不超过一类","教学重点：四维归类与技术归因惯性纠正","教学难点：把精度不达标、系统卡顿直接归技术类","教学方法：真实失败案例四维归类工作坊+三份归因交叉印证","原理逻辑：技术崩溃排在组织/数据/部署之后，换模型不能提高兑现率"],"def":"把失败强制归入组织权责、需求隔层、预期错位、技术四维，技术最多占一类。","imp":0.8,"diff":3.0,"time":60.0,"outdeg":2},{"x":725.69,"y":1091.15,"z":-176.65,"g":2,"a":3,"c":0.24,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"四维根因归类（组织权责/需求隔层/预期错位/技术）","id":"fde_e_four_rootcause","q":"培养目标：完成失败案例四维归类且技术不越一类","qsrc":"evidence","stage":"元方法·全程","evidence":["培养目标：完成失败案例四维归类且技术不越一类","教学重点：四维边界与空话排除","教学难点：技术归因惯性","教学方法：强制归类表+互评","原理逻辑：归类让教训可转化为前置检查项"],"def":"任何失败原因必须归入组织权责、需求隔层、预期错位、技术之一，技术类不超过一个。","imp":0.78,"diff":3.0,"time":25.0,"outdeg":2},{"x":747.63,"y":1220.54,"z":-352.79,"g":2,"a":3,"c":0.24,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"合同额不等于项目质量","id":"fde_e_contract_vs_quality","q":"培养目标：拒绝用合同额判断项目健康度","qsrc":"evidence","stage":"元方法·全程","evidence":["培养目标：拒绝用合同额判断项目健康度","教学重点：权责结构先于金额","教学难点：以合同规模论成败","教学方法：F1案例解剖","原理逻辑：没人担责则金额无法转化为验收"],"def":"千万级合同也可能因无人担责而无法验收，合同金额不保证项目活下来。","imp":0.72,"diff":2.0,"time":20.0,"outdeg":2},{"x":729.63,"y":1172.41,"z":-267.01,"g":2,"a":3,"c":0.24,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"73%演示与27%在运系统（POC炼狱五杀手）","id":"fde_e_demon_vs_live","q":"培养目标：识别POC五杀手并区分演示与在运系统","qsrc":"evidence","stage":"元方法·全程","evidence":["培养目标：识别POC五杀手并区分演示与在运系统","教学重点：第六个月交什么","教学难点：把POC跑完当项目完成","教学方法：五杀手清单对照自查","原理逻辑：演示无人用，在运系统才有业务结果"],"def":"失败组交出演示、成功组交出有真实用户在运的系统，POC炼狱有五个杀手。","imp":0.74,"diff":3.0,"time":25.0,"outdeg":2},{"x":706.27,"y":1049.94,"z":-112.13,"g":2,"a":3,"c":0.8,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"专题·资产化清单与规模化复利","id":"fde_t_asset_compound","q":"培养目标：产出≥3件可复用资产并说明下一项目怎么用、省下什么","qsrc":"evidence","stage":"元方法·全程","evidence":["培养目标：产出≥3件可复用资产并说明下一项目怎么用、省下什么","教学重点：资产可直接取用而非经验总结","教学难点：做完就散、把客户多误当模式成功","教学方法：清单共创工作坊+复用说明硬性检查","原理逻辑：资产让第二单成本下降，项目一次性而能力可复利"],"def":"把项目沉淀为可直接取用的资产，并用第二个项目降本证明复利成立。","imp":0.82,"diff":3.0,"time":60.0,"outdeg":2},{"x":735.16,"y":1116.1,"z":-210.46,"g":2,"a":3,"c":0.24,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"资产化清单（≥3件资产+下一项目复用说明）","id":"fde_e_asset_list","q":"培养目标：产出带复用说明的资产清单","qsrc":"evidence","stage":"元方法·全程","evidence":["培养目标：产出带复用说明的资产清单","教学重点：可直接取用与复用说明","教学难点：写完就散、无下一项目视角","教学方法：工作坊共创+复用说明检查","原理逻辑：无复用说明的沉淀不构成资产"],"def":"结项时列出≥3件可直接取用的资产并逐件写明下一项目怎么用、省下什么。","imp":0.78,"diff":3.0,"time":25.0,"outdeg":2},{"x":760.09,"y":1284.4,"z":-417.39,"g":2,"a":3,"c":0.24,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"ArcPy工具箱矩阵案例（培训3月→自主，周期-50%+）","id":"fde_e_arcpy_case","q":"培养目标：从模糊需求中识别经验断层并清点资产","qsrc":"evidence","stage":"元方法·全程","evidence":["培养目标：从模糊需求中识别经验断层并清点资产","教学重点：症状真实、产物可清点、成果可度量","教学难点：把工具文件当最终目标","教学方法：案例四要素拆解+资产清点练习","原理逻辑：经验不断层才是目标，工具是手段"],"def":"把老师傅手工点十几步的内涝/土地/POI/多中心分析工程化为4箱22工具28教程的资产对照锚点。","imp":0.7,"diff":2.0,"time":20.0,"outdeg":2},{"x":731.08,"y":1361.21,"z":-515.35,"g":2,"a":3,"c":0.24,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"低空模型训练服务Playbook（需求→检索→数据→训练→交付→质保）","id":"fde_e_playbook","q":"培养目标：识别流程型资产与工具型资产的差别","qsrc":"evidence","stage":"元方法·全程","evidence":["培养目标：识别流程型资产与工具型资产的差别","教学重点：全链路标准化册","教学难点：只沉淀工具不沉淀流程","教学方法：两种资产形态对照","原理逻辑：流程册让服务可复制，工具集让执行可加速"],"def":"把低空无人机模型训练服务沉淀为六环节标准化流程的资产化样本。","imp":0.66,"diff":2.0,"time":15.0,"outdeg":2},{"x":727.41,"y":1147.92,"z":-247.16,"g":2,"a":3,"c":0.24,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"专题·三阶段止损线与四条硬指标","id":"fde_t_stage_stoploss","q":"培养目标：为个人/团队路径设可判定止损线并只认四条硬指标","qsrc":"evidence","stage":"元方法·全程","evidence":["培养目标：为个人/团队路径设可判定止损线并只认四条硬指标","教学重点：每阶段止损条件与硬指标排他性","教学难点：用好看的过程数字冒充进展","教学方法：三阶段自检表+硬指标季度趋势练习","原理逻辑：止损线事先设定避免沉没成本绑架，硬指标回答我不在场还能不能跑"],"def":"为个人交付路径设三阶段止损线，并用四条硬指标替代好看的过程数字。","imp":0.76,"diff":3.0,"time":45.0,"outdeg":2},{"x":738.57,"y":1198.34,"z":-300.19,"g":2,"a":3,"c":0.24,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"三阶段止损线（证据链/产品件/人与Echo化）","id":"fde_e_three_stage","q":"培养目标：为每阶段写清通过标准与止损条件","qsrc":"evidence","stage":"元方法·全程","evidence":["培养目标：为每阶段写清通过标准与止损条件","教学重点：事先设定止损、非事后补救","教学难点：被沉没成本绑架继续投入","教学方法：三阶段自检表填写","原理逻辑：事先止损把叫停权利制度化"],"def":"0-90天补证据链、3-9月补产品件、9-18月补人与Echo化，每阶段事先写止损条件。","imp":0.74,"diff":3.0,"time":20.0,"outdeg":2},{"x":747.61,"y":1244.93,"z":-388.71,"g":2,"a":3,"c":0.18,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"双师四条硬指标","id":"fde_e_four_hard_metrics","q":"培养目标：用四条硬指标替代过程数字自评","qsrc":"evidence","stage":"元方法·全程","evidence":["培养目标：用四条硬指标替代过程数字自评","教学重点：硬指标排他性","教学难点：被好看数字迷惑","教学方法：指标替换练习","原理逻辑：硬指标回答可持续性，过程指标只回答忙碌度"],"def":"只留同类工时递减、二轮辅导工时、案例复用次数、不在场交付数四条，排除一切过程指标。","imp":0.72,"diff":2.0,"time":20.0,"outdeg":1},{"x":744.62,"y":1313.48,"z":-444.13,"g":2,"a":3,"c":0.24,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"三条线优先顺序（交付线维持/资产线加速/人线加速）","id":"fde_e_three_lines","q":"培养目标：按三线分配精力并过50%自检线","qsrc":"evidence","stage":"元方法·全程","evidence":["培养目标：按三线分配精力并过50%自检线","教学重点：先修结构再要规模","教学难点：顺手接更多单挤占建线","教学方法：三线精力分配自评","原理逻辑：接得越多绑得越死，四个风险源于资产没离开我"],"def":"第一阶段只准资产线和人线加速、交付线维持，新增交付压在我身上超过一半方向就错了。","imp":0.7,"diff":3.0,"time":15.0,"outdeg":2},{"x":592.41,"y":1220.2,"z":-941.03,"g":2,"a":2,"c":0.18,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"专题·课程考核纪律与OPC梯队出口","id":"fde_t_assessment_opc","q":"培养目标：按考核纪律完成完整交付包并回应答辩，规划梯队出口","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：按考核纪律完成完整交付包并回应答辩，规划梯队出口","教学重点：五件俱全与AI留痕规则","教学难点：把完成当验证过且归零","教学方法：任务书驱动+答辩质询+评分细则公开","原理逻辑：过程性留痕采信，考核即OPC纪律的教学化"],"def":"用过程性60%加期末答辩40%的考核结构落实交付纪律，并经OPC梯队走向真实交付。","imp":0.74,"diff":2.0,"time":45.0,"outdeg":1},{"x":711.82,"y":1080.67,"z":-734.76,"g":2,"a":2,"c":0.3,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"交付包五件俱全","id":"fde_e_delivery_pack","q":"培养目标：独立完成五件俱全的交付包","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：独立完成五件俱全的交付包","教学重点：五件与四环对应","教学难点：只交方案书缺验收与资产","教学方法：完整性清单对照","原理逻辑：五件是四环产出的档案化形态"],"def":"期末交付包含需求还原、对象模型、方案书、交付物清单、验收方案五件，缺一不完整。","imp":0.76,"diff":2.0,"time":20.0,"outdeg":3},{"x":518.49,"y":1289.63,"z":-1038.25,"g":2,"a":2,"c":0.18,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"AI使用留痕与反漂移纪律","id":"fde_e_ai_trace","q":"培养目标：留痕使用AI并主动纠偏","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：留痕使用AI并主动纠偏","教学重点：质疑记录与纠偏加分","教学难点：直接提交AI完整报告","教学方法：AI反方扮演+留痕提交","原理逻辑：留痕采信让AI使用可审计、反漂移"],"def":"提交AI参与环节说明与质疑记录，主动纠正AI编造加分，如实暴露缺陷不扣分。","imp":0.72,"diff":2.0,"time":15.0,"outdeg":1},{"x":739.44,"y":1338.72,"z":-479.35,"g":2,"a":3,"c":0.24,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"OPC项目梯队（课堂层/影子层/梯队层）","id":"fde_e_opc_ladder","q":"培养目标：规划自身在OPC梯队中的进阶位置","qsrc":"evidence","stage":"元方法·全程","evidence":["培养目标：规划自身在OPC梯队中的进阶位置","教学重点：三级通道的验收人数标准","教学难点：把课堂作业误当真实交付","教学方法：梯队路径自评","原理逻辑：梯队是个人能力组织化的出口装置"],"def":"课堂层产案例、影子层跟做标准件、梯队层独立交付分账的三级成长通道。","imp":0.7,"diff":2.0,"time":15.0,"outdeg":2},{"x":482.54,"y":546.29,"z":-323.41,"g":2,"a":1,"c":0.18,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"专题·口径纪律与证据溯源","id":"fde_t_caliber_discipline","q":"培养目标：为引用数据标注来源类型并识别不可溯源数字","qsrc":"evidence","stage":"筑基","evidence":["培养目标：为引用数据标注来源类型并识别不可溯源数字","教学重点：四类来源类型标注与排序方向保留","教学难点：被听上去有说服力的数字带跑","教学方法：口径标注扣分规则+二手汇编标注示范","原理逻辑：可溯源是证据可信度前提，课程自身先守口径"],"def":"凡引用外部数据必须标注来源类型，二手汇编只留排序方向，反数字浮夸。","imp":0.72,"diff":2.0,"time":30.0,"outdeg":1},{"x":471.67,"y":565.63,"z":-348.75,"g":2,"a":1,"c":0.24,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"证据来源类型标注（年报/厂商自述/访谈转述/教学推定）","id":"fde_e_source_type","q":"培养目标：为每条引用标来源类型","qsrc":"evidence","stage":"筑基","evidence":["培养目标：为每条引用标来源类型","教学重点：四类来源可信度差异","教学难点：省略来源图省事","教学方法：标注扣分实操","原理逻辑：来源类型决定证据可采信度"],"def":"引用数据须标注年报、厂商自述、访谈转述、教学推定四类来源类型，未标注扣分。","imp":0.7,"diff":2.0,"time":15.0,"outdeg":2},{"x":469.3,"y":590.6,"z":-368.58,"g":2,"a":1,"c":0.18,"col":"#0FA3A3","dm":"FDE交付·出口层","t":"反数字浮夸与二手汇编标注","id":"fde_e_no_fake_number","q":"培养目标：对精确但不可溯源的数字降级使用","qsrc":"evidence","stage":"筑基","evidence":["培养目标：对精确但不可溯源的数字降级使用","教学重点：排序方向替代精确占比","教学难点：舍不得删好看的精确数字","教学方法：口径修正对照练习","原理逻辑：经不起追问的精确比坦诚的方向更危险"],"def":"二手汇编数字只保留排序方向并标注争议，不写精确百分比区间。","imp":0.68,"diff":2.0,"time":15.0,"outdeg":1},{"x":425.23,"y":1062.47,"z":-660.85,"g":3,"a":3,"c":0.85,"col":"#F5A623","dm":"共享方法论内核","t":"元方法·方法论迁移","id":"core_meta_method","q":"培养目标：建立跨课程可迁移的方法论意识","qsrc":"evidence","stage":"元方法·全程","evidence":["培养目标：建立跨课程可迁移的方法论意识","教学重点：三层方法叠加与范式三阶段叠加","教学难点：区分工具层与方法层","教学方法：跨课案例互证（同一原则在三课的不同投影）","原理逻辑：先方法后工具，风往哪吹都有锚"],"def":"把\"定义问题→验收交付\"的方法论从AI编程迁移到一切不确定任务的元能力层，是三课全程贯穿的\"方法的方法\"。","imp":0.9,"diff":4.0,"time":120.0,"outdeg":0},{"x":429.28,"y":1093.13,"z":-697.48,"g":3,"a":3,"c":0.85,"col":"#F5A623","dm":"共享方法论内核","t":"证据档案·可审计的信任","id":"core_evidence_archive","q":"培养目标：建立产出即留痕的档案习惯","qsrc":"evidence","stage":"元方法·全程","evidence":["培养目标：建立产出即留痕的档案习惯","教学重点：结果叙事与证据叙事的区别","教学难点：跨课档案的连贯性维护","教学方法：三步行动清单全程留痕实操","原理逻辑：信任可审计，档案比记忆可靠"],"def":"以\"成果即证据\"为纲，把每一次产出沉淀为时间戳对齐、可复核的成长档案，替代记忆作为通行证。","imp":0.9,"diff":3.0,"time":100.0,"outdeg":1},{"x":330.09,"y":1198.65,"z":-814.67,"g":3,"a":3,"c":0.8,"col":"#F5A623","dm":"共享方法论内核","t":"成长航线·三层漏斗与出口","id":"core_growth_route","q":"培养目标：为学生提供可核验的成长导航","qsrc":"evidence","stage":"元方法·全程","evidence":["培养目标：为学生提供可核验的成长导航","教学重点：三层漏斗与分层出口的对应","教学难点：跨层衔接的先后依赖","教学方法：以路线图替代课程清单","原理逻辑：有路线图才有破局动作"],"def":"把\"迷茫缺的不是课程而是路线图\"落成可视化航线：入口（vibe）→底座（onto）→出口（FDE），每层有可核验的出口证据。","imp":0.85,"diff":2.0,"time":80.0,"outdeg":2},{"x":393.24,"y":1119.45,"z":-707.43,"g":3,"a":3,"c":0.8,"col":"#F5A623","dm":"共享方法论内核","t":"让渡边界·保留what与why","id":"core_cede_how","q":"培养目标：建立人机权责的清醒分界","qsrc":"evidence","stage":"元方法·全程","evidence":["培养目标：建立人机权责的清醒分界","教学重点：四保留与四让渡","教学难点：纠正躺平甩手掌柜的误读","教学方法：角色对照练习","原理逻辑：让渡how、保留what与why，判断力不可外包"],"def":"人机权责分界原则：让渡how（语法/样板/初稿/广度），保留what与why（判断/边界/责任/品味）。","imp":0.9,"diff":2.0,"time":60.0,"outdeg":1},{"x":317.99,"y":1223.28,"z":-839.54,"g":3,"a":3,"c":0.75,"col":"#F5A623","dm":"共享方法论内核","t":"三层方法叠加","id":"core_three_layer_stack","q":"培养目标：理解三层机制的演进与叠加关系","qsrc":"evidence","stage":"元方法·全程","evidence":["培养目标：理解三层机制的演进与叠加关系","教学重点：每层治什么病","教学难点：三层混用或互替","教学方法：同一任务三层逐级加固演示","原理逻辑：工具演进是能力重估的记录，不是术语游戏"],"def":"提示词（当面吩咐）→上下文（交接文档）→Harness（门禁与操作规程），三层叠加而非替代。","imp":0.85,"diff":3.0,"time":60.0,"outdeg":1},{"x":100.72,"y":1406.22,"z":-1004.08,"g":3,"a":3,"c":0.7,"col":"#F5A623","dm":"共享方法论内核","t":"范式三阶段叠加","id":"core_paradigm_stack","q":"培养目标：识别范式演进中不变的方法层","qsrc":"evidence","stage":"元方法·全程","evidence":["培养目标：识别范式演进中不变的方法层","教学重点：三范式各自的适用场景","教学难点：范式叠加而非替换","教学方法：同一项目三范式对照","原理逻辑：能力叠加，底层纪律不随范式消失"],"def":"Vibe→Spec→Agentic 三范式是能力叠加而非替换，Agentic时代依然需要规格与验收。","imp":0.8,"diff":3.0,"time":50.0,"outdeg":2},{"x":6.54,"y":1450.81,"z":-1038.71,"g":3,"a":3,"c":0.65,"col":"#F5A623","dm":"共享方法论内核","t":"追问题不追新词","id":"core_problem_first","q":"培养目标：建立抗概念通胀的判断力","qsrc":"evidence","stage":"元方法·全程","evidence":["培养目标：建立抗概念通胀的判断力","教学重点：概念热度与能力本质的剥离","教学难点：在热闹语境中保持冷静","教学方法：概念考古（两次改口案例）","原理逻辑：术语会过期，问题与原则长存"],"def":"面对层出不穷的AI新词，锚定\"问题\"而非\"术语\"，方法层练扎实、产出沉淀为档案。","imp":0.75,"diff":2.0,"time":40.0,"outdeg":1},{"x":285.71,"y":1260.4,"z":-841.81,"g":3,"a":3,"c":0.75,"col":"#F5A623","dm":"共享方法论内核","t":"结构化输入决定结构化输出","id":"core_structure_out","q":"培养目标：内化结构化思维","qsrc":"evidence","stage":"元方法·全程","evidence":["培养目标：内化结构化思维","教学重点：输入结构到输出质量的传导","教学难点：把模糊需求翻译成结构化输入","教学方法：前后对照实验","原理逻辑：输出质量上限由输入结构决定"],"def":"AI时代不变的第一原理：输入的结构化程度决定输出的可用程度，规格与上下文是结构化输入的手段。","imp":0.85,"diff":3.0,"time":50.0,"outdeg":2},{"x":64.42,"y":-5.03,"z":-149.95,"g":3,"a":0,"c":0.7,"col":"#F5A623","dm":"共享方法论内核","t":"AI编排能力迁移","id":"core_ai_orchestration","q":"培养目标：完成从编程到编排的身份迁移","qsrc":"evidence","stage":"入门","evidence":["培养目标：完成从编程到编排的身份迁移","教学重点：编排闭环四环节","教学难点：把旧编程经验迁移而非抛弃","教学方法：迁移对照表","原理逻辑：岗位形态变了，能力内核随之重估"],"def":"把编程能力升级为AI编排能力（需求定义→提示与上下文→生成与验收→迭代交付）的元能力定义。","imp":0.85,"diff":2.0,"time":60.0,"outdeg":2},{"x":256.1,"y":1287.15,"z":-876.86,"g":3,"a":3,"c":0.7,"col":"#F5A623","dm":"共享方法论内核","t":"证据叙事与结果叙事","id":"core_evidence_narrative","q":"培养目标：掌握证据化表达","qsrc":"evidence","stage":"元方法·全程","evidence":["培养目标：掌握证据化表达","教学重点：两类叙事的差异与转换","教学难点：把成果翻译成证据链","教学方法：叙事改写练习","原理逻辑：可信度来自可复核证据"],"def":"结果叙事说\"做成了什么\"，证据叙事说\"凭什么信\"——交付的本质是建立可审计的信任。","imp":0.85,"diff":2.0,"time":40.0,"outdeg":2},{"x":228.62,"y":1308.33,"z":-908.97,"g":3,"a":3,"c":0.75,"col":"#F5A623","dm":"共享方法论内核","t":"可审计的信任·档案即通行证","id":"core_auditable_trust","q":"培养目标：把档案建设为长期资产","qsrc":"evidence","stage":"元方法·全程","evidence":["培养目标：把档案建设为长期资产","教学重点：档案的审计属性","教学难点：跨课档案连贯性","教学方法：学期档案盘点","原理逻辑：记忆会贬值，档案可审计"],"def":"个人档案是AI时代的通行证——成果依赖档案而非记忆，信任可审计、可复核、可追溯。","imp":0.85,"diff":3.0,"time":50.0,"outdeg":1},{"x":132.79,"y":416.08,"z":-352.69,"g":3,"a":1,"c":0.6,"col":"#F5A623","dm":"共享方法论内核","t":"时间戳对齐三线","id":"core_timestamp_alignment","q":"培养目标：掌握可复核的留痕规范","qsrc":"evidence","stage":"筑基","evidence":["培养目标：掌握可复核的留痕规范","教学重点：三条证据线的对齐","教学难点：留痕不流于形式","教学方法：全程留痕实战","原理逻辑：时间戳对齐防事后篡改"],"def":"版本快照、Prompt记录、验收记录三条证据线时间戳对齐，保证档案可复核的工程规范。","imp":0.75,"diff":3.0,"time":40.0,"outdeg":1},{"x":145.86,"y":376.68,"z":-326.01,"g":3,"a":1,"c":0.7,"col":"#F5A623","dm":"共享方法论内核","t":"完成=验证过且归零","id":"core_done_definition","q":"培养目标：建立统一的完成定义","qsrc":"evidence","stage":"筑基","evidence":["培养目标：建立统一的完成定义","教学重点：验证归零的判定操作","教学难点：抵制做完感的心理惯性","教学方法：三课完成定义对照","原理逻辑：完成以验证证据为准，不以主观感受为准"],"def":"对\"完成\"的统一判定：不是\"做完了\"，而是\"验证过且错误归零了\"。","imp":0.8,"diff":2.0,"time":40.0,"outdeg":1},{"x":74.54,"y":7.68,"z":-183.88,"g":3,"a":0,"c":0.55,"col":"#F5A623","dm":"共享方法论内核","t":"受众漏斗三层","id":"core_funnel_layers","q":"培养目标：理解三课的招生与衔接逻辑","qsrc":"evidence","stage":"入门","evidence":["培养目标：理解三课的招生与衔接逻辑","教学重点：漏斗各层的供给与出口","教学难点：层间递进不重叠不断档","教学方法：漏斗图教学","原理逻辑：受众漏斗决定课程位次与出口设计"],"def":"入口（最热·vibe）→底座（onto）→出口（FDE）的受众漏斗结构，越往里人越少、出口越实。","imp":0.7,"diff":1.0,"time":30.0,"outdeg":2},{"x":136.09,"y":409.08,"z":-339.01,"g":3,"a":1,"c":0.6,"col":"#F5A623","dm":"共享方法论内核","t":"缺的不是课程是路线图","id":"core_route_over_courses","q":"培养目标：以路线图替代课程清单做导航","qsrc":"evidence","stage":"筑基","evidence":["培养目标：以路线图替代课程清单做导航","教学重点：三道沟与三门课的对应","教学难点：跨层能力递进的先后依赖","教学方法：外圈路线图讲解","原理逻辑：有路线图才有破局动作"],"def":"迷茫的解药不是鸡汤是路线图：vibe入口→本体底座→FDE出口，三道沟对应三门课，每层都有可核验的出口。","imp":0.8,"diff":1.0,"time":30.0,"outdeg":2},{"x":204.51,"y":798.6,"z":-485.51,"g":3,"a":2,"c":0.6,"col":"#F5A623","dm":"共享方法论内核","t":"分层出口证据","id":"core_layer_exits","q":"培养目标：为学生标注分层出口","qsrc":"evidence","stage":"上岗交付","evidence":["培养目标：为学生标注分层出口","教学重点：三层出口的证据形态","教学难点：出口与课程的对接设计","教学方法：出口证据地图","原理逻辑：可核验出口让成长可导航"],"def":"每一层的可核验出口：学科竞赛/毕设（入口）、知识库工程实习（底座）、OPC项目梯队影子层→梯队层（出口）。","imp":0.75,"diff":2.0,"time":30.0,"outdeg":1}],"edges":[[1,0,1],[1,130,0],[1,2,0],[2,0,1],[2,200,1],[2,202,1],[2,206,1],[2,229,0],[3,0,1],[4,0,1],[5,1,1],[6,1,1],[7,1,1],[8,1,1],[9,5,1],[9,10,1],[10,5,1],[10,11,1],[11,5,1],[11,12,0],[11,13,0],[12,5,1],[13,6,1],[14,6,1],[14,29,1],[15,6,1],[16,7,1],[16,17,1],[17,7,1],[17,18,0],[18,7,1],[19,7,1],[20,8,1],[21,8,1],[21,22,0],[21,35,0],[22,8,1],[23,2,1],[24,2,1],[24,3,1],[25,2,1],[26,2,1],[27,23,1],[27,28,1],[28,23,1],[28,29,0],[29,23,1],[29,30,1],[30,23,1],[31,24,1],[32,24,1],[32,34,1],[33,24,1],[34,24,1],[35,25,1],[35,36,1],[36,25,1],[37,25,1],[37,38,0],[38,25,1],[38,39,0],[39,25,1],[40,26,1],[40,41,1],[40,53,1],[41,26,1],[41,42,0],[42,26,1],[42,43,0],[43,26,1],[43,44,0],[44,26,1],[45,3,1],[46,3,1],[47,3,1],[48,3,1],[48,89,0],[49,45,1],[49,50,1],[50,45,1],[50,51,1],[51,45,1],[51,52,1],[52,45,1],[52,53,0],[53,45,1],[53,54,1],[54,46,1],[55,46,1],[55,56,1],[56,46,1],[56,60,0],[57,46,1],[57,54,1],[58,47,1],[58,59,1],[59,47,1],[60,47,1],[60,61,1],[61,47,1],[61,62,0],[62,47,1],[63,48,1],[63,64,1],[64,48,1],[64,66,1],[65,48,1],[65,49,0],[66,48,1],[66,67,1],[67,48,1],[68,4,1],[69,4,1],[70,68,1],[70,71,1],[71,68,1],[71,72,1],[72,68,1],[73,68,1],[74,69,1],[74,75,1],[75,69,1],[75,76,0],[76,69,1],[78,77,1],[79,77,1],[80,77,1],[82,81,1],[83,81,1],[83,84,0],[84,81,1],[86,85,1],[87,85,1],[88,85,1],[90,89,1],[91,89,1],[92,89,1],[94,93,1],[95,93,1],[95,100,0],[96,93,1],[98,97,1],[99,97,1],[100,97,1],[102,101,1],[103,101,1],[104,101,1],[106,105,1],[107,105,1],[108,105,1],[110,109,1],[111,109,1],[112,109,1],[114,113,1],[114,20,0],[115,113,1],[115,114,0],[116,113,1],[118,117,1],[118,119,0],[119,117,1],[120,117,1],[122,121,1],[123,121,1],[123,124,1],[124,121,1],[126,125,1],[127,125,1],[128,125,1],[129,125,1],[130,2,1],[131,130,0],[131,24,1],[132,131,0],[133,131,1],[134,133,0],[135,132,0],[136,134,0],[137,36,1],[138,137,1],[139,40,0],[139,137,0],[140,41,0],[140,139,0],[141,140,0],[142,143,0],[145,144,0],[146,147,0],[147,163,1],[148,33,1],[150,148,0],[151,33,1],[152,29,1],[152,153,0],[154,155,0],[156,157,1],[158,31,1],[159,32,1],[160,32,1],[160,161,0],[161,32,1],[162,32,1],[163,164,1],[165,163,0],[166,167,1],[169,179,0],[170,36,1],[171,173,0],[172,176,1],[173,36,1],[175,174,1],[177,178,0],[180,43,1],[180,181,1],[182,181,0],[184,158,0],[186,184,1],[187,190,0],[189,3,0],[192,191,1],[194,148,0],[195,3,1],[195,50,1],[196,195,1],[196,202,0],[197,195,1],[197,196,0],[198,195,1],[199,195,1],[199,49,0],[200,3,1],[200,45,1],[201,200,1],[201,52,1],[201,51,0],[202,200,1],[202,203,0],[203,200,1],[203,52,1],[204,3,1],[204,200,1],[205,204,1],[205,198,0],[206,204,1],[206,227,1],[207,204,1],[207,205,1],[208,3,1],[208,211,1],[209,208,1],[210,208,1],[210,53,1],[210,247,0],[211,3,1],[212,211,1],[212,58,0],[212,213,0],[213,211,1],[213,235,1],[213,53,0],[214,211,1],[214,235,1],[215,3,1],[215,203,1],[216,215,1],[216,217,1],[217,215,1],[217,60,0],[218,215,1],[218,231,0],[219,3,1],[219,55,1],[220,219,1],[220,55,1],[221,219,1],[221,248,0],[222,219,1],[223,3,1],[223,220,0],[224,223,1],[224,225,1],[225,223,1],[226,3,1],[226,56,1],[227,226,1],[227,56,0],[228,226,1],[228,221,0],[229,226,1],[229,201,0],[230,3,1],[230,50,0],[231,230,1],[231,64,0],[232,230,1],[232,218,0],[233,230,1],[233,64,1],[234,3,1],[234,67,1],[235,234,1],[235,61,1],[236,234,1],[236,61,1],[237,234,1],[237,235,0],[238,3,1],[238,234,1],[239,238,1],[239,64,0],[240,238,1],[241,238,1],[241,235,0],[242,4,1],[243,242,1],[243,216,0],[243,227,0],[244,242,1],[245,242,1],[245,241,0],[246,3,1],[247,246,1],[247,60,0],[248,246,1],[250,70,1],[251,1,0],[251,3,0],[252,249,1],[253,249,1],[254,11,0],[254,249,1],[255,249,1],[256,11,0],[256,249,1],[257,1,1],[257,249,1],[258,70,1],[258,250,1],[259,250,1],[260,250,1],[261,250,1],[262,251,1],[262,1,0],[263,251,1],[263,264,0],[264,251,1]],"rels":{"contains":[[0,1,1],[0,2,1],[0,3,1],[0,4,1],[1,5,1],[1,6,1],[1,7,1],[1,8,1],[2,23,1],[2,24,1],[2,25,1],[2,26,1],[3,45,1],[3,46,1],[3,47,1],[3,48,1],[4,68,1],[4,69,1],[20,21,1],[31,32,1],[32,31,1],[36,37,1],[54,55,1],[74,49,1],[75,61,1],[77,1,1],[77,78,1],[77,79,1],[77,80,1],[81,1,1],[81,82,1],[81,83,1],[81,84,0],[85,1,1],[85,86,1],[85,87,1],[85,88,1],[89,1,1],[89,90,1],[89,91,1],[89,92,1],[93,1,1],[93,94,1],[93,95,1],[93,96,0],[97,1,1],[97,98,1],[97,99,1],[97,100,1],[101,1,1],[101,102,1],[101,103,1],[101,104,1],[105,1,1],[105,106,1],[105,107,1],[105,108,1],[109,1,1],[109,110,1],[109,111,1],[109,112,1],[113,1,1],[113,114,1],[113,115,1],[113,116,1],[117,1,1],[117,118,1],[117,119,1],[117,120,0],[121,1,1],[121,122,1],[121,123,1],[121,124,1],[125,1,1],[125,126,1],[125,127,1],[125,128,1],[125,129,1],[130,144,1],[130,145,1],[130,146,1],[130,147,1],[131,148,1],[131,149,1],[131,150,1],[131,151,0],[132,152,1],[132,153,1],[132,154,1],[132,155,1],[133,156,1],[133,157,1],[133,158,1],[134,159,1],[134,160,1],[134,161,1],[134,162,1],[135,163,1],[135,164,1],[135,165,1],[136,166,1],[136,167,1],[136,168,1],[136,169,0],[137,170,1],[137,171,1],[137,172,0],[137,173,1],[138,174,1],[138,175,1],[138,176,1],[139,177,1],[139,178,1],[139,179,1],[140,180,1],[140,181,1],[140,182,1],[140,183,1],[141,184,1],[141,185,1],[141,186,1],[142,187,1],[142,188,1],[142,189,1],[142,190,1],[143,191,1],[143,192,1],[143,193,1],[143,194,1],[144,130,1],[145,130,1],[146,130,1],[147,130,1],[148,131,1],[149,131,1],[150,131,1],[151,131,1],[152,132,1],[153,132,1],[154,132,1],[155,132,1],[156,133,1],[157,133,1],[158,133,1],[159,134,1],[160,134,1],[161,134,1],[162,134,1],[163,135,1],[164,135,1],[165,135,1],[166,136,1],[167,136,1],[168,136,1],[169,136,1],[170,137,1],[171,137,1],[172,137,1],[173,137,1],[174,138,1],[175,138,1],[176,138,1],[177,139,1],[178,139,1],[179,139,1],[180,140,1],[181,140,1],[182,140,1],[183,140,1],[184,141,1],[185,141,1],[186,141,1],[187,142,1],[188,142,1],[189,142,1],[190,142,1],[191,143,1],[192,143,1],[193,143,1],[194,143,1],[195,196,1],[195,197,1],[195,198,1],[195,199,0],[200,201,1],[200,202,1],[200,203,1],[204,205,1],[204,206,1],[204,207,0],[208,209,1],[208,210,1],[211,212,1],[211,213,1],[211,214,1],[215,216,1],[215,217,1],[215,218,1],[219,220,1],[219,221,1],[219,222,0],[223,224,1],[223,225,1],[226,227,1],[226,228,1],[226,229,1],[230,231,1],[230,232,0],[230,233,1],[234,235,1],[234,236,0],[234,237,0],[238,239,1],[238,240,1],[238,241,0],[242,3,1],[242,243,1],[242,244,1],[242,245,0],[246,247,1],[246,248,1],[249,252,1],[249,253,1],[249,254,1],[249,255,1],[249,256,1],[249,257,1],[250,258,1],[250,259,1],[250,260,1],[250,261,1],[251,262,1],[251,263,1],[251,264,1]],"extends":[[1,3,0],[11,206,0],[15,223,0],[19,17,0],[32,52,1],[40,3,0],[40,208,0],[61,29,0],[77,9,0],[79,6,0],[80,16,0],[82,120,0],[85,5,1],[85,11,1],[86,11,0],[87,45,0],[88,12,0],[89,12,0],[89,5,0],[92,114,0],[93,13,1],[93,14,0],[94,13,0],[95,14,0],[96,13,0],[97,14,1],[97,15,0],[98,14,0],[100,95,0],[100,15,0],[100,24,0],[101,16,1],[101,17,0],[102,17,0],[103,18,0],[104,108,0],[105,18,0],[105,17,0],[106,17,0],[108,104,0],[108,48,0],[109,19,1],[110,19,0],[111,108,0],[112,17,0],[113,20,0],[113,92,0],[114,92,0],[116,115,0],[120,121,0],[121,257,0],[121,120,0],[122,111,0],[124,10,0],[125,20,1],[125,22,0],[126,20,0],[126,21,0],[126,47,0],[127,22,0],[128,258,0],[130,23,1],[131,23,1],[131,33,1],[131,1,0],[132,29,1],[132,23,0],[133,24,1],[134,32,1],[134,24,1],[135,34,1],[135,24,1],[137,25,1],[137,37,1],[137,38,1],[138,25,1],[139,42,1],[140,43,1],[141,40,1],[142,26,1],[142,44,0],[142,3,1],[143,26,1],[143,44,1],[143,39,1],[143,142,0],[143,4,0],[144,23,0],[149,23,0],[153,29,1],[154,29,0],[156,24,0],[157,156,0],[157,34,0],[167,33,0],[167,166,0],[168,24,0],[169,40,0],[171,38,1],[172,36,0],[175,36,0],[178,164,1],[179,40,1],[183,41,1],[184,40,1],[188,44,0],[188,3,1],[189,40,0],[189,44,0],[190,187,0],[191,44,0],[192,39,0],[193,39,1],[193,3,0],[195,49,1],[196,51,1],[197,49,1],[198,205,1],[200,52,1],[202,52,1],[204,56,1],[205,229,0],[206,56,1],[208,53,1],[209,53,1],[211,58,1],[214,66,0],[215,45,1],[216,51,0],[219,54,1],[220,64,0],[221,228,0],[223,47,1],[226,47,1],[227,206,1],[227,2,0],[228,63,0],[229,205,0],[230,64,1],[231,218,0],[233,56,0],[234,61,1],[234,1,0],[235,214,0],[238,67,1],[239,220,0],[240,67,1],[244,4,1],[245,4,0],[246,60,1],[246,4,0],[247,210,0],[248,50,0],[249,68,1],[250,72,1],[250,75,0],[250,125,0],[251,69,1],[253,13,0],[253,14,0],[253,15,0],[254,9,0],[259,72,1],[260,21,0],[261,19,0]],"analogy":[[1,222,0],[12,215,0],[19,37,1],[19,137,0],[20,31,1],[20,187,0],[77,254,0],[78,255,0],[79,253,0],[80,258,0],[81,249,0],[87,21,0],[87,260,0],[88,17,0],[91,12,0],[99,256,0],[100,23,0],[104,21,0],[106,39,0],[106,137,0],[107,19,0],[108,249,0],[109,56,0],[111,261,0],[111,56,0],[114,46,0],[116,39,0],[122,39,0],[124,47,0],[128,39,0],[128,47,0],[129,21,0],[133,31,0],[136,33,0],[141,42,0],[144,145,0],[145,28,0],[147,34,0],[149,158,0],[150,37,0],[151,173,0],[153,164,0],[155,185,0],[157,3,0],[158,184,0],[159,167,0],[161,155,0],[162,166,0],[164,153,0],[168,159,0],[170,37,1],[173,151,0],[174,157,0],[177,42,0],[179,169,0],[181,182,0],[182,43,0],[185,155,1],[186,29,0],[187,143,0],[187,3,1],[188,163,0],[190,143,0],[191,192,1],[193,182,0],[194,170,0],[194,4,0],[222,231,0],[249,5,0],[252,10,0],[255,9,0],[261,37,0],[264,20,0]],"constrains":[[2,3,1],[4,242,1],[4,244,1],[38,67,0],[70,20,1],[70,60,1],[71,11,1],[71,56,1],[72,21,1],[73,16,1],[73,39,1],[76,65,0],[82,10,0],[84,119,0],[90,11,0],[119,84,0],[119,45,0],[138,36,0],[164,163,1],[174,38,0],[176,172,1],[178,39,0],[209,235,0],[211,208,1],[217,216,1],[225,221,0],[251,142,0]],"evolved":[[9,15,0],[13,14,1],[14,15,1],[63,17,0],[64,18,1],[163,147,1],[181,180,1],[203,216,0],[218,1,0],[230,1,1]],"contrast":[[32,33,0],[78,18,0],[117,121,0],[130,30,0],[136,31,0],[146,30,1],[146,1,0],[148,150,0],[155,34,0],[165,30,0],[166,31,0],[176,36,0],[183,42,0],[185,34,0],[233,1,0]]},"relOrder":["contains","evolved","extends","analogy","contrast","constrains"]}</script>
+<script>
+(function(){
+  "use strict";
+  const DATA=JSON.parse(document.getElementById('graphdata').textContent);
+  const GROUPS=DATA.groups, N=DATA.nodes, E=DATA.edges, H=DATA.H;
+  const GCOL=DATA.gcol;
+  const RELS=DATA.rels||{};
+  const REL_ORDER=DATA.relOrder||[];
+  const reduce=window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+  const wrap=document.getElementById('wrap');
+  const cv=document.getElementById('cv');
+  const ctx=cv.getContext('2d');
+  let DPR=1,VW=0,VH=0;
+  function resize(){
+    DPR=Math.min(window.devicePixelRatio||1,2);
+    VW=wrap.clientWidth; VH=wrap.clientHeight;
+    cv.width=VW*DPR; cv.height=VH*DPR; cv.style.width=VW+'px'; cv.style.height=VH+'px';
+  }
+
+  N.forEach(n=>{ n.py=n.y-H/2; });
+
+  // prerequisite adjacency: e[0] depends on e[1] (prereq)
+  const incident=Array.from({length:N.length},()=>[]);
+  const directPre=Array.from({length:N.length},()=>[]);
+  const directNext=Array.from({length:N.length},()=>[]);
+  E.forEach((e,i)=>{
+    incident[e[0]].push(i); incident[e[1]].push(i);
+    directPre[e[0]].push(e[1]); directNext[e[1]].push(e[0]);
+  });
+
+  N.forEach(n=>{ n.appear=n.y/H; });
+
+  // ---- camera ----
+  let rotY=0.6, tilt=-0.32, zoom=1, spin=reduce?0:0.00018;
+  let panX=0, panY=0;
+  const FOV=1400;
+  let grow=reduce?1:0;
+
+  const P=new Float32Array(N.length*3);
+
+  function project(){
+    const cy=Math.cos(rotY), sy=Math.sin(rotY);
+    const ct=Math.cos(tilt), st=Math.sin(tilt);
+    const cx=VW*0.52+panX, cyy=VH*0.52+panY;
+    const sc=Math.min(VW/1500,VH/1780)*zoom;
+    for(let i=0;i<N.length;i++){
+      const n=N[i];
+      let x=n.x*cy+n.z*sy, z=-n.x*sy+n.z*cy, y=n.py;
+      let y2=y*ct-z*st, z2=y*st+z*ct;
+      const pf=FOV/(FOV+z2*sc*1.6);
+      P[i*3]=cx+x*sc*pf;
+      P[i*3+1]=cyy-y2*sc*pf;
+      P[i*3+2]=pf;
+    }
+  }
+
+  function calcClusterProj(ids, rY, tt, z){
+    const cy=Math.cos(rY), sy=Math.sin(rY);
+    const ct=Math.cos(tt), st=Math.sin(tt);
+    const sc=Math.min(VW/1500,VH/1780)*z;
+    const out=[];
+    for(const i of ids){
+      const n=N[i];
+      let x=n.x*cy+n.z*sy, zz=-n.x*sy+n.z*cy, y=n.py;
+      let y2=y*ct-zz*st, z2=y*st+zz*ct;
+      const pf=FOV/(FOV+z2*sc*1.6);
+      out.push({sx:VW*0.52+x*sc*pf, sy:VH*0.52-y2*sc*pf});
+    }
+    return out;
+  }
+
+  // ---- state ----
+  const active=new Set(GROUPS.map((_,i)=>i));
+  let hover=-1, selected=-1, lineage=null;
+  let reveal=0, revealSpeed=1/300;      // Phase1：depends 逐层溯源
+  // Phase2：关系类型时序展开
+  let p2Idx=-1, p2Reveal=0, p2Nodes=null, p2Edges=null, p2MaxDepth=0, p2Dash=0;
+  const P2_SPEED=1/350;
+  const P2_LABEL={contains:'构成关系',evolved:'演进关系',extends:'扩展关系',analogy:'类比关系',contrast:'对比关系',constrains:'约束关系'};
+  const P2_DESC={contains:'由哪些子概念构成',evolved:'从何演进而来',extends:'如何向外扩展',analogy:'与什么相类比',contrast:'与什么相对比',constrains:'受什么约束'};
+
+  // ---- perf guard（防假死）----
+  let useShadow=true, drawAcc=0, drawCnt=0;
+
+  function buildLineage(i){
+    const nodes=new Map([[i,0]]), edges=new Set(), q=[i];
+    let maxDepth=0;
+    while(q.length){
+      const u=q.shift();
+      for(const idx of incident[u]){
+        const e=E[idx];
+        if(e[0]===u){
+          edges.add(idx);
+          if(!nodes.has(e[1])){
+            const d=nodes.get(u)+1;
+            nodes.set(e[1],d); if(d>maxDepth)maxDepth=d;
+            q.push(e[1]);
+          }
+        }
+      }
+    }
+    lineage={nodes,edges,maxDepth};
+    reveal=reduce?maxDepth+1:0;
+    p2Idx=-1; p2Reveal=0; p2Nodes=null; p2Edges=null; p2MaxDepth=0;
+    if(reduce){
+      p2Idx=REL_ORDER.length;  // 减少动态：直接显示全部关系
+      showSubtitle('<span class="st-badge">完成</span>含义与关系已全部展开');
+    } else {
+      showSubtitle(null);
+    }
+  }
+
+  function buildP2(t){
+    // 沿类型 t 的边从 selected 双向 BFS，收集节点深度与边集
+    const nodes=new Map([[selected,0]]), edges=new Set(), q=[selected];
+    let maxDepth=0;
+    const list=RELS[t]||[];
+    const adj=Array.from({length:N.length},()=>[]);
+    list.forEach((e,i)=>{ adj[e[0]].push([e[1],i]); adj[e[1]].push([e[0],i]); });
+    while(q.length){
+      const u=q.shift();
+      for(const pair of adj[u]){
+        const v=pair[0], ei=pair[1];
+        if(!nodes.has(v)){
+          const d=nodes.get(u)+1;
+          nodes.set(v,d); if(d>maxDepth)maxDepth=d;
+          q.push(v);
+        }
+        edges.add(ei);
+      }
+    }
+    return {nodes,edges,maxDepth};
+  }
+
+  // ---- drawing ----
+  const RGB=N.map(n=>{const h=n.col.slice(1);const v=parseInt(h,16);return (v>>16)+','+((v>>8)&255)+','+(v&255);});
+  const order=N.map((_,i)=>i);
+  function clamp(v,a,b){return v<a?a:(v>b?b:v);}
+
+  function nodeR(i){
+    return (2.3+Math.sqrt(N[i].c)*7.5)*P[i*3+2]*Math.min(1.6,Math.max(.9,zoom));
+  }
+
+  function draw(){
+    const t0=performance.now();
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+    ctx.clearRect(0,0,VW,VH);
+    project();
+    const hasSel=!!lineage;
+    // ---- Phase1 edges ----
+    for(let k=0;k<E.length;k++){
+      const e=E[k],a=e[0],b=e[1];
+      if(!active.has(N[a].g)||!active.has(N[b].g))continue;
+      if(!reduce&&(N[a].appear>grow||N[b].appear>grow))continue;
+      let alpha,col=null,lw=1;
+      if(hasSel){
+        if(lineage.edges.has(k)){
+          const da=lineage.nodes.get(a);
+          const s=clamp(reveal-da,0,1);
+          alpha=.75*s; col=RGB[b]; lw=1.6;
+        } else {alpha=.04;}
+      } else {
+        alpha=e[2]?.10:.05;
+      }
+      if(alpha<=0.004)continue;
+      const depth=(P[a*3+2]+P[b*3+2])/2;
+      ctx.strokeStyle=col?'rgba('+col+','+alpha+')':'rgba(150,165,205,'+(alpha*depth)+')';
+      ctx.lineWidth=lw;
+      ctx.beginPath();
+      ctx.moveTo(P[a*3],P[a*3+1]);ctx.lineTo(P[b*3],P[b*3+1]);
+      ctx.stroke();
+    }
+    // ---- Phase2 edges（按类型时序；reduce 时全量直接显示）----
+    if(REL_ORDER.length){
+      const pulse=0.5+0.5*Math.sin(performance.now()/300);
+      const drawRelEdge=(t,a,b,s)=>{
+        if(!active.has(N[a].g)||!active.has(N[b].g))return;
+        if(s<=0.004)return;
+        let alpha,lw=1.3,dash=null;
+        if(t==='contains'){alpha=.6*s;lw=1.4;}
+        else if(t==='evolved'){alpha=.65*s;lw=1.6;dash=[6,4];}
+        else if(t==='extends'){alpha=.45*s;lw=1;}
+        else if(t==='analogy'){alpha=(.4+.35*pulse)*s;lw=1.3;dash=[2,6];}
+        else if(t==='contrast'){alpha=.35*s;lw=1;dash=[4,4];}
+        else {alpha=.3*s;lw=1;dash=[1,4];}
+        const col=RGB[a];
+        ctx.strokeStyle='rgba('+col+','+alpha+')';
+        ctx.lineWidth=lw;
+        if(dash){ctx.setLineDash(dash);ctx.lineDashOffset=(t==='evolved')?-p2Dash:0;}
+        ctx.beginPath();
+        ctx.moveTo(P[a*3],P[a*3+1]);ctx.lineTo(P[b*3],P[b*3+1]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      };
+      if(reduce){
+        for(const t of REL_ORDER){
+          const list=RELS[t]||[];
+          for(const e of list)drawRelEdge(t,e[0],e[1],1);
+        }
+      } else if(p2Edges&&p2Idx>=0){
+        const t=REL_ORDER[p2Idx];
+        const list=RELS[t]||[];
+        const inP2=new Set(p2Edges);
+        for(const e of list){
+          const ei=list.indexOf(e);
+          if(!inP2.has(ei))continue;
+          const d0=p2Nodes.get(e[0]), d1=p2Nodes.get(e[1]);
+          const dm=Math.max(d0,d1);
+          drawRelEdge(t,e[0],e[1],clamp(p2Reveal-dm,0,1));
+        }
+      }
+    }
+
+    // dots, far-to-near
+    order.sort((a,b)=>P[a*3+2]-P[b*3+2]);
+    for(const i of order){
+      const n=N[i];
+      if(!active.has(n.g))continue;
+      if(!reduce&&n.appear>grow)continue;
+      const inLin=hasSel?lineage.nodes.has(i):true;
+      const isFocus=(i===selected)||(i===hover);
+      let dim=1;
+      if(hasSel){
+        if(inLin){
+          const dj=lineage.nodes.get(i);
+          const s=(dj===0)?1:clamp(reveal-dj,0,1);
+          dim=s;
+        } else {dim=0.10;}
+      }
+      if(dim<=0.004)continue;
+      const sx=P[i*3],sy=P[i*3+1],pf=P[i*3+2];
+      const r=nodeR(i)*(isFocus?1.6:1);
+      const rgb=RGB[i];
+      const a=dim*(0.55+0.45*Math.min(1,pf*pf));
+      // 性能：光晕仅焦点节点（≤2），链上节点用亮圈
+      if(useShadow&&isFocus){
+        ctx.shadowColor='rgb('+rgb+')';ctx.shadowBlur=isFocus?18:9;
+      } else ctx.shadowBlur=0;
+      ctx.fillStyle='rgba('+rgb+','+a+')';
+      ctx.beginPath();ctx.arc(sx,sy,r,0,6.2832);ctx.fill();
+      ctx.shadowBlur=0;
+      if(hasSel&&inLin&&!isFocus){
+        // 链上节点：同色亮圈（轻量，替代光晕）
+        ctx.strokeStyle='rgba('+rgb+','+(0.85*dim)+')';
+        ctx.lineWidth=1.6;
+        ctx.beginPath();ctx.arc(sx,sy,r+1.2,0,6.2832);ctx.stroke();
+      } else {
+        ctx.strokeStyle='rgba(8,10,18,'+(0.5*dim)+')';
+        ctx.lineWidth=1;
+        ctx.beginPath();ctx.arc(sx,sy,r,0,6.2832);ctx.stroke();
+      }
+      if(isFocus){
+        ctx.strokeStyle='rgba(255,255,255,.95)';ctx.lineWidth=1.6;
+        ctx.beginPath();ctx.arc(sx,sy,r+2.5,0,6.2832);ctx.stroke();
+      }
+    }
+    // perf stats
+    drawAcc+=performance.now()-t0; drawCnt++;
+    if(drawCnt>=120){
+      if(drawAcc/drawCnt>50)useShadow=false;
+      drawAcc=0; drawCnt=0;
+    }
+  }
+
+  // ---- interaction ----
+  let dragging=false,moved=false,lx=0,ly=0;
+  wrap.addEventListener('pointerdown',e=>{
+    try{wrap.setPointerCapture(e.pointerId);}catch(err){}
+    dragging=true;moved=false;lx=e.clientX;ly=e.clientY;
+  });
+  wrap.addEventListener('pointermove',e=>{
+    if(dragging){
+      const dx=e.clientX-lx,dy=e.clientY-ly;
+      if(Math.abs(dx)+Math.abs(dy)>3)moved=true;
+      rotY+=dx*0.0055; tilt=Math.max(-1.1,Math.min(0.15,tilt-dy*0.003));
+      lx=e.clientX; ly=e.clientY;
+    } else onHover(e);
+  });
+  wrap.addEventListener('pointerup',e=>{
+    dragging=false;
+    if(!moved) onClick(e);
+  });
+  wrap.addEventListener('pointerleave',()=>{hideTip();hover=-1;});
+  wrap.addEventListener('wheel',e=>{
+    e.preventDefault();
+    const nz=zoom*Math.exp(-e.deltaY*0.0016);
+    zoom=isFinite(nz)?Math.max(.5,Math.min(4,nz)):zoom;
+  },{passive:false});
+  let pts=new Map(),pinchD=0;
+  wrap.addEventListener('pointerdown',e=>pts.set(e.pointerId,[e.clientX,e.clientY]));
+  wrap.addEventListener('pointermove',e=>{
+    if(pts.has(e.pointerId))pts.set(e.pointerId,[e.clientX,e.clientY]);
+    if(pts.size===2){
+      const a=[...pts.values()];const dd=Math.hypot(a[0][0]-a[1][0],a[0][1]-a[1][1]);
+      if(pinchD&&dd>0){const nz=zoom*dd/pinchD;zoom=isFinite(nz)?Math.max(.5,Math.min(4,nz)):zoom;}
+      pinchD=dd;dragging=false;
+    }
+  });
+  wrap.addEventListener('pointerup',e=>{pts.delete(e.pointerId);if(pts.size<2)pinchD=0;});
+
+  function pick(mx,my){
+    let best=-1,bd=20*20;
+    for(let i=0;i<N.length;i++){
+      if(!active.has(N[i].g))continue;
+      const dx=P[i*3]-mx,dy=P[i*3+1]-my,d=dx*dx+dy*dy;
+      const rr=Math.max(11,nodeR(i)+6);
+      if(d<rr*rr&&d<bd){bd=d;best=i;}
+    }
+    return best;
+  }
+  function onHover(e){
+    const r=cv.getBoundingClientRect();
+    const i=pick(e.clientX-r.left,e.clientY-r.top);
+    if(i!==hover){hover=i;i>=0?showTip(i,e):hideTip();}
+    else if(i>=0)placeTip(e);
+    spin=(hover>=0||selected>=0||reduce)?0:0.00018;
+  }
+
+  // ---- selection + cluster-fitted camera ----
+  const hist=[];
+  let rotYTarget=null, tiltTarget=null, zoomTarget=null;
+  let panXTarget=null, panYTarget=null;
+
+  function focusNode(i){
+    // v2 交互：点击节点【保持全局视图】——不做簇缩放/旋转/平移（避免视图比例变形、用户无法操作）。
+    // 成长关系由 buildLineage 逐层点亮 + Phase2 关系时序动画在全局视角内局部表达。
+    // 相机仅在用户手动滚轮/拖拽时改变；ESC 恢复全局。
+  }
+
+  function onClick(e){
+    const r=cv.getBoundingClientRect();
+    const i=pick(e.clientX-r.left,e.clientY-r.top);
+    if(i<0){clearSel();return;}
+    selectNode(i,true);
+  }
+  function selectNode(i,push){
+    if(push&&selected>=0&&selected!==i) hist.push(selected);
+    selected=i; buildLineage(i); showCard(i); focusNode(i); spin=0;
+    hideTip();
+    document.getElementById('backBtn').style.display=hist.length?'inline-block':'none';
+    document.getElementById('replayBtn').style.display='inline-block';
+  }
+  function clearSel(){
+    selected=-1;lineage=null;hist.length=0;
+    // ESC/关闭 → 回到全局视图：缩放归 1、平移回中、恢复自动自旋
+    rotYTarget=null;tiltTarget=null;zoomTarget=1;
+    panXTarget=0;panYTarget=0;
+    p2Idx=-1;p2Reveal=0;p2Nodes=null;p2Edges=null;
+    showSubtitle(null);
+    document.getElementById('card').classList.remove('on');
+    document.getElementById('backBtn').style.display='none';
+    document.getElementById('replayBtn').style.display='none';
+    if(!reduce)spin=0.00018;
+  }
+  document.addEventListener('keydown',ev=>{if(ev.key==='Escape')clearSel();});
+  document.getElementById('closeBtn').addEventListener('click',clearSel);
+  document.getElementById('backBtn').addEventListener('click',()=>{
+    if(hist.length)selectNode(hist.pop(),false);
+  });
+  document.getElementById('replayBtn').addEventListener('click',()=>{
+    if(lineage){
+      if(!reduce){reveal=0;p2Idx=-1;p2Reveal=0;p2Nodes=null;p2Edges=null;}
+      else{reveal=lineage.maxDepth+1;p2Idx=REL_ORDER.length;}
+    }
+  });
+
+  // ---- subtitle ----
+  const subtitle=document.getElementById('subtitle');
+  function showSubtitle(text){
+    if(!text){subtitle.classList.remove('on');subtitle.textContent='';return;}
+    subtitle.innerHTML=text;
+    subtitle.classList.add('on');
+  }
+  function updateSubtitle(){
+    if(p2Idx<0||p2Idx>=REL_ORDER.length){showSubtitle(null);return;}
+    const t=REL_ORDER[p2Idx];
+    const cnt=p2Edges?p2Edges.size:0;
+    showSubtitle('<span class="st-badge">含义展开</span>'+P2_LABEL[t]+'：'+P2_DESC[t]+'（'+cnt+' 条）');
+  }
+
+  // ---- search / quick locate ----
+  const searchInput=document.getElementById('searchInput');
+  const resultsBox=document.getElementById('results');
+  searchInput.addEventListener('input',()=>{
+    const kw=searchInput.value.trim().toLowerCase();
+    resultsBox.innerHTML='';
+    if(!kw){resultsBox.classList.remove('on');return;}
+    const hits=[];
+    for(let i=0;i<N.length&&hits.length<8;i++){
+      if(N[i].t.toLowerCase().includes(kw)||(N[i].dm||'').toLowerCase().includes(kw))hits.push(i);
+    }
+    hits.forEach(j=>{
+      const b=document.createElement('button');b.className='srow';
+      b.innerHTML='<span class="rdot" style="background:'+N[j].col+'"></span>'+
+        '<span class="rt">'+esc(N[j].t)+'</span><span class="ra">'+esc(N[j].stage)+'</span>';
+      b.addEventListener('click',()=>{
+        selectNode(j,true);resultsBox.innerHTML='';resultsBox.classList.remove('on');
+        searchInput.value=N[j].t;
+      });
+      resultsBox.appendChild(b);
+    });
+    resultsBox.classList.add('on');
+  });
+  document.addEventListener('click',e=>{
+    if(!e.target.closest('#search')){resultsBox.innerHTML='';resultsBox.classList.remove('on');}
+  });
+  ['pointerdown','pointerup','click','wheel'].forEach(ev=>{
+    document.getElementById('search').addEventListener(ev,e=>e.stopPropagation());
+  });
+
+  // ---- tooltip / card ----
+  const tip=document.getElementById('tip');
+  function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+  function showTip(i,e){
+    const n=N[i];
+    tip.innerHTML='<span class="sw" style="background:'+n.col+'"></span><span class="ts">'+esc(n.dm)+' · '+esc(n.stage)+'</span><div class="ttl">'+esc(n.t)+'</div>'+(n.q?'<div class="q">'+esc(n.q)+'</div>':'');
+    tip.classList.add('on');placeTip(e);
+  }
+  function placeTip(e){
+    const r=wrap.getBoundingClientRect();
+    let x=e.clientX-r.left+16,y=e.clientY-r.top+16;
+    const w=tip.offsetWidth,h=tip.offsetHeight;
+    if(x+w>VW-8)x=e.clientX-r.left-w-16;
+    if(y+h>VH-8)y=e.clientY-r.top-h-16;
+    tip.style.left=x+'px';tip.style.top=y+'px';
+  }
+  function hideTip(){tip.classList.remove('on');}
+
+  const card=document.getElementById('card');
+  ['pointerdown','pointerup','click','wheel'].forEach(ev=>{
+    card.addEventListener(ev,e=>e.stopPropagation());
+    document.getElementById('legend').addEventListener(ev,e=>e.stopPropagation());
+  });
+  function fillRows(container,idxs){
+    container.innerHTML='';
+    if(!idxs.length){
+      const d=document.createElement('div');d.className='empty';d.textContent='nothing yet';container.appendChild(d);return;
+    }
+    idxs.slice().sort((a,b)=>N[a].a-N[b].a).forEach(j=>{
+      const m=N[j],b=document.createElement('button');b.className='row';
+      b.innerHTML='<span class="rdot" style="background:'+m.col+'"></span>'+
+        '<span class="rt">'+esc(m.t)+'</span><span class="ra">'+esc(m.stage)+'</span>';
+      b.addEventListener('click',()=>selectNode(j,true));
+      container.appendChild(b);
+    });
+  }
+  function showCard(i){
+    const n=N[i],cnt=lineage.nodes.size-1;
+    card.querySelector('.sw').style.background=n.col;
+    card.querySelector('.cs').textContent=n.dm+' · '+n.stage;
+    card.querySelector('.ctl').textContent=n.t;
+    card.querySelector('.n').textContent=cnt;
+    card.querySelector('.d').textContent=directPre[i].length;
+    card.querySelector('.u').textContent=directNext[i].length;
+    card.querySelector('.def').textContent=n.def||'（原数据无定义）';
+    const aq=card.querySelector('.aq');
+    if(n.q&&n.qsrc!=='none'){aq.innerHTML=esc(n.q)+(n.qsrc==='keypoints'?' <span class="missing">（由掌握标准降级）</span>':'');aq.classList.remove('missing');}
+    else{aq.textContent='⚠ 原数据未提供随堂评估提问，Schema 需补齐';aq.classList.add('missing');}
+    const ev=card.querySelector('.ev');
+    if(n.evidence&&n.evidence.length){
+      ev.innerHTML=n.evidence.map(x=>'· '+esc(x)).join('<br>');ev.classList.remove('missing');
+    }else{ev.textContent='⚠ 原数据未提供掌握标准（由 keyPoints 降级）';ev.classList.add('missing');}
+    fillRows(card.querySelector('.rows-pre'),directPre[i]);
+    fillRows(card.querySelector('.rows-next'),directNext[i]);
+    card.querySelector('.meta').textContent='重要度 '+n.imp+' · 难度 '+n.diff+' · 建议学时 '+n.time+' · 依赖出度 '+n.outdeg+' · 中心度 '+n.c;
+    card.scrollTop=0;
+    card.classList.add('on');
+  }
+
+  // ---- rel legend ----
+  const relLegend=document.getElementById('relLegend');
+  function buildRelLegend(){
+    relLegend.innerHTML='<div class="lt">关系类型 · 点击后按序展开</div>';
+    const order=['contains','evolved','extends','analogy','contrast','constrains'];
+    const colorMap={contains:'#58a6ff',evolved:'#d29922',extends:'#3fb950',analogy:'#bc8cff',contrast:'#f778ba',constrains:'#8b949e'};
+    order.forEach(t=>{
+      const cnt=(RELS[t]||[]).length;
+      const d=document.createElement('div');d.className='rc';
+      d.innerHTML='<span class="sw2" style="border-color:'+colorMap[t]+';'+(t==='evolved'||t==='analogy'?'border-top-style:dashed;':'')+'"></span>'+
+        '<span class="ln">'+P2_LABEL[t]+' <span style="color:#8b949e">'+cnt+'</span></span>';
+      relLegend.appendChild(d);
+    });
+  }
+  buildRelLegend();
+  function showRelLegend(on){
+    if(on&&selected>=0)relLegend.classList.add('on');
+    else relLegend.classList.remove('on');
+  }
+
+  // ---- legend chips ----
+  const counts=GROUPS.map(()=>0);N.forEach(n=>counts[n.g]++);
+  GROUPS.forEach((s,i)=>{
+    const el=document.createElement('div');el.className='chip';el.tabIndex=0;
+    el.setAttribute('role','button');el.setAttribute('aria-pressed','true');
+    el.innerHTML='<span class="sw" style="background:'+GCOL[i]+'"></span>'+
+      '<span class="nm">'+esc(s)+'</span><span class="ct">'+counts[i]+'</span>';
+    const toggle=()=>{
+      if(active.has(i)){active.delete(i);el.classList.add('off');el.setAttribute('aria-pressed','false');}
+      else{active.add(i);el.classList.remove('off');el.setAttribute('aria-pressed','true');}
+    };
+    el.addEventListener('click',toggle);
+    el.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();toggle();}});
+    document.getElementById('legend').appendChild(el);
+  });
+
+  // ---- main loop ----
+  const START=performance.now();
+  let lastTs=START;
+  function frame(ts){
+    if(!reduce)grow=Math.min(1.02,(ts-START)/2800*1.02);
+    const dt=Math.min(64,ts-lastTs); lastTs=ts;
+    rotY+=spin*dt;
+    if(rotYTarget!==null){
+      let d=((rotYTarget-rotY+Math.PI)%(2*Math.PI)+2*Math.PI)%(2*Math.PI)-Math.PI;
+      rotY+=d*0.12;
+      if(tiltTarget!==null)tilt+=(tiltTarget-tilt)*0.12;
+      if(zoomTarget!==null)zoom+=(zoomTarget-zoom)*0.12;
+      if(Math.abs(d)<0.008){rotYTarget=null;tiltTarget=null;zoomTarget=null;}
+    }
+    if(panXTarget!==null){
+      panX+=(panXTarget-panX)*0.12;
+      panY+=(panYTarget-panY)*0.12;
+      if(Math.abs(panXTarget-panX)+Math.abs(panYTarget-panY)<0.5){panXTarget=null;panYTarget=null;}
+    }
+    // Phase1 reveal
+    if(lineage&&!reduce&&reveal<lineage.maxDepth+1){
+      reveal=Math.min(lineage.maxDepth+1, reveal+dt*revealSpeed);
+    }
+    // Phase1 完成 → 接续 Phase2 各类型
+    if(lineage&&!reduce){
+      if(p2Idx<0&&reveal>=lineage.maxDepth+1&&REL_ORDER.length){
+        p2Idx=0; const r=buildP2(REL_ORDER[0]); p2Nodes=r.nodes;p2Edges=r.edges;p2MaxDepth=r.maxDepth;p2Reveal=0;
+        updateSubtitle(); showRelLegend(true);
+      } else if(p2Idx>=0&&p2Idx<REL_ORDER.length){
+        if(p2Reveal<p2MaxDepth+1){
+          p2Reveal=Math.min(p2MaxDepth+1,p2Reveal+dt*P2_SPEED);
+          updateSubtitle();
+        } else {
+          p2Idx++;
+          if(p2Idx<REL_ORDER.length){
+            const r=buildP2(REL_ORDER[p2Idx]); p2Nodes=r.nodes;p2Edges=r.edges;p2MaxDepth=r.maxDepth;p2Reveal=0;
+            updateSubtitle();
+          } else { showSubtitle('<span class="st-badge">完成</span>含义与关系已全部展开'); showRelLegend(false); }
+        }
+      }
+    }
+    if(useShadow&&p2Idx>=0&&REL_ORDER[p2Idx]==='evolved')p2Dash+=dt*0.02;
+    draw();
+    requestAnimationFrame(frame);
+  }
+  window.addEventListener('resize',()=>{resize();});
+  resize();
+  // 只读调试/状态接口
+  window.__marble = {
+    state: function(){
+      return {
+        zoom:+zoom.toFixed(3), panX:+panX.toFixed(1), panY:+panY.toFixed(1),
+        rotY:+rotY.toFixed(3), tilt:+tilt.toFixed(3),
+        zoomT:zoomTarget!==null?+zoomTarget.toFixed(3):null,
+        panXT:panXTarget!==null?+panXTarget.toFixed(1):null,
+        panYT:panYTarget!==null?+panYTarget.toFixed(1):null,
+        reveal:+reveal.toFixed(2), maxDepth:lineage?lineage.maxDepth:null,
+        lineageSize:lineage?lineage.nodes.size:null,
+        p2Idx:p2Idx, p2Type:p2Idx>=0&&p2Idx<REL_ORDER.length?REL_ORDER[p2Idx]:null,
+        p2Reveal:+p2Reveal.toFixed(2), p2Max:p2MaxDepth, p2Edges:p2Edges?p2Edges.size:0,
+        useShadow:useShadow,
+        selected:selected>=0?N[selected].t:null, grow:+grow.toFixed(3),
+        view:[VW,VH]
+      };
+    }
+  };
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
