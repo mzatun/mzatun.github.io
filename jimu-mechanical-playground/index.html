@@ -331,6 +331,8 @@ const METAL = {
   plastic:{ color:0xEFE9F5, metalness:0.02, roughness:0.8 },
 };
 
+Object.values(METAL).forEach(m => { m.__keep = true; });   // 全局共享材质：清场不释放
+
 const G = {
   scene:null, camera:null, renderer:null, controls:null,
   active:null,        // 当前机构 {group, update, explode, reset, parts}
@@ -413,42 +415,147 @@ function matPlastic(color, opts={}){
   return new THREE.MeshStandardMaterial({ color, metalness:0.03, roughness:0.72, ...opts });
 }
 
-/* ---------- 齿轮 ---------- */
-function makeGear({teeth=16, pitch=0.32, thick=0.34, color=0xFF8A80, toothColor=null, hole=true}){
+/* ---------- 齿轮（盘面在 XY 平面、轴沿 Z；梯形齿廓，齿根嵌入轮体） ----------
+   统一约定：所有"平面机构"（齿轮/带轮/凸轮/连杆）都放在 XY 平面内，轴朝 Z。
+   这样 rotation.z 就是真转轴，齿环与轮盘共面，不会出现"齿悬在盘外"的错位。
+------------------------------------------------------------------------- */
+const TOOTH_GEO = {};           // 同一规格的齿共享几何体，省显存
+function toothGeometry(r, pitch, thick){
+  const key = r.toFixed(4)+'|'+pitch.toFixed(4)+'|'+thick.toFixed(4);
+  if(TOOTH_GEO[key]) return TOOTH_GEO[key];
+  const root = r - pitch*0.40;      // 齿根圆（齿根高 1.25m，标准制）
+  const tip  = r + pitch*0.32;      // 齿顶圆（齿顶高 1.0m）
+  const bw   = pitch*0.48;          // 齿根宽（≈节圆齿厚，保证对方齿槽容纳得下）
+  const tw   = pitch*0.23;          // 齿顶宽（留侧隙，齿面不硬碰）
+  const s = new THREE.Shape();
+  s.moveTo(root, -bw/2);
+  s.lineTo(tip - 0.008, -tw/2);
+  s.lineTo(tip - 0.008,  tw/2);
+  s.lineTo(root,  bw/2);
+  s.closePath();
+  const geo = new THREE.ExtrudeGeometry(s, {depth:thick, bevelEnabled:false, curveSegments:2});
+  geo.translate(0, 0, -thick/2);
+  geo.computeVertexNormals();
+  geo.userData.__keep = true;      // 共享几何：清场时不能释放
+  TOOTH_GEO[key] = geo;
+  return geo;
+}
+function makeGear({teeth=16, pitch=0.32, thick=0.34, color=0xFF8A80, toothColor=null, hole=true, bore=0.32}){
   const g = new THREE.Group();
-  const r = teeth*pitch/(2*Math.PI);
-  const disc = new THREE.Mesh(new THREE.CylinderGeometry(r*0.82, r*0.82, thick, 40), mat(color));
-  disc.castShadow = disc.receiveShadow = true;
-  g.add(disc);
+  const r = teeth*pitch/(2*Math.PI);              // 节圆半径
+  const root = r - pitch*0.40;                    // 齿根圆（与齿形一致）
+  // 轮体：圆柱轴向 Y → 转成轴向 Z，与齿环同面
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(root+0.012, root+0.012, thick, 48), mat(color));
+  body.rotation.x = Math.PI/2;
+  body.castShadow = body.receiveShadow = true;
+  g.add(body);
+  // 齿：在 XY 平面内沿圆周分布，径向由齿形自身给出
+  const tg = toothGeometry(r, pitch, thick+0.015);
   const tm = mat(toothColor||color);
-  const w = pitch*0.5, h = pitch*0.55;
   for(let i=0;i<teeth;i++){
     const a = i/teeth*Math.PI*2;
-    const tooth = new THREE.Mesh(new THREE.BoxGeometry(h, w, thick+0.04), tm);
-    tooth.position.set(Math.cos(a)*r, Math.sin(a)*r, 0);
-    tooth.rotation.z = -a;
+    const tooth = new THREE.Mesh(tg, tm);
+    tooth.rotation.z = a;
     tooth.castShadow = true;
     g.add(tooth);
   }
   if(hole){
-    const holeMesh = new THREE.Mesh(new THREE.CylinderGeometry(r*0.30, r*0.30, thick+0.06, 24), mat(0x3A3444));
-    g.add(holeMesh);
+    const h = new THREE.Mesh(new THREE.CylinderGeometry(r*bore, r*bore, thick+0.1, 24), mat(0x3A3444));
+    h.rotation.x = Math.PI/2;
+    g.add(h);
+  }
+  g.userData = {gear:true, r, root:root+0.012, teeth, pitch, thick};
+  return g;
+}
+
+/* ---------- 齿轮啮合相位 ----------
+   两轮中心距 = 两节圆半径之和时，齿要一齿对一槽才不会"齿撞齿"。
+   给定 A 轮转角、两轮齿数与连心线方位角 alpha（从 A 指向 B），
+   返回 B 轮应有的转角。这样多级齿轮链可以逐级推出相位，齿形永远咬在齿槽里。
+------------------------------------------------------------------------- */
+function meshAngle(thA, zA, zB, alpha=0){
+  return alpha + Math.PI + Math.PI/zB - (zA/zB)*(thA - alpha);
+}
+
+/* ---------- 带轮/圆盘（盘面 XY、轴沿 Z，凹槽环与盘共面） ---------- */
+function makePulley(r=0.7, thick=0.28, color=0x4FC3F7, groove=true){
+  const g = new THREE.Group();
+  const disc = new THREE.Mesh(new THREE.CylinderGeometry(r, r, thick, 44), mat(color));
+  disc.rotation.x = Math.PI/2;
+  disc.castShadow = disc.receiveShadow = true;
+  g.add(disc);
+  if(groove){
+    // TorusGeometry 默认就在 XY 平面（轴 Z），与轮盘同面 → 真正的挡边
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(r*0.93, thick*0.26, 10, 44), mat(0x2A2533));
+    g.add(ring);
+  }
+  const hub = new THREE.Mesh(new THREE.CylinderGeometry(r*0.26, r*0.26, thick+0.14, 20), mat(0x3A3444));
+  hub.rotation.x = Math.PI/2;
+  g.add(hub);
+  return g;
+}
+
+/* ---------- 开口皮带的真实路径：两轮外公切线 + 两段包角圆弧 ----------
+   几何要点：
+   · 外公切线切点的法线方向 θ = φ ± acos((r1−r2)/d)，满足 (B−A)·n = 0 —— 真切线
+   · 皮带绕小轮走短弧、绕大轮走长弧，两段圆弧首尾相接，不穿越两轮之间的空隙
+------------------------------------------------------------------------- */
+function beltLoop(L, rL, R, rR, out=0.10, seg=140){
+  const a1 = rL + out, a2 = rR + out;
+  const dx = R.x - L.x, dy = R.y - L.y;
+  const d = Math.hypot(dx, dy);
+  const phi = Math.atan2(dy, dx);
+  const th = Math.acos(THREE.MathUtils.clamp((a1 - a2)/d, -1, 1));  // 法线相对连心线的偏角
+  const dir = a => new THREE.Vector2(Math.cos(a), Math.sin(a));
+  const Aup = new THREE.Vector2(L.x, L.y).addScaledVector(dir(phi + th), a1);
+  const Bup = new THREE.Vector2(R.x, R.y).addScaledVector(dir(phi + th), a2);
+  const Adn = new THREE.Vector2(L.x, L.y).addScaledVector(dir(phi - th), a1);
+  const Bdn = new THREE.Vector2(R.x, R.y).addScaledVector(dir(phi - th), a2);
+  const pts = [];
+  const push = v => pts.push(new THREE.Vector3(v.x, v.y, 0));
+  const line = (P, Q, n=8) => { for(let i=0;i<n;i++) push(P.clone().lerp(Q, i/n)); };
+
+  // ① 绕左轮：从 Aup 逆时针经过远离右轮的一侧，到 Adn（短弧 2π−2θ）
+  const sweep1 = Math.PI*2 - 2*th;
+  const n1 = Math.max(16, Math.round(seg*sweep1/(Math.PI*2)));
+  for(let i=0;i<n1;i++){
+    const a = phi + th + sweep1*i/n1;
+    push(new THREE.Vector2(L.x + Math.cos(a)*a1, L.y + Math.sin(a)*a1));
+  }
+  // ② 下切线 Adn → Bdn
+  line(Adn, Bdn);
+  // ③ 绕右轮：从 Bdn 逆时针经过远离左轮的一侧，到 Bup（长弧 2θ）
+  const sweep2 = 2*th;
+  const n2 = Math.max(16, Math.round(seg*sweep2/(Math.PI*2)));
+  for(let i=0;i<n2;i++){
+    const a = phi - th + sweep2*i/n2;
+    push(new THREE.Vector2(R.x + Math.cos(a)*a2, R.y + Math.sin(a)*a2));
+  }
+  // ④ 上切线 Bup → Aup
+  line(Bup, Aup);
+  return pts;
+}
+
+/* ---------- 轴承支架（两块竖板托住沿 Z 的轴，让悬空齿轮有落脚点） ---------- */
+function makeStand(x, yTop, zHalf, w=0.18, color=0xB9C4D0, y0=0.0){
+  const g = new THREE.Group();
+  const h = Math.max(yTop - y0, 0.1);
+  for(const s of [-1, 1]){
+    const p = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.1), mat(color, {roughness:0.45}));
+    p.position.set(x, y0 + h/2, s*zHalf);
+    p.castShadow = true;
+    g.add(p);
   }
   return g;
 }
 
-/* ---------- 圆盘/带轮 ---------- */
-function makePulley(r=0.7, thick=0.28, color=0x4FC3F7, groove=true){
-  const g = new THREE.Group();
-  const disc = new THREE.Mesh(new THREE.CylinderGeometry(r, r, thick, 40), mat(color));
-  disc.castShadow = true; g.add(disc);
-  if(groove){
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(r*0.92, thick*0.22, 10, 40), mat(0x2A2533));
-    ring.rotation.x = Math.PI/2; g.add(ring);
-  }
-  const hub = new THREE.Mesh(new THREE.CylinderGeometry(r*0.28, r*0.28, thick+0.1, 20), mat(0x3A3444));
-  g.add(hub);
-  return g;
+/* ---------- 立柱（把高位部件撑到基板上） ---------- */
+function makePost(x, y0, y1, z=0, r=0.085, color=0x9AA3B2){
+  const h = Math.max(y1 - y0, 0.05);
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 14), mat(color, {roughness:0.45}));
+  m.position.set(x, y0 + h/2, z);
+  m.castShadow = true;
+  return m;
 }
 
 /* ---------- 轴 ---------- */
@@ -514,8 +621,9 @@ function placeBar(m, A2, B2){ // A2/B2 为 {x,y} 平面点
   const mid = a.clone().add(b).multiplyScalar(0.5);
   const len = a.distanceTo(b);
   m.position.copy(mid);
-  m.rotation.z = Math.atan2(b.y-a.y, b.x-a.x);
-  m.scale.set(len, 1, 1);
+  // makeUnitBar 的圆柱沿 +Y 生成，必须再转 -90° 才能把长度方向对准 A→B（原版少了这一步，所有杆件歪 90°）
+  m.rotation.z = Math.atan2(b.y-a.y, b.x-a.x) - Math.PI/2;
+  m.scale.set(1, len, 1);
 }
 
 /* ---------- 文字标签（Sprite） ---------- */
@@ -614,8 +722,9 @@ function disposeGroup(group){
   if(!group) return;
   group.traverse(o=>{
     if(o.isMesh || o.isSprite){
-      if(o.geometry) o.geometry.dispose();
-      if(o.material){
+      // 齿轮齿几何与 METAL 材质是跨机构共享的，释放后再次进入会花屏 → 跳过
+      if(o.geometry && !o.geometry.userData.__keep) o.geometry.dispose();
+      if(o.material && !o.material.__keep){
         if(o.material.map) o.material.map.dispose();
         o.material.dispose();
       }
@@ -640,302 +749,359 @@ function clearActive(){
    ============================================================ */
 const DEMOS = {
 
-  /* ---------- 1 齿轮传动 ---------- */
+  /* ---------- 1 齿轮传动：真实齿廓 + 齿相位同步 ---------- */
   gear: function(){
     const group = new THREE.Group();
-    const base = makeBase(6.6, 3.4, 0xEFE9F5); base.position.y = -0.1; group.add(base);
-    let drive, driven, dotA, dotB, labelA, labelB, mode = 'speedup';
-    const motor = new THREE.Group();
-    motor.add(new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.62, 0.62), mat(0x9AA3B2, {roughness:0.5})));
-    motor.add(new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.2, 0.2), mat(0x5B4A63)));
-    motor.position.set(-2.55, 0.62, 0);
-    group.add(motor);
-    const axle = makeAxle(0.8, 0.09, 0x8E9BA8); axle.rotation.z = Math.PI/2; axle.position.set(-2.05, 0.62, 0); group.add(axle);
-    const mL = makeLabel('电机', {bg:'rgba(154,163,178,0.92)', fg:'#fff', border:'#9AA3B2', size:0.6});
-    mL.position.set(-2.55, 1.35, 0); group.add(mL);
+    const base = makeBase(6.8, 3.4, 0xEFE9F5); base.position.y = -0.1; group.add(base);
+    const CY = 1.45, PITCH = 0.32, THICK = 0.34;   // 轴心高度 / 齿距 / 齿厚
+    let drive = null, driven = null, standA = null, standB = null, labelA = null, labelB = null;
+    let mode = 'speedup', ax = -0.55, bx = 0, th = 0;
+
+    // 电机：与主动轮同轴，装在轮后（沿 Z），不再"隔着空气传动"
+    const motor = new THREE.Mesh(new THREE.BoxGeometry(0.66, 0.62, 0.86), mat(0x9AA3B2, {roughness:0.5}));
+    motor.castShadow = true; group.add(motor);
+    const mAxle = makeAxle(0.85, 0.09, 0x8E9BA8); mAxle.rotation.x = Math.PI/2; group.add(mAxle);
+    const mL = makeLabel('电机', {bg:'rgba(154,163,178,0.92)', fg:'#fff', border:'#9AA3B2', size:0.55});
+    group.add(mL);
+
+    // 分解视图：两个齿轮沿 Z 前后分开（分解对象在 rebuild 时刷新引用）
+    const expo = [
+      {obj:null, base:new THREE.Vector3(), dir:new THREE.Vector3(0,0,1),  dist:1.15},
+      {obj:null, base:new THREE.Vector3(), dir:new THREE.Vector3(0,0,-1), dist:1.15},
+    ];
+    setExplode(expo);
+    function bindExplode(){ expo[0].obj = drive.group; expo[0].base.copy(drive.group.position);
+                            expo[1].obj = driven.group; expo[1].base.copy(driven.group.position); }
 
     function rebuild(){
-      if(drive){ group.remove(drive.group); group.remove(driven.group); disposeGroup2(drive.group); disposeGroup2(driven.group); group.remove(labelA); group.remove(labelB); }
-      const big = mode==='speedup' ? 24 : 12, small = mode==='speedup' ? 12 : 24;
-      const ax = -0.6, pitch = 0.32;
-      const rA = big*pitch/(2*Math.PI), rB = small*pitch/(2*Math.PI);
-      const bx = ax + rA + rB + 0.03;   // 两轮外缘相切
-      drive = { teeth:big, group:makeGear({teeth:big, pitch, thick:0.36, color:0xFFD54F, toothColor:0xF5C83C}), r:rA };
-      drive.group.position.set(ax, 0.62, 0);
-      group.add(drive.group);
-      driven = { teeth:small, group:makeGear({teeth:small, pitch, thick:0.36, color:0x4FC3F7, toothColor:0x35AED9}), r:rB };
-      driven.group.position.set(bx, 0.62, 0);
-      group.add(driven.group);
-      // 转速标记点
-      dotA = new THREE.Mesh(new THREE.SphereGeometry(0.09, 14, 14), mat(0xFF5252));
-      dotA.position.set(0, drive.r*0.92, 0.1); drive.group.add(dotA);
-      dotB = new THREE.Mesh(new THREE.SphereGeometry(0.09, 14, 14), mat(0xFF8A80));
-      dotB.position.set(0, driven.r*0.92, 0.1); driven.group.add(dotB);
-      labelA = makeLabel(mode==='speedup' ? '大齿轮' : '小齿轮', {border:0xFFD54F, size:0.62});
-      labelA.position.set(ax, 1.5 + rA*0.55, 0); group.add(labelA);
-      labelB = makeLabel(mode==='speedup' ? '小齿轮' : '大齿轮', {border:0x4FC3F7, size:0.62});
-      labelB.position.set(bx, 1.5 + rB*0.55, 0); group.add(labelB);
+      for(const o of [drive&&drive.group, driven&&driven.group, standA, standB, labelA, labelB]) if(o) group.remove(o);
+      const big = (mode==='speedup') ? 24 : 12;
+      const small = (mode==='speedup') ? 12 : 24;
+      const rA = big*PITCH/(2*Math.PI), rB = small*PITCH/(2*Math.PI);
+      bx = ax + rA + rB;                       // 节圆相切 = 正确中心距（原版多出的 0.03 会让齿顶互撞）
+      drive  = {teeth:big,   r:rA, group:makeGear({teeth:big,   pitch:PITCH, thick:THICK, color:0xFFD54F, toothColor:0xF2C230})};
+      driven = {teeth:small, r:rB, group:makeGear({teeth:small, pitch:PITCH, thick:THICK, color:0x4FC3F7, toothColor:0x35AED9})};
+      drive.group.position.set(ax, CY, 0);
+      driven.group.position.set(bx, CY, 0);
+      group.add(drive.group, driven.group);
+
+      // 转速标记：嵌在轮体内随轮一起转（原来浮在盘外）
+      for(const [g, rr, col] of [[drive, rA, 0xFF5252], [driven, rB, 0xE64A19]]){
+        const dot = new THREE.Mesh(new THREE.SphereGeometry(0.085, 14, 14), mat(col));
+        dot.position.set(0, rr*0.60, THICK/2 + 0.03);
+        g.group.add(dot);
+      }
+      // 轴承支架：齿轮不再悬空
+      standA = makeStand(ax, CY, THICK/2 + 0.11, 0.18, 0xB9C4D0, 0.05);
+      standB = makeStand(bx, CY, THICK/2 + 0.11, 0.18, 0xB9C4D0, 0.05);
+      group.add(standA, standB);
+
+      motor.position.set(ax, CY, -(THICK/2 + 0.58));
+      mAxle.position.set(ax, CY, -(THICK/2 + 0.30));
+      mL.position.set(ax, CY + 0.78, -0.95);   // 贴在电机上方，不压住齿轮
+
+      labelA = makeLabel(big===24 ? '大齿轮' : '小齿轮', {border:0xFFD54F, size:0.62});
+      labelA.position.set(ax, CY + rA + 0.34, 0);
+      labelB = makeLabel(small===12 ? '小齿轮' : '大齿轮', {border:0x4FC3F7, size:0.62});
+      labelB.position.set(bx, CY + rB + 0.34, 0);
+      group.add(labelA, labelB);
+
       setAxis([
-        {from:new THREE.Vector3(ax-1.0,0.62,0), to:new THREE.Vector3(ax+1.0,0.62,0), color:0xFFD54F},
-        {from:new THREE.Vector3(bx-1.0,0.62,0), to:new THREE.Vector3(bx+1.0,0.62,0), color:0x4FC3F7},
+        {from:new THREE.Vector3(ax-0.9,CY,0), to:new THREE.Vector3(ax+0.9,CY,0), color:0xFFD54F},
+        {from:new THREE.Vector3(bx-0.7,CY,0), to:new THREE.Vector3(bx+0.7,CY,0), color:0x4FC3F7},
       ]);
+      bindExplode();
     }
-    function disposeGroup2(g){ g.traverse(o=>{ if(o.geometry)o.geometry.dispose(); if(o.material)o.material.dispose(); }); }
 
-    const state = { thA:0, thB:0 };
     rebuild();
-
-    // 模式切换（暴露给 UI）
-    group.userData = { setMode:(m)=>{ mode=m; rebuild(); } };
+    group.userData = { setMode:(m)=>{ mode = m; rebuild(); } };
 
     return {
       group,
       update(dt){
-        state.thA += dt*2.2;
-        state.thB = -state.thA*(drive.teeth/driven.teeth);
-        drive.group.rotation.z = state.thA;
-        driven.group.rotation.z = state.thB;
+        th += dt*1.9;
+        drive.group.rotation.z = th;
+        // 齿相位同步：小轮转角由齿数比 + 啮合相位算出，齿永远咬进齿槽
+        driven.group.rotation.z = meshAngle(th, drive.teeth, driven.teeth, 0);
       },
-      reset(){ mode='speedup'; rebuild(); }
+      reset(){ mode = 'speedup'; th = 0; rebuild(); }
     };
   },
 
-  /* ---------- 2 蜗轮蜗杆 ---------- */
+  /* ---------- 2 蜗轮蜗杆：两轴正交（最短距离 = 节圆半径和），自锁减速 ---------- */
   worm: function(){
     const group = new THREE.Group();
-    const base = makeBase(6.6, 3.8, 0xEFE9F5); base.position.y = -0.15; group.add(base);
+    const base = makeBase(6.8, 3.6, 0xEFE9F5); base.position.y = -0.15; group.add(base);
     const RATIO = 36;
-    const WR = 1.0;                 // 蜗轮半径（立在基板上）
-    const WORM_Y = 0.05 + WR*2 - 0.62 + 0.05;   // 蜗杆轴心 = 蜗轮顶 - 蜗杆半径
-    // 蜗杆（沿 X 轴，抛光不锈钢）
-    const wormG = new THREE.Group();
-    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 3.6, 28), METAL.steel);
-    body.rotation.z = Math.PI/2; body.castShadow = true; wormG.add(body);
-    const turns = 5, n = 240, lR = 0.62, len = 3.3;
-    for(let i=0;i<n;i++){
-      const t = i/n, ang = t*Math.PI*2*turns, x = (t-0.5)*len;
-      const tooth = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.3, 0.2), METAL.steelH);
-      tooth.position.set(x, lR*Math.cos(ang), lR*Math.sin(ang));
-      tooth.lookAt(x+10, lR*2*Math.cos(ang), lR*2*Math.sin(ang));
-      tooth.castShadow = true; wormG.add(tooth);
-    }
-    wormG.position.set(0, WORM_Y, 0);
-    group.add(wormG);
-    // 蜗轮（沿 Y 轴，黄铜，立在基板上）
+    const WX = 0.85, WY = 1.25, WR = 0.82;        // 蜗轮中心与节圆半径（盘面 XY、轴沿 Z）
+    const RW = 0.27;                               // 蜗杆半径
+    const WORM_Y = WY + WR + RW;                   // 轴线最短距离 = WR + RW → 真正相切
+
+    // 蜗轮：竖直圆盘 + 36 个细齿（齿宽 < 齿距，不会自己叠在一起）
     const wheelG = new THREE.Group();
-    const disc = new THREE.Mesh(new THREE.CylinderGeometry(WR, WR, 0.55, 48), METAL.brass);
-    disc.castShadow = true; wheelG.add(disc);
-    const wr = WR + 0.05;
+    const wDisc = new THREE.Mesh(new THREE.CylinderGeometry(WR-0.12, WR-0.12, 0.5, 56), METAL.brass);
+    wDisc.rotation.x = Math.PI/2; wDisc.castShadow = true; wDisc.receiveShadow = true;
+    wheelG.add(wDisc);
     for(let i=0;i<RATIO;i++){
       const a = i/RATIO*Math.PI*2;
-      const tooth = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.36, 0.24), METAL.brassH);
-      tooth.position.set(wr*Math.cos(a), 0, wr*Math.sin(a));
-      tooth.rotation.y = -a; tooth.rotation.z = Math.PI/9;
-      tooth.castShadow = true; wheelG.add(tooth);
+      const tooth = new THREE.Mesh(new THREE.BoxGeometry(0.20, 0.085, 0.46), METAL.brassH);
+      tooth.position.set(Math.cos(a)*WR, Math.sin(a)*WR, 0);
+      tooth.rotation.z = a;
+      tooth.castShadow = true;
+      wheelG.add(tooth);
     }
-    const hole = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.62, 24), METAL.dark);
-    wheelG.add(hole);
-    wheelG.position.set(0, 0.05 + WR, 0);
+    const bore = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.56, 20), METAL.dark);
+    bore.rotation.x = Math.PI/2; wheelG.add(bore);
+    wheelG.position.set(WX, WY, 0);
+    wheelG.userData.tag = 'wormWheel';
     group.add(wheelG);
-    // 轴
-    const axleV = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 1.3, 20), METAL.alu);
-    axleV.position.set(0, 0.6, 0); group.add(axleV);
-    // 啮合标记（自发光红点）
-    const glowMat = new THREE.MeshStandardMaterial({ color:0xFF3B30, emissive:0xFF0000, emissiveIntensity:0.6, roughness:0.4 });
-    const meshP = new THREE.Mesh(new THREE.SphereGeometry(0.11, 16, 16), glowMat);
-    meshP.position.set(0, -0.62, 0.16); wormG.add(meshP);
-    const glow = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 16),
-      new THREE.MeshBasicMaterial({ color:0xFF5252, transparent:true, opacity:0.25 }));
-    glow.position.copy(meshP.position); wormG.add(glow);
-    // 红点标记转速
-    const rimDot = new THREE.Mesh(new THREE.SphereGeometry(0.1, 14, 14), glowMat);
-    rimDot.position.set(wr, 0, 0); wheelG.add(rimDot);
-    // 标签
-    const l1 = makeLabel('蜗杆', {border:0x8E9BA8, size:0.6}); l1.position.set(0, WORM_Y+1.0, 0); group.add(l1);
-    const l2 = makeLabel('蜗轮', {border:0xC8A34D, size:0.6}); l2.position.set(0, 0.15, WR+0.9); group.add(l2);
-    const l3 = makeLabel('蜗杆转 36 圈 → 蜗轮 1 圈', {bg:'rgba(255,213,79,0.92)', fg:'#7A5C08', border:'#FFD54F', size:0.58});
-    l3.position.set(0, WORM_Y+1.75, 0); group.add(l3);
+
+    // 轮轴 + 轴承座（轮心离地，必须真的被托住）
+    const wAxle = makeAxle(1.30, 0.10, 0xB9C4D0); wAxle.rotation.x = Math.PI/2;
+    wAxle.position.set(WX, WY, 0); group.add(wAxle);
+    group.add(makeStand(WX, WY, 0.50, 0.20, 0xB9C4D0, 0.0));
+
+    // 蜗杆：沿 X 轴横卧在蜗轮顶部，螺旋牙包在轴外
+    const wormG = new THREE.Group();
+    const core = new THREE.Mesh(new THREE.CylinderGeometry(RW, RW, 3.0, 32), METAL.steel);
+    core.rotation.z = Math.PI/2; core.castShadow = true; wormG.add(core);
+    const turns = 6, n = 300, helixR = RW + 0.06, span = 2.7;
+    for(let i=0;i<n;i++){
+      const t = i/n, ang = t*Math.PI*2*turns, x = (t-0.5)*span;
+      const th2 = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.14, 0.06), METAL.steelH);
+      th2.position.set(x, helixR*Math.cos(ang), helixR*Math.sin(ang));
+      th2.lookAt(x + 0.16, helixR*1.6*Math.cos(ang), helixR*1.6*Math.sin(ang));
+      th2.castShadow = true;
+      wormG.add(th2);
+    }
+    wormG.position.set(WX, WORM_Y, 0);           // 位于蜗轮轮缘正上方（公垂线方向 Y）
+    wormG.userData.tag = 'wormScrew';
+    group.add(wormG);
+
+    // 驱动电机 + 支柱（原来电机挂在半空）
+    const motor = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.6, 0.6), mat(0x9AA3B2, {roughness:0.5}));
+    motor.position.set(WX-2.0, WORM_Y, 0); motor.castShadow = true; group.add(motor);
+    const mAxle = makeAxle(0.7, 0.09, 0x8E9BA8); mAxle.rotation.z = Math.PI/2;
+    mAxle.position.set(WX-1.5, WORM_Y, 0); group.add(mAxle);
+    group.add(makePost(WX-2.0, 0.05, WORM_Y-0.3, 0, 0.10));
+
+    // 啮合点发光标记 + 蜗轮转速红点
+    const glowMat = new THREE.MeshStandardMaterial({color:0xFF3B30, emissive:0xFF0000, emissiveIntensity:0.7, roughness:0.4});
+    const meshP = new THREE.Mesh(new THREE.SphereGeometry(0.10, 16, 16), glowMat);
+    meshP.position.set(WX, WORM_Y - RW - 0.02, 0);
+    group.add(meshP);
+    const rimDot = new THREE.Mesh(new THREE.SphereGeometry(0.09, 14, 14), glowMat);
+    rimDot.position.set(WR, 0, 0.27); wheelG.add(rimDot);
+
+    const l1 = makeLabel('蜗杆', {border:0x8E9BA8, size:0.6}); l1.position.set(WX-0.9, WORM_Y+0.55, 0); group.add(l1);
+    const l2 = makeLabel('蜗轮', {border:0xC8A34D, size:0.6}); l2.position.set(WX+WR+0.55, WY-0.35, 0.35); group.add(l2);
+    const l3 = makeLabel('蜗杆转 36 圈 → 蜗轮 1 圈', {bg:'rgba(255,213,79,0.92)', fg:'#7A5C08', border:'#FFD54F', size:0.55});
+    l3.position.set(WX, WORM_Y+0.95, 0); group.add(l3);
+
     setAxis([
-      {from:new THREE.Vector3(-2.6,WORM_Y,0), to:new THREE.Vector3(2.6,WORM_Y,0), color:0x8E9BA8},
-      {from:new THREE.Vector3(0,0.05,0), to:new THREE.Vector3(0,WR*2+0.05,0), color:0xC8A34D},
+      {from:new THREE.Vector3(WX-2.4,WORM_Y,0), to:new THREE.Vector3(WX+2.4,WORM_Y,0), color:0x8E9BA8},
+      {from:new THREE.Vector3(WX,WY-1.3,0), to:new THREE.Vector3(WX,WY+1.3,0), color:0xC8A34D},
     ]);
-    // 爆炸
-    const wb = wormG.position.clone(), whb = wheelG.position.clone();
     setExplode([
-      {obj:wormG, base:wb, dir:new THREE.Vector3(0,1,0), dist:1.4},
-      {obj:wheelG, base:whb, dir:new THREE.Vector3(0,1,0), dist:0.6},
+      {obj:wormG, base:wormG.position.clone(), dir:new THREE.Vector3(0,1,0), dist:1.3},
+      {obj:wheelG, base:wheelG.position.clone(), dir:new THREE.Vector3(0,0,1), dist:1.2},
     ]);
+
+    let wth = 0;
     return {
       group,
       update(dt){
-        wormG.rotation.x += dt*3.0;
-        wheelG.rotation.y -= dt*3.0/RATIO;
-      }
+        wth += dt*3.2;
+        wormG.rotation.x = wth;                       // 蜗杆绕自身轴（X）转
+        wheelG.rotation.z = -wth/RATIO;               // 蜗轮绕自身轴（Z）慢转：36:1
+      },
+      reset(){ wth = 0; }
     };
   },
 
-  /* ---------- 3 垂直传动（冠状齿轮） ---------- */
+  /* ---------- 3 垂直传动：冠齿轮（端面齿）+ 直立小齿轮，90° 真啮合 ---------- */
   bevel: function(){
     const group = new THREE.Group();
-    const base = makeBase(6, 3.6, 0xEFE9F5); base.position.y = -0.55; group.add(base);
-    // 电机 + 竖直轴
-    const motor = new THREE.Group();
-    motor.add(new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.7, 0.7), mat(0x9AA3B2, {roughness:0.5})));
-    motor.position.set(0, 0.15, 0); group.add(motor);
-    const axle = makeAxle(1.4, 0.1, 0xB9C4D0); axle.position.y = 0.85; group.add(axle);
-    const mL = makeLabel('电机', {bg:'rgba(154,163,178,0.92)', fg:'#fff', border:'#9AA3B2', size:0.55});
-    mL.position.set(0, -0.15, 0.85); group.add(mL);
-    // 冠状齿轮（水平盘，齿朝上，齿环半径1.2）
+    const base = makeBase(6.0, 3.4, 0xEFE9F5); base.position.y = -0.55; group.add(base);
+    const BASE_TOP = -0.4;
+    const CN = 16, CR = 1.12, CY = 0.42;            // 冠齿圈半径 / 冠齿轮盘面高度
+    const pitchC = 2*Math.PI*CR/CN;
+    const ZP = 12, rP = ZP*pitchC/(2*Math.PI);
+    const PY = CY + 0.32 + rP;                       // 小齿轮中心：节圆与冠齿节线相切
+
+    // 电机：竖直轴，从基板直立驱动冠齿轮
+    const motor = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.6, 0.8), mat(0x9AA3B2, {roughness:0.5}));
+    motor.position.set(0, BASE_TOP+0.3, 0); motor.castShadow = true; group.add(motor);
+    const vAxle = makeAxle(0.75, 0.10, 0xB9C4D0); vAxle.position.set(0, BASE_TOP+0.78, 0); group.add(vAxle);
+
+    // 冠齿轮：水平盘 + 盘缘一圈朝上的齿
     const crown = new THREE.Group();
-    const disc = new THREE.Mesh(new THREE.CylinderGeometry(1.05, 1.05, 0.34, 40), mat(0xFFD54F, {roughness:0.35}));
-    disc.castShadow = true; crown.add(disc);
-    const CN = 16, cr = 1.18, pitchC = 2*Math.PI*cr/CN;
+    const cDisc = new THREE.Mesh(new THREE.CylinderGeometry(CR-0.12, CR-0.12, 0.3, 56), mat(0xFFD54F, {roughness:0.35}));
+    cDisc.castShadow = cDisc.receiveShadow = true; crown.add(cDisc);
     for(let i=0;i<CN;i++){
       const a = i/CN*Math.PI*2;
-      const tooth = new THREE.Mesh(new THREE.BoxGeometry(pitchC*0.55, 0.5, 0.34), mat(0xF5C83C));
-      tooth.position.set(Math.cos(a)*cr, 0.42, Math.sin(a)*cr);
+      const tooth = new THREE.Mesh(new THREE.BoxGeometry(0.20, 0.34, 0.18), mat(0xF2C230));
+      tooth.position.set(Math.cos(a)*CR, 0.32, Math.sin(a)*CR);
       tooth.rotation.y = -a;
       tooth.castShadow = true; crown.add(tooth);
     }
-    crown.position.set(0, 0.52, 0);
+    crown.position.set(0, CY, 0);
     group.add(crown);
-    // 锥齿轮（斜置，轴沿 X，齿在竖直平面，底齿与冠状齿轮齿环咬合）
-    const vert = new THREE.Group();
-    const spin = new THREE.Group();
-    const vTeeth = 12, vPitch = pitchC;
-    const vg = makeGear({teeth:vTeeth, pitch:vPitch, thick:0.34, color:0x4DB6AC, toothColor:0x3DA79B});
-    vg.rotation.z = Math.PI/2;           // 齿轮轴转为 X 向（齿在竖直 XY 平面）
-    spin.add(vg);
-    vert.add(spin);
-    const vR = vTeeth*vPitch/(2*Math.PI);
-    vert.position.set(1.18 + vR*0.6, 0.94 + vR*0.8, 0);  // 斜下方抵住齿环
-    vert.rotation.x = -Math.PI/3.4;      // 整体倾斜，呈锥齿轮姿态
-    group.add(vert);
-    const rimDot = new THREE.Mesh(new THREE.SphereGeometry(0.1, 14, 14), mat(0xFF5252));
-    rimDot.position.set(0, 0, vR); vg.add(rimDot);
-    // 标签
-    const l1 = makeLabel('冠状齿轮', {border:0xFFD54F, size:0.62}); l1.position.set(0, 1.5, 0); group.add(l1);
-    const l2 = makeLabel('锥齿轮', {border:0x4DB6AC, size:0.62}); l2.position.set(1.7, 2.3, 0); group.add(l2);
+
+    // 直立小齿轮（盘面 XY、轴沿 Z），轮齿从上方插进冠齿齿槽
+    const pinion = new THREE.Group();
+    const pg = makeGear({teeth:ZP, pitch:pitchC, thick:0.34, color:0x4DB6AC, toothColor:0x3DA79B});
+    pinion.add(pg);
+    pinion.position.set(CR, PY, 0);
+    group.add(pinion);
+    // 小齿轮的轴承座（两块竖板 + 一根沿 Z 的短轴）
+    group.add(makeStand(CR, PY, 0.34, 0.20, 0xB9C4D0, BASE_TOP));
+    const pAxle = makeAxle(0.85, 0.085, 0xB9C4D0); pAxle.rotation.x = Math.PI/2;
+    pAxle.position.set(CR, PY, 0); group.add(pAxle);
+
+    const rimDot = new THREE.Mesh(new THREE.SphereGeometry(0.09, 14, 14), mat(0xFF5252));
+    rimDot.position.set(0, -rP*0.62, 0.20); pg.add(rimDot);
+
+    const l1 = makeLabel('冠齿轮', {border:0xFFD54F, size:0.6}); l1.position.set(-CR-0.05, CY+0.75, 0); group.add(l1);
+    const l2 = makeLabel('小齿轮', {border:0x4DB6AC, size:0.6}); l2.position.set(CR+0.15, PY+0.75, 0); group.add(l2);
     const l3 = makeLabel('90° 转向', {bg:'rgba(255,214,79,0.92)', fg:'#7A5C08', border:'#FFD54F', size:0.55});
-    l3.position.set(0.5, 2.0, 0); group.add(l3);
+    l3.position.set(0.35, 2.35, 0); group.add(l3);
+
     setAxis([
-      {from:new THREE.Vector3(0,0.3,0), to:new THREE.Vector3(0,2.2,0), color:0xFFD54F},
-      {from:new THREE.Vector3(-1.4,2.1,0), to:new THREE.Vector3(2.6,0.5,0), color:0x4DB6AC},
+      {from:new THREE.Vector3(0,BASE_TOP,0), to:new THREE.Vector3(0,CY+0.7,0), color:0xFFD54F},
+      {from:new THREE.Vector3(CR-0.8,PY,0), to:new THREE.Vector3(CR+0.8,PY,0), color:0x4DB6AC},
     ]);
-    const cb = crown.position.clone(), vb = vert.position.clone();
     setExplode([
-      {obj:crown, base:cb, dir:new THREE.Vector3(0,-1,0), dist:0.9},
-      {obj:vert, base:vb, dir:new THREE.Vector3(0,1,0), dist:0.9},
+      {obj:crown,  base:crown.position.clone(),  dir:new THREE.Vector3(0,-1,0), dist:0.8},
+      {obj:pinion, base:pinion.position.clone(), dir:new THREE.Vector3(0, 1,0), dist:0.8},
     ]);
+
+    let thc = 0;
     return {
       group,
       update(dt){
-        crown.rotation.y += dt*2.0;
-        spin.rotation.x -= dt*2.0;   // 锥齿轮绕自身轴自旋
-      }
+        thc += dt*1.7;
+        crown.rotation.y = thc;
+        // 端面啮合相位：冠齿节距与直齿轮节距一一对应，齿槽永远对得上
+        pinion.rotation.z = meshAngle(thc, CN, ZP, 0);
+      },
+      reset(){ thc = 0; }
     };
   },
 
-  /* ---------- 4 皮带传动 ---------- */
+  /* ---------- 4 皮带传动：外公切线路径，皮带真正搭在轮缘上 ---------- */
   belt: function(){
     const group = new THREE.Group();
-    const base = makeBase(6.8, 3, 0xEFE9F5); base.position.y = -0.15; group.add(base);
-    const L = new THREE.Vector3(-1.7, 1.15, 0), R = new THREE.Vector3(1.7, 1.0, 0);
-    const rL = 0.62, rR = 0.95;
-    // 带轮
-    const pulL = makePulley(rL, 0.34, 0xFF8A80); pulL.position.copy(L); group.add(pulL);
-    const pulR = makePulley(rR, 0.34, 0x4FC3F7); pulR.position.copy(R); group.add(pulR);
-    // 电机
-    const motor = new THREE.Group();
-    motor.add(new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.55, 0.55), mat(0x9AA3B2, {roughness:0.5})));
-    motor.position.set(-1.7, 0.32, 0); group.add(motor);
-    // 皮带路径
-    const pts = [];
-    const N = 40;
-    const oL = rL+0.13, oR = rR+0.13;
-    const B_L = new THREE.Vector3(L.x, L.y-oL, 0), B_R = new THREE.Vector3(R.x-oR, R.y-oR, 0);
-    const T_R = new THREE.Vector3(R.x+oR, R.y+oR, 0), T_L = new THREE.Vector3(L.x+oL, L.y+oL, 0);
-    for(let i=0;i<N;i++){
-      const t = i/N;
-      if(t < 0.25){ const a = Math.PI/2 + (t/0.25)*Math.PI; pts.push(new THREE.Vector3(L.x+Math.cos(a)*oL, L.y+Math.sin(a)*oL, 0)); }
-      else if(t < 0.5){ const k=(t-0.25)/0.25; pts.push(B_L.clone().lerp(B_R, k)); }
-      else if(t < 0.75){ const a = -Math.PI/2 + ((t-0.5)/0.25)*Math.PI; pts.push(new THREE.Vector3(R.x+Math.cos(a)*oR, R.y+Math.sin(a)*oR, 0)); }
-      else { const k=(t-0.75)/0.25; pts.push(T_R.clone().lerp(T_L, k)); }
-    }
-    const curve = new THREE.CatmullRomCurve3(pts, true, 'catmullrom', 0.5);
-    // 皮带条纹纹理
-    const tc = document.createElement('canvas'); tc.width=512; tc.height=64;
+    const base = makeBase(6.8, 3.2, 0xEFE9F5); base.position.y = -0.15; group.add(base);
+    const L = new THREE.Vector2(-1.65, 1.35), R = new THREE.Vector2(1.65, 1.15);
+    const rL = 0.62, rR = 0.98;
+    const pulL = makePulley(rL, 0.32, 0xFF8A80); pulL.position.set(L.x, L.y, 0); group.add(pulL);
+    const pulR = makePulley(rR, 0.32, 0x4FC3F7); pulR.position.set(R.x, R.y, 0); group.add(pulR);
+    group.add(makeStand(L.x, L.y, 0.26, 0.18, 0xB9C4D0, 0.0), makeStand(R.x, R.y, 0.26, 0.18, 0xB9C4D0, 0.0));
+
+    // 电机：与左带轮同轴
+    const motor = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.58, 0.7), mat(0x9AA3B2, {roughness:0.5}));
+    motor.position.set(L.x, L.y, -0.62); motor.castShadow = true; group.add(motor);
+    const mAxle = makeAxle(0.7, 0.09, 0x8E9BA8); mAxle.rotation.x = Math.PI/2;
+    mAxle.position.set(L.x, L.y, -0.28); group.add(mAxle);
+
+    // 皮带路径：外公切线 + 包角圆弧（原版四个点连 CatmullRom 会切进轮盘里）
+    const pts = beltLoop(L, rL, R, rR, 0.10);
+    const curve = new THREE.CatmullRomCurve3(pts, true, 'centripetal', 0.5);
+    const beltLen = curve.getLength();
+
+    const tc = document.createElement('canvas'); tc.width = 512; tc.height = 64;
     const tctx = tc.getContext('2d');
-    tctx.fillStyle='#3A3444'; tctx.fillRect(0,0,512,64);
-    tctx.fillStyle='#FFF3C9';
+    tctx.fillStyle = '#3A3444'; tctx.fillRect(0, 0, 512, 64);
+    tctx.fillStyle = '#FFF3C9';
     for(let x=0;x<512;x+=64) tctx.fillRect(x, 10, 22, 44);
     const beltTex = new THREE.CanvasTexture(tc);
     beltTex.wrapS = beltTex.wrapT = THREE.RepeatWrapping;
-    beltTex.repeat.set(6, 1);
-    const belt = new THREE.Mesh(new THREE.TubeGeometry(curve, 96, 0.11, 10, true),
-      new THREE.MeshStandardMaterial({ map:beltTex, roughness:0.85 }));
+    const beltRepeat = Math.max(6, Math.round(beltLen/0.36));
+    beltTex.repeat.set(beltRepeat, 1);
+
+    const belt = new THREE.Mesh(new THREE.TubeGeometry(curve, 160, 0.10, 10, true),
+      new THREE.MeshStandardMaterial({map:beltTex, roughness:0.85}));
     belt.castShadow = true; group.add(belt);
-    const l1 = makeLabel('小带轮', {border:0xFF8A80, size:0.55}); l1.position.set(L.x, L.y+rL+0.5, 0); group.add(l1);
-    const l2 = makeLabel('大带轮', {border:0x4FC3F7, size:0.55}); l2.position.set(R.x, R.y+rR+0.5, 0); group.add(l2);
+
+    const l1 = makeLabel('小带轮', {border:0xFF8A80, size:0.55}); l1.position.set(L.x, L.y+rL+0.45, 0); group.add(l1);
+    const l2 = makeLabel('大带轮', {border:0x4FC3F7, size:0.55}); l2.position.set(R.x, R.y+rR+0.45, 0); group.add(l2);
     setAxis([
-      {from:new THREE.Vector3(L.x,L.y-1,0), to:new THREE.Vector3(L.x,L.y+1,0), color:0xFF8A80},
-      {from:new THREE.Vector3(R.x,R.y-1,0), to:new THREE.Vector3(R.x,R.y+1,0), color:0x4FC3F7},
+      {from:new THREE.Vector3(L.x,L.y-1.1,0), to:new THREE.Vector3(L.x,L.y+1.1,0), color:0xFF8A80},
+      {from:new THREE.Vector3(R.x,R.y-1.1,0), to:new THREE.Vector3(R.x,R.y+1.1,0), color:0x4FC3F7},
     ]);
-    const lb = pulL.position.clone(), rb = pulR.position.clone(), bb = belt.position.clone();
     setExplode([
-      {obj:pulL, base:lb, dir:new THREE.Vector3(0,0,-1), dist:0.8},
-      {obj:pulR, base:rb, dir:new THREE.Vector3(0,0,-1), dist:0.8},
-      {obj:belt, base:bb, dir:new THREE.Vector3(0,0,1), dist:0.8},
+      {obj:pulL, base:pulL.position.clone(), dir:new THREE.Vector3(0,0,-1), dist:0.9},
+      {obj:pulR, base:pulR.position.clone(), dir:new THREE.Vector3(0,0,-1), dist:0.9},
+      {obj:belt, base:belt.position.clone(), dir:new THREE.Vector3(0,0,1), dist:0.9},
     ]);
+
+    let thL = 0;
     return {
       group,
       update(dt){
-        const w = dt*2.2;
-        pulL.rotation.z += w;
-        pulR.rotation.z += w*(rL/rR);
-        beltTex.offset.x += w*rL*0.9;
-      }
+        const d = dt*2.0;
+        thL += d;
+        pulL.rotation.z = thL;
+        pulR.rotation.z = thL*(rL/rR);          // 开口带：两轮同向，线速度相等 → 大轮慢转
+        beltTex.offset.x -= d*rL/0.36;          // 皮带表面速度 = 轮缘线速度
+      },
+      reset(){ thL = 0; }
     };
   },
 
-  /* ---------- 5 杠杆 ---------- */
+  /* ---------- 5 杠杆：吊篮始终竖直（重力方向），倾角由力矩差决定 ---------- */
   lever: function(){
     const group = new THREE.Group();
-    const base = makeBase(6.6, 3.2, 0xEFE9F5); base.position.y = -0.1; group.add(base);
-    const HALF = 2.35, PIVOT_Y = 1.0;
-    // 支点（三角，可移动）
+    const base = makeBase(6.8, 3.2, 0xEFE9F5); base.position.y = -0.1; group.add(base);
+    const HALF = 2.3, PIVOT_Y = 1.45;
+
+    // 支点：三角形棱柱（XY 平面内的三角，沿 Z 拉伸），顶点正好顶住梁底
     const fulcrum = new THREE.Group();
-    const tri = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.68, 1.2, 3), mat(0xFFD54F, {roughness:0.4}));
-    tri.rotation.y = -Math.PI/2; tri.castShadow = true; fulcrum.add(tri);
-    group.add(fulcrum);
-    // 旋转组：原点即支点（世界位置随 fx 移动）
-    const beamG = new THREE.Group();
-    const beam = new THREE.Mesh(new THREE.BoxGeometry(HALF*2, 0.2, 0.42), mat(0xFF8A80, {roughness:0.35}));
-    beam.castShadow = true; beamG.add(beam);
-    // 吊篮 + 砝码（挂在梁端，梁局部随支点偏移）
+    const triShape = new THREE.Shape();
+    triShape.moveTo(-0.60, 0); triShape.lineTo(0.60, 0); triShape.lineTo(0, PIVOT_Y - 0.03);
+    triShape.closePath();
+    const triGeo = new THREE.ExtrudeGeometry(triShape, {depth:0.5, bevelEnabled:false});
+    triGeo.translate(0, 0, -0.25);
+    const tri = new THREE.Mesh(triGeo, mat(0xFFD54F, {roughness:0.4}));
+    tri.position.y = 0.02; tri.castShadow = tri.receiveShadow = true;
+    fulcrum.add(tri); group.add(fulcrum);
+
+    // 梁：绕支点旋转；梁相对支点反向平移，使两端始终停在 ±HALF
+    const beamG = new THREE.Group(); beamG.position.set(0, PIVOT_Y, 0);
+    const beam = new THREE.Mesh(new THREE.BoxGeometry(HALF*2, 0.2, 0.44), mat(0xFF8A80, {roughness:0.35}));
+    beam.castShadow = true; beamG.add(beam); group.add(beamG);
+
+    // 吊篮（浅托盘 + 双绳），用反旋保证始终竖直——重力永远朝下
     const bL = new THREE.Group(), bR = new THREE.Group();
-    function makeBucket(g, color){
-      const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.36, 0.5, 20), mat(color));
-      cup.position.y = -0.25; cup.castShadow = true; g.add(cup);
-      const handle = new THREE.Mesh(new THREE.TorusGeometry(0.18, 0.035, 8, 20), mat(0x5B4A63));
-      handle.rotation.x = Math.PI/2; handle.position.y = 0.02; g.add(handle);
+    bL.userData.tag = 'bucket'; bR.userData.tag = 'bucket';
+    function makeBasket(g, color){
+      const tray = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.31, 0.12, 22), mat(color));
+      tray.position.y = -0.30; tray.castShadow = tray.receiveShadow = true; g.add(tray);
+      for(const sx of [-0.22, 0.22]){
+        const rope = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.24, 8), mat(0x5B4A63));
+        rope.position.set(sx, -0.11, 0); g.add(rope);
+      }
+      const hk = new THREE.Mesh(new THREE.TorusGeometry(0.10, 0.022, 8, 16), mat(0x5B4A63));
+      g.add(hk);
     }
-    makeBucket(bL, 0x4FC3F7); makeBucket(bR, 0xFF5252);
-    beamG.add(bL); beamG.add(bR);
+    makeBasket(bL, 0x4FC3F7); makeBasket(bR, 0xFF5252);
+    beamG.add(bL, bR);
     const wLgrp = new THREE.Group(), wRgrp = new THREE.Group();
     bL.add(wLgrp); bR.add(wRgrp);
-    wLgrp.position.y = -0.6; wRgrp.position.y = -0.6;
-    group.add(beamG);
+
     function setWeights(grp, n){
-      while(grp.children.length) grp.remove(grp.children[0]);
+      while(grp.children.length){ const c = grp.children[0]; grp.remove(c); if(c.geometry) c.geometry.dispose(); }
       for(let i=0;i<n;i++){
-        const w = new THREE.Mesh(new THREE.SphereGeometry(0.22, 18, 18), mat(i%2? 0x4DB6AC : 0xFFD54F));
-        w.position.set(0, 0.24+i*0.42, 0); w.castShadow = true; grp.add(w);
+        const w = new THREE.Mesh(new THREE.BoxGeometry(0.20, 0.15, 0.20), mat(i%2 ? 0x4DB6AC : 0xFFD54F));
+        const col = i % 3, row = Math.floor(i/3);
+        w.position.set((col-1)*0.20, -0.165 + row*0.165, 0);  // 从托盘往上码，不撞梁
+        w.castShadow = true; grp.add(w);
       }
     }
-    // 力箭头 + 标签（世界坐标跟随）
-    const fAL = makeArrow(1.1, 0x4FC3F7); fAL.rotation.z = Math.PI; group.add(fAL);
-    const fAR = makeArrow(1.1, 0xFF5252); fAR.rotation.z = Math.PI; group.add(fAR);
+
+    const fAL = makeArrow(1.0, 0x4FC3F7); fAL.rotation.z = -Math.PI/2; group.add(fAL);
+    const fAR = makeArrow(1.0, 0xFF5252); fAR.rotation.z = -Math.PI/2; group.add(fAR);
     const lblF = makeLabel('动力', {border:0x4FC3F7, size:0.5}); group.add(lblF);
     const lblR = makeLabel('阻力', {border:0xFF5252, size:0.5}); group.add(lblR);
     const lblP = makeLabel('支点', {bg:'rgba(255,214,79,0.92)', fg:'#7A5C08', border:'#FFD54F', size:0.55}); group.add(lblP);
@@ -943,144 +1109,173 @@ const DEMOS = {
     const st = { fx:0, wL:3, wR:3 };
     function apply(){
       const fx = THREE.MathUtils.clamp(st.fx, -1.15, 1.15);
-      const inset = 0.15;
-      const dL = HALF - inset + fx, dR = HALF - inset - fx;
-      const target = THREE.MathUtils.clamp((st.wL*dL - st.wR*dR)*0.05, -0.5, 0.5);
-      // 支点世界位置
+      const dL = HALF - 0.10 + fx, dR = HALF - 0.10 - fx;
+      const mL = st.wL*dL, mR = st.wR*dR;
+      const theta = THREE.MathUtils.clamp(0.7*(mL-mR)/Math.max(mL+mR, 1), -0.12, 0.12);
+
       beamG.position.set(fx, PIVOT_Y, 0);
-      fulcrum.position.set(fx, 0.4, 0);
-      // 梁绕支点：梁中心偏移 -fx，吊篮挂在梁端
+      fulcrum.position.set(fx, 0, 0);
       beam.position.x = -fx;
-      bL.position.set(-fx-(HALF-inset), -0.25, 0);
-      bR.position.set(-fx+(HALF-inset), -0.25, 0);
-      beamG.rotation.z = target;
-      // 力箭头
-      const cL = Math.cos(target), sL = Math.sin(target);
-      const wbLx = fx + cL*(-fx-(HALF-inset)) - sL*(-0.6);
-      const wbLy = PIVOT_Y + sL*(-fx-(HALF-inset)) + cL*(-0.6);
-      fAL.position.set(wbLx, wbLy-0.35, 0.55); lblF.position.set(wbLx, wbLy-0.85, 0.55);
-      const wbRx = fx + cL*(-fx+(HALF-inset)) - sL*(-0.6);
-      const wbRy = PIVOT_Y + sL*(-fx+(HALF-inset)) + cL*(-0.6);
-      fAR.position.set(wbRx, wbRy-0.35, 0.55); lblR.position.set(wbRx, wbRy-0.85, 0.55);
-      lblP.position.set(fx, PIVOT_Y+1.0, 0);
-      setWeights(wLgrp, st.wL); setWeights(wRgrp, st.wR);
+      bL.position.set(-fx-(HALF-0.10), -0.40, 0);
+      bR.position.set(-fx+(HALF-0.10), -0.40, 0);
+      beamG.rotation.z = theta;
+      bL.rotation.z = -theta;                  // 反旋 → 吊篮永远竖直
+      bR.rotation.z = -theta;
+
+      const c = Math.cos(theta), s = Math.sin(theta);
+      const xL = fx + c*bL.position.x - s*bL.position.y;
+      const yL = PIVOT_Y + s*bL.position.x + c*bL.position.y;
+      const xR = fx + c*bR.position.x - s*bR.position.y;
+      const yR = PIVOT_Y + s*bR.position.x + c*bR.position.y;
+      fAL.position.set(xL, yL+0.72, 0.42); lblF.position.set(xL, yL+0.96, 0.42);
+      fAR.position.set(xR, yR+0.72, 0.42); lblR.position.set(xR, yR+0.96, 0.42);
+      lblP.position.set(fx, PIVOT_Y+0.52, 0);
+
+      setWeights(wLgrp, st.wL);
+      setWeights(wRgrp, st.wR);
     }
     apply();
-    group.userData = { set:(k,v)=>{ st[k]=v; apply(); } };
-    return {
-      group,
-      update(dt){}
-    };
+    group.userData = { set:(k,v)=>{ st[k] = (k==='fx') ? parseFloat(v) : parseInt(v); apply(); }, st };
+    return { group, update(){} };
   },
 
-  /* ---------- 6 曲柄连杆（四连杆） ---------- */
+  /* ---------- 6 曲柄连杆（磕头机）：四连杆解算 + 竖直抽油杆 ---------- */
   crank: function(){
     const group = new THREE.Group();
-    const base = makeBase(6.4, 3.2, 0xEFE9F5); base.position.y = -0.35; group.add(base);
-    const O1 = new THREE.Vector2(-1.4, 1.15), O2 = new THREE.Vector2(1.35, 1.15);
-    const r = 0.9, L = 2.5, R2 = 1.5;
-    // 立柱
-    const p1 = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.28, 1.05, 14), mat(0x8E9BA8)); p1.position.set(O1.x, 0.28, 0); group.add(p1);
+    const base = makeBase(6.6, 3.2, 0xEFE9F5); base.position.y = -0.35; group.add(base);
+    const O1 = new THREE.Vector2(-1.45, 1.25), O2 = new THREE.Vector2(1.20, 1.25);
+    const r = 0.80, L = 2.30, R2 = 1.20;
+    // 格拉斯霍夫判据：r + 机架(2.65) ≤ L + R2(3.5) → 曲柄能整圈旋转
+    const p1 = new THREE.Mesh(new THREE.CylinderGeometry(0.20, 0.26, 1.05, 14), mat(0x8E9BA8));
+    p1.position.set(O1.x, 0.28, 0); p1.castShadow = true; group.add(p1);
     const p2 = p1.clone(); p2.position.set(O2.x, 0.28, 0); group.add(p2);
-    // 电机
-    const motor = new THREE.Group();
-    motor.add(new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.7, 0.7), mat(0x9AA3B2, {roughness:0.5})));
-    motor.position.set(O1.x, 0.95, 0); group.add(motor);
+
+    const motor = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.7, 0.7), mat(0x9AA3B2, {roughness:0.5}));
+    motor.position.set(O1.x, 0.95, 0); motor.castShadow = true; group.add(motor);
     const mL = makeLabel('电机', {bg:'rgba(154,163,178,0.92)', fg:'#fff', border:'#9AA3B2', size:0.52});
-    mL.position.set(O1.x, 2.0, 0); group.add(mL);
+    mL.position.set(O1.x-0.45, 1.95, 0); group.add(mL);
+
     // 曲柄
     const crank = new THREE.Group();
-    const crankBar = makeBar(r, 0.24, 0xFF8A80);
-    crankBar.position.x = r/2; crank.add(crankBar);
-    const jointP = new THREE.Mesh(new THREE.SphereGeometry(0.16, 16, 16), mat(0xFF5252)); jointP.position.x = r; crank.add(jointP);
-    crank.position.set(O1.x, O1.y, 0);
-    group.add(crank);
-    // 摇臂
+    const crankBar = makeBar(r, 0.24, 0xFF8A80); crankBar.position.x = r/2; crank.add(crankBar);
+    const jointP = new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 16), mat(0xFF5252));
+    jointP.position.x = r; crank.add(jointP);
+    crank.position.set(O1.x, O1.y, 0); crank.userData.tag='crank'; group.add(crank);
+    // 摇臂（游梁）
     const rocker = new THREE.Group();
-    const rockerBar = makeBar(R2, 0.24, 0xFFD54F);
-    rockerBar.position.x = R2/2; rocker.add(rockerBar);
-    const jointQ = new THREE.Mesh(new THREE.SphereGeometry(0.16, 16, 16), mat(0xF5A623)); jointQ.position.x = R2; rocker.add(jointQ);
-    rocker.position.set(O2.x, O2.y, 0);
-    group.add(rocker);
-    // 连杆（动态创建）
-    const coupler = makeBar(L, 0.22, 0x4FC3F7); group.add(coupler);
-    // 抽油杆演示
-    const pumpRod = new THREE.Mesh(new THREE.BoxGeometry(0.16, 1.6, 0.16), mat(0x8E9BA8, {roughness:0.4}));
-    pumpRod.position.set(0, 0.5, 0); group.add(pumpRod);
-    const well = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.46, 0.5, 18), mat(0x5B4A63));
-    well.position.set(0, -0.02, 0); group.add(well);
-    const l1 = makeLabel('曲柄', {border:0xFF8A80, size:0.52}); l1.position.set(O1.x, 2.2, 0); group.add(l1);
-    const l2 = makeLabel('摇臂', {border:0xFFD54F, size:0.52}); l2.position.set(O2.x, 2.2, 0); group.add(l2);
-    const l3 = makeLabel('连杆', {border:0x4FC3F7, size:0.5}); l3.position.set(0.1, 2.6, 0); group.add(l3);
+    const rockerBar = makeBar(R2, 0.24, 0xFFD54F); rockerBar.position.x = R2/2; rocker.add(rockerBar);
+    const jointQ = new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 16), mat(0xF5A623));
+    jointQ.position.x = R2; rocker.add(jointQ);
+    rocker.position.set(O2.x, O2.y, 0); rocker.userData.tag='rocker'; group.add(rocker);
+    // 连杆（长度恒定，用缩放匹配两端铰点距离）
+    const coupler = makeBar(L, 0.20, 0x4FC3F7); coupler.userData.tag='coupler'; group.add(coupler);
+
+    // 井口 + 抽油杆（永远竖直，只在井口中心上下运动）
+    const wellX = O2.x - 0.45;
+    const well = new THREE.Mesh(new THREE.CylinderGeometry(0.40, 0.46, 0.55, 18), mat(0x5B4A63));
+    well.position.set(wellX, 0.02, 0); well.castShadow = true; group.add(well);
+    const pumpRod = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 1.5, 14), mat(0x8E9BA8, {roughness:0.4}));
+    pumpRod.castShadow = true; pumpRod.userData.tag='pumpRod'; group.add(pumpRod);
+    const rodHead = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.16, 0.34), mat(0xFF8A80));
+    rodHead.castShadow = true; group.add(rodHead);
+    const wire = makeUnitBar(0.028, 0x5B4A63, false); group.add(wire);
+
+    const l1 = makeLabel('曲柄', {border:0xFF8A80, size:0.52}); l1.position.set(O1.x-0.1, 2.35, 0); group.add(l1);
+    const l2 = makeLabel('摇臂', {border:0xFFD54F, size:0.52}); l2.position.set(O2.x+0.9, 2.20, 0); group.add(l2);
+    const l3 = makeLabel('连杆', {border:0x4FC3F7, size:0.50}); l3.position.set(0.1, 2.55, 0); group.add(l3);
     setAxis([
-      {from:new THREE.Vector3(O1.x,-0.3,0), to:new THREE.Vector3(O1.x,2.2,0), color:0xFF8A80},
-      {from:new THREE.Vector3(O2.x,-0.3,0), to:new THREE.Vector3(O2.x,2.2,0), color:0xFFD54F},
+      {from:new THREE.Vector3(O1.x,-0.05,0), to:new THREE.Vector3(O1.x,2.0,0), color:0xFF8A80},
+      {from:new THREE.Vector3(O2.x,-0.05,0), to:new THREE.Vector3(O2.x,2.0,0), color:0xFFD54F},
     ]);
+
     let th = 0;
     return {
       group,
       update(dt){
-        th += dt*1.6;
+        th += dt*1.5;
         crank.rotation.z = th;
         const P = new THREE.Vector2(O1.x + r*Math.cos(th), O1.y + r*Math.sin(th));
+        // 以摇臂为基准解三角形：|PQ| = L, |O2Q| = R2（取上方分支，保持连续）
         const d = P.distanceTo(O2);
-        const dc = THREE.MathUtils.clamp((d*d + R2*R2 - L*L)/(2*d*R2), -1, 1);
-        let beta = Math.acos(dc);
+        const cosB = THREE.MathUtils.clamp((d*d + R2*R2 - L*L)/(2*d*R2), -1, 1);
+        const beta = Math.acos(cosB);
         const phi = Math.atan2(P.y-O2.y, P.x-O2.x);
-        const rockA = phi + beta;
+        const rockA = phi - beta;
         const Q = new THREE.Vector2(O2.x + R2*Math.cos(rockA), O2.y + R2*Math.sin(rockA));
         rocker.rotation.z = rockA;
-        // 连杆位置
+
         const mid = P.clone().add(Q).multiplyScalar(0.5);
         const len = P.distanceTo(Q);
         coupler.position.set(mid.x, mid.y, 0);
         coupler.rotation.z = Math.atan2(Q.y-P.y, Q.x-P.x);
         coupler.scale.set(len/L, 1, 1);
-        // 抽油杆随摇臂端点头
-        const rx = Q.x - O2.x;
-        pumpRod.position.x = O2.x + rx*1.35 + 0.2;
-        pumpRod.position.y = 0.45 + (Q.y - O1.y)*0.45;
-        well.position.x = O2.x + 1.9;
-      }
+
+        // 驴头端通过钢丝绳拉动抽油杆：杆只做竖直运动
+        const rodTop = 0.95 + (Q.y - 1.95)*0.85;
+        pumpRod.position.set(wellX, 0.30 + rodTop/2, 0);
+        pumpRod.scale.set(1, rodTop/1.5, 1);
+        rodHead.position.set(wellX, 0.30 + rodTop, 0);
+        placeBar(wire, {x:Q.x, y:Q.y-0.05}, {x:wellX, y:0.30 + rodTop + 0.08});
+      },
+      reset(){ th = 0; }
     };
   },
 
-  /* ---------- 7 曲柄滑块 ---------- */
+  /* ---------- 7 曲柄滑块：导轨包住滑块，行程全在轨内（偏置式，与活塞一致） ---------- */
   slider: function(){
     const group = new THREE.Group();
-    const base = makeBase(6.6, 3.2, 0xEFE9F5); base.position.y = -0.15; group.add(base);
-    const pivot = new THREE.Vector2(0, 1.15);
-    const r = 0.75, L = 2.15, pathY = 0.35;
-    // 电机
-    const motor = new THREE.Group();
-    motor.add(new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.75, 0.75), mat(0x9AA3B2, {roughness:0.5})));
-    motor.position.set(pivot.x, pivot.y+0.15, 0); group.add(motor);
+    const base = makeBase(6.8, 3.4, 0xEFE9F5); base.position.y = -0.15; group.add(base);
+    const pivot = new THREE.Vector2(-0.9, 1.30);
+    const r = 0.72, L = 2.05, pathY = 0.42;
+    const BLOCK = 0.52;
+
+    const motor = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.72, 0.72), mat(0x9AA3B2, {roughness:0.5}));
+    motor.position.set(pivot.x, pivot.y, -0.62); motor.castShadow = true; group.add(motor);
+    const mAxle = makeAxle(0.5, 0.09, 0x8E9BA8); mAxle.rotation.x = Math.PI/2;
+    mAxle.position.set(pivot.x, pivot.y, -0.22); group.add(mAxle);
     const mL = makeLabel('电机', {bg:'rgba(154,163,178,0.92)', fg:'#fff', border:'#9AA3B2', size:0.5});
-    mL.position.set(pivot.x, pivot.y+1.35, 0); group.add(mL);
+    mL.position.set(pivot.x, pivot.y+1.2, 0); group.add(mL);
+
     // 曲柄
     const crank = new THREE.Group();
     const crankBar = makeBar(r, 0.22, 0xFF8A80); crankBar.position.x = r/2; crank.add(crankBar);
-    const jointP = new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 16), mat(0xFF5252)); jointP.position.x = r; crank.add(jointP);
-    crank.position.set(pivot.x, pivot.y, 0); group.add(crank);
-    // 导轨
-    const rail1 = new THREE.Mesh(new THREE.BoxGeometry(4.6, 0.1, 0.1), mat(0xB9C4D0)); rail1.position.set(0, pathY+0.05, 0); group.add(rail1);
-    const rail2 = rail1.clone(); rail2.position.set(0, pathY-0.42, 0); group.add(rail2);
-    // 滑块
+    const jointP = new THREE.Mesh(new THREE.SphereGeometry(0.14, 16, 16), mat(0xFF5252));
+    jointP.position.x = r; crank.add(jointP);
+    crank.position.set(pivot.x, pivot.y, 0); crank.userData.tag='crank'; group.add(crank);
+    group.add(makePost(pivot.x, 0.05, pivot.y-0.1, 0, 0.09));
+
+    // 导轨：上下两片，间距 = 滑块高度 + 0.04（既不穿模也不悬空）
+    const railY1 = pathY + BLOCK/2 + 0.05, railY2 = pathY - BLOCK/2 - 0.05;
+    const RAIL_LEN = 5.6, RAIL_CX = 0.9;
+    for(const yy of [railY1, railY2]){
+      const rail = new THREE.Mesh(new THREE.BoxGeometry(RAIL_LEN, 0.10, 0.5), mat(0xB9C4D0));
+      rail.position.set(RAIL_CX, yy, 0); rail.castShadow = true; group.add(rail);
+    }
+    for(const xx of [RAIL_CX-RAIL_LEN/2+0.12, RAIL_CX+RAIL_LEN/2-0.12]){
+      const post = makePost(xx, 0.05, pathY - BLOCK/2, 0, 0.06, 0xB9C4D0);
+      group.add(post);
+    }
+
     const slider = new THREE.Group();
-    const block = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.52, 0.72), mat(0xFF5252, {roughness:0.4}));
+    const block = new THREE.Mesh(new THREE.BoxGeometry(0.72, BLOCK, 0.72), mat(0xFF5252, {roughness:0.4}));
     block.castShadow = true; slider.add(block);
-    const flag = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.6, 0.06), mat(0xFFD54F));
-    flag.position.y = 0.42; slider.add(flag);
-    slider.position.set(0, pathY, 0); group.add(slider);
-    // 连杆（动态）
-    const rod = makeBar(L, 0.2, 0x4FC3F7); group.add(rod);
-    // 往复箭头
-    const arr = makeArrow(1.6, 0x4DB6AC); arr.position.set(0, pathY+0.75, 0.55); group.add(arr);
-    const l1 = makeLabel('曲柄', {border:0xFF8A80, size:0.5}); l1.position.set(pivot.x, pivot.y+1.05, 0); group.add(l1);
-    const l2 = makeLabel('滑块', {border:0xFF5252, size:0.5}); l2.position.set(2.0, pathY+0.45, 0); group.add(l2);
-    const l3 = makeLabel('连杆', {border:0x4FC3F7, size:0.5}); l3.position.set(0.5, 1.9, 0); group.add(l3);
-    const l4 = makeLabel('转动 → 直线往复', {bg:'rgba(77,182,172,0.92)', fg:'#fff', border:'#4DB6AC', size:0.55});
-    l4.position.set(0, -0.55, 0); group.add(l4);
+    const flag = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.55, 0.05), mat(0xFFD54F));
+    flag.position.set(0.24, BLOCK/2 + 0.28, 0); slider.add(flag);
+    const cloth = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.22, 0.03), mat(0xFF8A80));
+    cloth.position.set(0.4, BLOCK/2 + 0.40, 0); slider.add(cloth);
+    slider.position.set(0, pathY, 0); slider.userData.tag='sliderBlock'; group.add(slider);
+    const rod = makeBar(L, 0.19, 0x4FC3F7); group.add(rod);
+
+    const arr = makeArrow(1.5, 0x4DB6AC); arr.position.set(1.4, pathY + 0.95, 0.5); group.add(arr);
+    const l1 = makeLabel('曲柄', {border:0xFF8A80, size:0.5}); l1.position.set(pivot.x, pivot.y+0.55, 0); group.add(l1);
+    const l2 = makeLabel('滑块', {border:0xFF5252, size:0.5}); l2.position.set(2.5, pathY+0.95, 0); group.add(l2);
+    const l3 = makeLabel('连杆', {border:0x4FC3F7, size:0.5}); l3.position.set(0.2, 2.15, 0); group.add(l3);
+    const l4 = makeLabel('转动 → 直线往复', {bg:'rgba(77,182,172,0.92)', fg:'#fff', border:'#4DB6AC', size:0.52});
+    l4.position.set(0.6, -0.45, 0.9); group.add(l4);
+    setAxis([
+      {from:new THREE.Vector3(RAIL_CX-RAIL_LEN/2,pathY,0), to:new THREE.Vector3(RAIL_CX+RAIL_LEN/2,pathY,0), color:0x4DB6AC},
+    ]);
+
     let th = 0;
     return {
       group,
@@ -1089,330 +1284,408 @@ const DEMOS = {
         crank.rotation.z = th;
         const P = new THREE.Vector2(pivot.x + r*Math.cos(th), pivot.y + r*Math.sin(th));
         const dy = P.y - pathY;
-        const dx = Math.sqrt(Math.max(L*L - dy*dy, 0.01));
+        const dx = Math.sqrt(Math.max(L*L - dy*dy, 0.0001));   // |PQ| ≡ L，连杆长度恒定
         const S = new THREE.Vector2(P.x + dx, pathY);
         slider.position.x = S.x;
         const mid = P.clone().add(S).multiplyScalar(0.5);
         rod.position.set(mid.x, mid.y, 0);
         rod.rotation.z = Math.atan2(S.y-P.y, S.x-P.x);
-        rod.scale.set(P.distanceTo(S)/2.15, 1, 1);
-      }
+        rod.scale.set(P.distanceTo(S)/L, 1, 1);
+      },
+      reset(){ th = 0; }
     };
   },
-
-  /* ---------- 8 凸轮 ---------- */
+  /* ---------- 8 凸轮：盘面在 XY、绕 Z 转，从动杆接触高度按真实轮廓求解 ---------- */
   cam: function(){
     const group = new THREE.Group();
-    const base = makeBase(5.6, 3.2, 0xEFE9F5); base.position.y = -0.15; group.add(base);
-    const pivotY = 0.85, R = 0.85, e = 0.3;
-    // 电机（轴沿 X 进凸轮）
-    const motor = new THREE.Group();
-    motor.add(new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.7, 0.95), mat(0x9AA3B2, {roughness:0.5})));
-    motor.position.set(-1.9, pivotY, 0); group.add(motor);
-    const axle = makeAxle(1.3, 0.1, 0xB9C4D0); axle.rotation.z = Math.PI/2; axle.position.set(-1.2, pivotY, 0); group.add(axle);
-    const mL = makeLabel('电机', {bg:'rgba(154,163,178,0.92)', fg:'#fff', border:'#9AA3B2', size:0.5});
-    mL.position.set(-1.9, pivotY+1.0, 0); group.add(mL);
-    // 偏心凸轮
+    const base = makeBase(5.8, 3.2, 0xEFE9F5); base.position.y = -0.15; group.add(base);
+    const px = 0.15, py = 1.15, R = 0.85, e = 0.30, ROLL = 0.17;
+    const ROD_W = 0.34, ROD_L = 1.0;
+
+    // 电机：与凸轮同轴（都在 z 轴方向），装在凸轮后面
+    const motor = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.72, 0.9), mat(0x9AA3B2, {roughness:0.5}));
+    motor.position.set(px, py, -0.72); motor.castShadow = true; group.add(motor);
+    const mAxle = makeAxle(0.85, 0.09, 0x8E9BA8); mAxle.rotation.x = Math.PI/2;
+    mAxle.position.set(px, py, -0.30); group.add(mAxle);
+    group.add(makePost(px, 0.05, py-0.42, -0.72, 0.09));
+
+    // 偏心凸轮：圆盘中心相对轴心偏 e，整组绕 Z 转
     const camG = new THREE.Group();
-    const disc = new THREE.Mesh(new THREE.CylinderGeometry(R, R, 0.34, 48), mat(0xFF8A80, {roughness:0.35}));
+    const disc = new THREE.Mesh(new THREE.CylinderGeometry(R, R, 0.34, 56), mat(0xFF8A80, {roughness:0.35}));
+    disc.rotation.x = Math.PI/2;
+    disc.position.y = e;                       // 偏心量
     disc.castShadow = true; camG.add(disc);
-    const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.4, 14), mat(0x3A3444)); camG.add(hub);
-    disc.position.y = e; hub.position.y = e; // 偏心
-    camG.position.set(-0.35, pivotY, 0);
+    const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.42, 18), mat(0x3A3444));
+    hub.rotation.x = Math.PI/2; camG.add(hub);
+    camG.position.set(px, py, 0);
+    camG.userData.tag = 'cam';
     group.add(camG);
-    // 导向套筒
-    const tube1 = new THREE.Mesh(new THREE.BoxGeometry(0.12, 2.6, 0.5), mat(0xB9C4D0)); tube1.position.set(-0.62, pivotY+R+e+1.0, 0); group.add(tube1);
-    const tube2 = tube1.clone(); tube2.position.set(-0.08, pivotY+R+e+1.0, 0); group.add(tube2);
-    // 从动杆
-    const rod = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1, 0.3), mat(0x4FC3F7, {roughness:0.4}));
+
+    // 导向套筒（两片竖直板，间距略大于杆宽 = 真正"套住"）
+    const GD = ROD_W/2 + 0.05;
+    for(const sx of [-GD, GD]){
+      const p = new THREE.Mesh(new THREE.BoxGeometry(0.10, 1.45, 0.46), mat(0xB9C4D0));
+      p.position.set(px + sx, 2.95, 0); p.castShadow = true; group.add(p);
+    }
+    // 套筒横梁（把两片板连起来，避免悬空）
+    const bridge = new THREE.Mesh(new THREE.BoxGeometry(GD*2+0.2, 0.12, 0.46), mat(0xB9C4D0));
+    bridge.position.set(px, 3.72, 0); group.add(bridge);
+    group.add(makePost(px + GD + 0.35, 0.05, 3.72, 0, 0.07, 0xB9C4D0));
+
+    // 从动件：滚轮 + 杆 + 顶部小旗
+    const rod = new THREE.Mesh(new THREE.BoxGeometry(ROD_W, ROD_L, ROD_W), mat(0x4FC3F7, {roughness:0.4}));
     rod.castShadow = true; group.add(rod);
-    const roller = new THREE.Mesh(new THREE.SphereGeometry(0.17, 16, 16), mat(0xFFD54F)); group.add(roller);
-    const topFlag = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.1, 0.3), mat(0xFF5252)); group.add(topFlag);
-    const l1 = makeLabel('凸轮', {border:0xFF8A80, size:0.55}); l1.position.set(-0.35, pivotY+R+0.45, 0); group.add(l1);
-    const l2 = makeLabel('从动件（一上一下）', {bg:'rgba(79,195,247,0.92)', fg:'#fff', border:'#4FC3F7', size:0.55});
-    l2.position.set(-0.35, pivotY+R+e+2.5, 0); group.add(l2);
-    const l3 = makeLabel('转动 → 升降', {bg:'rgba(77,182,172,0.92)', fg:'#fff', border:'#4DB6AC', size:0.52});
-    l3.position.set(1.3, 0.6, 0); group.add(l3);
+    const roller = new THREE.Mesh(new THREE.CylinderGeometry(ROLL, ROLL, 0.16, 20), mat(0xFFD54F));
+    roller.rotation.x = Math.PI/2; roller.castShadow = true; group.add(roller);
+    const flag = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.10, 0.28), mat(0xFF5252));
+    flag.castShadow = true; group.add(flag);
+
+    const l1 = makeLabel('凸轮', {border:0xFF8A80, size:0.55}); l1.position.set(px-R-0.55, py+0.15, 0); group.add(l1);
+    const l2 = makeLabel('从动件（一上一下）', {bg:'rgba(79,195,247,0.92)', fg:'#fff', border:'#4FC3F7', size:0.52});
+    l2.position.set(px+0.1, 4.0, 0); group.add(l2);
+    const l3 = makeLabel('转动 → 升降', {bg:'rgba(77,182,172,0.92)', fg:'#fff', border:'#4DB6AC', size:0.5});
+    l3.position.set(px+1.55, 0.55, 0); group.add(l3);
     setAxis([
-      {from:new THREE.Vector3(-2.2,pivotY,0), to:new THREE.Vector3(1.2,pivotY,0), color:0xFF8A80},
+      {from:new THREE.Vector3(px-1.3,py,0), to:new THREE.Vector3(px+1.3,py,0), color:0xFF8A80},
     ]);
+    setExplode([
+      {obj:camG,  base:camG.position.clone(),  dir:new THREE.Vector3(0,0,-1), dist:0.9},
+      {obj:rod,   base:rod.position.clone(),   dir:new THREE.Vector3(0,0, 1), dist:0.5},
+    ]);
+
     let th = 0;
     function placeFollower(){
-      const h = R + e*Math.cos(th) + 0.06;
-      const baseY = pivotY + h;
-      rod.position.set(-0.35, baseY + 0.55, 0);
-      roller.position.set(-0.35, baseY, 0);
-      topFlag.position.set(-0.35, baseY + 1.05, 0);
+      // 偏心圆在 x = px 正上方的轮廓高度：y = e·cosθ + √(R² − (e·sinθ)²)
+      // 凸轮圆心随转角绕轴心公转：cx = px - e·sinθ, cy = py + e·cosθ
+      // 滚轮必须与凸轮外圆相切：|roller − camCenter| = R + ROLL
+      const off = e*Math.sin(th);
+      const rollY = py + e*Math.cos(th) + Math.sqrt(Math.max((R+ROLL)*(R+ROLL) - off*off, 1e-6));
+      roller.position.set(px, rollY, 0);
+      const rodBottom = rollY + ROLL;
+      rod.position.set(px, rodBottom + ROD_L/2, 0);
+      flag.position.set(px, rodBottom + ROD_L + 0.05, 0);
     }
     placeFollower();
     return {
       group,
       update(dt){
         th += dt*2.2;
-        camG.rotation.x = th;
+        camG.rotation.z = th;
         placeFollower();
-      }
+      },
+      reset(){ th = 0; placeFollower(); }
     };
   },
 
-  /* ---------- 9 惰轮 ---------- */
+  /* ---------- 9 惰轮：齿相位逐级推导，三齿轮全程不撞齿 ---------- */
   idler: function(){
     const group = new THREE.Group();
-    const base = makeBase(7.4, 3.2, 0xEFE9F5); base.position.y = -0.15; group.add(base);
+    const base = makeBase(7.4, 3.4, 0xEFE9F5); base.position.y = -0.15; group.add(base);
     const pitch = 0.34, teeth = 16, r = teeth*pitch/(2*Math.PI);
-    const gap = 2*r + 0.03, Y = 0.7;
-    const L = new THREE.Vector3(-gap, Y, 0), M = new THREE.Vector3(0, Y, 0), R = new THREE.Vector3(gap, Y, 0);
+    const gap = 2*r;                          // 节圆相切 = 正确中心距
+    const CY = 1.18;
     const gL = makeGear({teeth, pitch, thick:0.34, color:0xFF8A80, toothColor:0xF56A5E});
     const gM = makeGear({teeth, pitch, thick:0.34, color:0x9AA3B2, toothColor:0x8E9BA8});
     const gR = makeGear({teeth, pitch, thick:0.34, color:0x4FC3F7, toothColor:0x35AED9});
-    gL.position.copy(L); gM.position.copy(M); gR.position.copy(R);
+    gL.position.set(-gap, CY, 0); gM.position.set(0, CY, 0); gR.position.set(gap, CY, 0);
     group.add(gL, gM, gR);
-    // 电机
-    const motor = new THREE.Group();
-    motor.add(new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.6, 0.6), mat(0x9AA3B2, {roughness:0.5})));
-    motor.position.set(L.x-1.05, Y, 0); group.add(motor);
-    const axle = makeAxle(0.7, 0.09, 0x8E9BA8); axle.rotation.z = Math.PI/2; axle.position.set(L.x-0.62, Y, 0); group.add(axle);
-    // 白点标记
-    const dotL = new THREE.Mesh(new THREE.SphereGeometry(0.09, 14, 14), mat(0xFFFFFF)); dotL.position.set(0, r*0.92, 0.1); gL.add(dotL);
-    const dotM = new THREE.Mesh(new THREE.SphereGeometry(0.09, 14, 14), mat(0x3A3444)); dotM.position.set(0, r*0.92, 0.1); gM.add(dotM);
-    const dotR = new THREE.Mesh(new THREE.SphereGeometry(0.09, 14, 14), mat(0xFFFFFF)); dotR.position.set(0, r*0.92, 0.1); gR.add(dotR);
-    // 标签
-    const l1 = makeLabel('主动轮', {border:0xFF8A80, size:0.55}); l1.position.set(L.x, 1.7, 0); group.add(l1);
-    const l2 = makeLabel('惰轮', {border:0x9AA3B2, size:0.55}); l2.position.set(M.x, 1.7, 0); group.add(l2);
-    const l3 = makeLabel('从动轮', {border:0x4FC3F7, size:0.55}); l3.position.set(R.x, 1.7, 0); group.add(l3);
-    const l4 = makeLabel('方向反过来，速度不变！', {bg:'rgba(77,182,172,0.92)', fg:'#fff', border:'#4DB6AC', size:0.58});
-    l4.position.set(0, 2.45, 0); group.add(l4);
+    group.add(makeStand(-gap, CY, 0.28, 0.18, 0xB9C4D0, 0.0), makeStand(0, CY, 0.28, 0.18, 0xB9C4D0, 0.0), makeStand(gap, CY, 0.28, 0.18, 0xB9C4D0, 0.0));
+
+    const motor = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.58, 0.7), mat(0x9AA3B2, {roughness:0.5}));
+    motor.position.set(-gap, CY, -0.62); motor.castShadow = true; group.add(motor);
+    const mAxle = makeAxle(0.6, 0.09, 0x8E9BA8); mAxle.rotation.x = Math.PI/2;
+    mAxle.position.set(-gap, CY, -0.28); group.add(mAxle);
+
+    for(const [g, col] of [[gL, 0xFFFFFF], [gM, 0x3A3444], [gR, 0xFFFFFF]]){
+      const dot = new THREE.Mesh(new THREE.SphereGeometry(0.085, 14, 14), mat(col));
+      dot.position.set(0, r*0.62, 0.20); g.add(dot);
+    }
+
+    const l1 = makeLabel('主动轮', {border:0xFF8A80, size:0.55}); l1.position.set(-gap, CY+r+0.35, 0); group.add(l1);
+    const l2 = makeLabel('惰轮', {border:0x9AA3B2, size:0.55}); l2.position.set(0, CY+r+0.35, 0); group.add(l2);
+    const l3 = makeLabel('从动轮', {border:0x4FC3F7, size:0.55}); l3.position.set(gap, CY+r+0.35, 0); group.add(l3);
+    const l4 = makeLabel('方向反过来，速度不变！', {bg:'rgba(77,182,172,0.92)', fg:'#fff', border:'#4DB6AC', size:0.55});
+    l4.position.set(0, CY+r+0.95, 0); group.add(l4);
     setAxis([
-      {from:new THREE.Vector3(L.x,0.1,0), to:new THREE.Vector3(L.x,1.5,0), color:0xFF8A80},
-      {from:new THREE.Vector3(M.x,0.1,0), to:new THREE.Vector3(M.x,1.5,0), color:0x9AA3B2},
-      {from:new THREE.Vector3(R.x,0.1,0), to:new THREE.Vector3(R.x,1.5,0), color:0x4FC3F7},
+      {from:new THREE.Vector3(-gap,0.05,0), to:new THREE.Vector3(-gap,CY,0), color:0xFF8A80},
+      {from:new THREE.Vector3(0,0.05,0), to:new THREE.Vector3(0,CY,0), color:0x9AA3B2},
+      {from:new THREE.Vector3(gap,0.05,0), to:new THREE.Vector3(gap,CY,0), color:0x4FC3F7},
     ]);
+
+    let th = 0;
     return {
       group,
       update(dt){
-        gL.rotation.z += dt*2.0;
-        gM.rotation.z -= dt*2.0;
-        gR.rotation.z += dt*2.0;
-      }
+        th += dt*1.9;
+        gL.rotation.z = th;
+        gM.rotation.z = meshAngle(th, teeth, teeth, 0);       // 反向 + 齿槽对齐
+        gR.rotation.z = meshAngle(gM.rotation.z, teeth, teeth, 0);  // 再次反向 → 与主动轮同向
+      },
+      reset(){ th = 0; }
     };
   },
 
-  /* ---------- 10 互锁结构 ---------- */
+  /* ---------- 10 互锁结构：砖高与凸点高度匹配（不再层层穿插） ---------- */
   interlock: function(){
     const group = new THREE.Group();
     const base = makeBase(7.6, 3.2, 0xEFE9F5); base.position.y = -0.15; group.add(base);
-    const LAYERS = 4, BH = 0.6, STEP = 0.62;
+    const LAYERS = 4, BH = 0.50, STEP = 0.62;   // 0.50 砖体 + 0.12 凸点 = 0.62 层高
     function brick(c){ return makeBrick({w:0.9, d:0.42, h:BH, color:c}); }
+    const SEAM_Y = 2*STEP;                      // 上层组绕这个高度的接缝摆动
+
     // 左墙：砖缝对齐（会裂）
-    const wallBad = new THREE.Group(); wallBad.position.set(-1.9, 0, 0);
-    const badTop = new THREE.Group();
+    const wallBad = new THREE.Group(); wallBad.position.set(-1.9, 0, 0); group.add(wallBad);
+    const badTop = new THREE.Group(); badTop.position.y = SEAM_Y; wallBad.add(badTop);
     for(let L=0; L<LAYERS; L++){
-      const y = 0.3 + L*STEP;
-      const b0 = brick(L%2? 0xFFB74D : 0xFF8A80); b0.position.set(-0.45, y, 0);
-      const b1 = brick(L%2? 0xFFB74D : 0xFF8A80); b1.position.set(0.45, y, 0);
-      (L>=2 ? badTop : wallBad).add(b0, b1);
+      const y = BH/2 + L*STEP;
+      for(const sx of [-0.45, 0.45]){
+        const b = brick(L%2 ? 0xFFB74D : 0xFF8A80);
+        b.position.set(sx, L>=2 ? y-SEAM_Y : y, 0);
+        (L>=2 ? badTop : wallBad).add(b);
+      }
     }
-    wallBad.add(badTop);
-    group.add(wallBad);
     // 右墙：砖缝错开（稳）
-    const wallGood = new THREE.Group(); wallGood.position.set(1.9, 0, 0);
+    const wallGood = new THREE.Group(); wallGood.position.set(1.9, 0, 0); group.add(wallGood);
     for(let L=0; L<LAYERS; L++){
-      const y = 0.3 + L*STEP, off = (L%2) ? 0.45 : 0;
-      const b0 = brick(L%2? 0x4FC3F7 : 0x4DB6AC); b0.position.set(off-0.45, y, 0);
-      const b1 = brick(L%2? 0x4DB6AC : 0x4FC3F7); b1.position.set(off+0.45, y, 0);
-      wallGood.add(b0, b1);
+      const y = BH/2 + L*STEP, off = (L%2) ? 0.45 : 0;   // 偶数层齐缝，奇数层错半砖
+      [[off-0.45, 0x4FC3F7], [off+0.45, 0x4DB6AC]].forEach(([x, c])=>{
+        const b = brick(c);
+        b.position.set(x, y, 0);
+        wallGood.add(b);
+      });
     }
-    group.add(wallGood);
-    // 推力箭头
-    const push = makeArrow(1.0, 0xFF5252); push.position.set(-3.0, 1.35, 0.5); group.add(push);
-    const l1 = makeLabel('✗ 砖缝对齐，一推就裂', {bg:'rgba(255,82,82,0.92)', fg:'#fff', border:'#FF5252', size:0.55});
-    l1.position.set(-1.9, 3.1, 0); group.add(l1);
-    const l2 = makeLabel('✓ 砖缝错开，稳稳当当', {bg:'rgba(77,182,172,0.92)', fg:'#fff', border:'#4DB6AC', size:0.55});
-    l2.position.set(1.9, 3.1, 0); group.add(l2);
+
+    const push = makeArrow(0.9, 0xFF5252); push.rotation.z = -Math.PI/2;
+    push.position.set(-2.9, 2.35, 0.5); group.add(push);
+    const l1 = makeLabel('✗ 砖缝对齐，一推就裂', {bg:'rgba(255,82,82,0.92)', fg:'#fff', border:'#FF5252', size:0.52});
+    l1.position.set(-1.9, 3.05, 0); group.add(l1);
+    const l2 = makeLabel('✓ 砖缝错开，稳稳当当', {bg:'rgba(77,182,172,0.92)', fg:'#fff', border:'#4DB6AC', size:0.52});
+    l2.position.set(1.9, 3.05, 0); group.add(l2);
+
     return {
       group,
-      update(dt){
+      update(){
         const t = performance.now()/1000;
-        badTop.position.x = Math.sin(t*1.6)*0.10;
-        badTop.rotation.z = Math.sin(t*1.6)*0.03;
+        const s = Math.sin(t*1.6);
+        badTop.rotation.z = s*0.035;            // 绕接缝摆动（不是绕墙根整体晃动）
+        badTop.position.x = s*0.045;
       }
     };
   },
 
-  /* ---------- 11 两点固定 ---------- */
+  /* ---------- 11 两点固定：梁真正坐在支架顶上，螺钉真的穿过梁 ---------- */
   twopoint: function(){
     const group = new THREE.Group();
     const base = makeBase(7.2, 3.0, 0xEFE9F5); base.position.y = -0.15; group.add(base);
+    const STAND_H = 0.55, BEAM_T = 0.17, BEAM_Y = STAND_H + BEAM_T/2;
     function pin(){
       const g = new THREE.Group();
-      const p = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.6, 14), mat(0x3A3444));
-      p.position.y = 0.05; g.add(p);
-      const hd = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.17, 0.07, 14), mat(0x5B4A63));
-      hd.position.y = 0.4; g.add(hd);
+      const p = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.52, 14), mat(0x3A3444));
+      p.position.y = -0.09; g.add(p);          // 从梁中心向下穿过支架
+      const hd = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.07, 16), mat(0x5B4A63));
+      hd.position.y = BEAM_T/2 + 0.05; g.add(hd);
       return g;
     }
-    // 左：1 颗螺丝 → 会转
-    const left = new THREE.Group(); left.position.set(-1.85, 0.72, 0);
-    const bm1 = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.17, 0.4), mat(0xFF8A80, {roughness:0.35}));
+    // 左：1 颗螺丝 → 绕螺钉旋转
+    const left = new THREE.Group(); left.position.set(-1.85, BEAM_Y, 0); group.add(left);
+    const bm1 = new THREE.Mesh(new THREE.BoxGeometry(1.8, BEAM_T, 0.4), mat(0xFF8A80, {roughness:0.35}));
     bm1.castShadow = true; left.add(bm1);
-    const pn1 = pin(); left.add(pn1);
-    const stand1 = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.55, 0.55), mat(0x9AA3B2));
-    stand1.position.set(-1.85, 0.02, 0); group.add(stand1);
-    group.add(left);
-    // 右：2 颗螺丝 → 固定
-    const right = new THREE.Group(); right.position.set(1.85, 0.72, 0);
-    const bm2 = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.17, 0.4), mat(0x4FC3F7, {roughness:0.35}));
+    left.add(pin());
+    const stand1 = new THREE.Mesh(new THREE.BoxGeometry(0.42, STAND_H, 0.46), mat(0x9AA3B2));
+    stand1.position.set(-1.85, STAND_H/2, 0); stand1.castShadow = true; group.add(stand1);
+
+    // 右：2 颗螺丝 → 锁定
+    const right = new THREE.Group(); right.position.set(1.85, BEAM_Y, 0); group.add(right);
+    const bm2 = new THREE.Mesh(new THREE.BoxGeometry(1.8, BEAM_T, 0.4), mat(0x4FC3F7, {roughness:0.35}));
     bm2.castShadow = true; right.add(bm2);
-    const pn2 = pin(); pn2.position.x = -0.6; right.add(pn2);
-    const pn3 = pin(); pn3.position.x = 0.6; right.add(pn3);
-    const stand2 = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.55, 0.55), mat(0x9AA3B2));
-    stand2.position.set(1.85-0.6, 0.02, 0); group.add(stand2);
-    const stand3 = stand2.clone(); stand3.position.set(1.85+0.6, 0.02, 0); group.add(stand3);
-    group.add(right);
-    // 推力箭头
-    const push = makeArrow(0.9, 0xFF5252); push.position.set(-1.2, 1.35, 0.5); push.rotation.z = -Math.PI/2; group.add(push);
-    const l1 = makeLabel('1 颗螺丝 → 还会晃', {border:0xFF8A80, size:0.55}); l1.position.set(-1.85, 1.7, 0); group.add(l1);
-    const l2 = makeLabel('2 颗螺丝 → 稳稳不动', {border:0x4FC3F7, size:0.55}); l2.position.set(1.85, 1.7, 0); group.add(l2);
+    for(const sx of [-0.6, 0.6]){
+      const pn = pin(); pn.position.x = sx; right.add(pn);
+      const st = new THREE.Mesh(new THREE.BoxGeometry(0.42, STAND_H, 0.46), mat(0x9AA3B2));
+      st.position.set(1.85+sx, STAND_H/2, 0); st.castShadow = true; group.add(st);
+    }
+
+    const push = makeArrow(0.85, 0xFF5252); push.rotation.z = Math.PI;
+    push.position.set(-1.0, BEAM_Y+0.05, 0.42); group.add(push);
+    const push2 = push.clone(); push2.position.set(1.0, BEAM_Y+0.05, 0.42); group.add(push2);
+    const l1 = makeLabel('1 颗螺丝 → 还会晃', {border:0xFF8A80, size:0.55}); l1.position.set(-1.85, 1.55, 0); group.add(l1);
+    const l2 = makeLabel('2 颗螺丝 → 稳稳不动', {border:0x4FC3F7, size:0.55}); l2.position.set(1.85, 1.55, 0); group.add(l2);
     const l3 = makeLabel('两点确定一条直线', {bg:'rgba(255,213,79,0.92)', fg:'#7A5C08', border:'#FFD54F', size:0.55});
-    l3.position.set(0, 2.5, 0); group.add(l3);
+    l3.position.set(0, 2.35, 0); group.add(l3);
+
     return {
       group,
-      update(dt){
-        left.rotation.z = Math.sin(performance.now()/800)*0.45;
+      update(){
+        left.rotation.z = Math.sin(performance.now()/800)*0.42;
       }
     };
   },
 
-  /* ---------- 12 稳定性：三角形 vs 四边形 ---------- */
+  /* ---------- 12 三角形 vs 四边形：平行四边形机构，杆长全程不变 ---------- */
   stability: function(){
     const group = new THREE.Group();
-    const base = makeBase(7.6, 3.2, 0xEFE9F5); base.position.y = -0.15; group.add(base);
-    // 四边形（可剪切变形）
-    const J1 = new THREE.Vector2(-2.5, 0.5), J2 = new THREE.Vector2(-0.95, 0.5), J3 = new THREE.Vector2(-0.95, 1.8), J4 = new THREE.Vector2(-2.5, 1.8);
-    const barB = makeUnitBar(0.06, 0xFFB74D), barR = makeUnitBar(0.06, 0xFF8A80), barT = makeUnitBar(0.06, 0xFFB74D), barL = makeUnitBar(0.06, 0xFF8A80);
-    const joint = () => new THREE.Mesh(new THREE.SphereGeometry(0.12, 14, 14), mat(0x5B4A63));
+    const base = makeBase(7.6, 3.4, 0xEFE9F5); base.position.y = -0.15; group.add(base);
+    const J1 = new THREE.Vector2(-2.30, 0.55), J2 = new THREE.Vector2(-0.75, 0.55);
+    const H = 1.30;                                  // 两侧连杆长度（恒定）
+    const barB = makeUnitBar(0.065, 0xFFB74D), barR = makeUnitBar(0.065, 0xFF8A80),
+          barT = makeUnitBar(0.065, 0xFFB74D), barL = makeUnitBar(0.065, 0xFF8A80);
+    const joint = () => new THREE.Mesh(new THREE.SphereGeometry(0.115, 14, 14), mat(0x5B4A63));
     const jq1 = joint(), jq2 = joint(), jq3 = joint(), jq4 = joint();
     group.add(barB, barR, barT, barL, jq1, jq2, jq3, jq4);
-    // 三角形
-    const t1 = new THREE.Vector2(2.35, 0.5), t2 = new THREE.Vector2(3.9, 0.5), t3 = new THREE.Vector2(3.125, 1.85);
-    const tb1 = makeUnitBar(0.06, 0x4DB6AC), tb2 = makeUnitBar(0.06, 0x4DB6AC), tb3 = makeUnitBar(0.06, 0x4DB6AC);
+
+    // 三角形（刚性，纹丝不动）
+    const t1 = new THREE.Vector2(2.35, 0.55), t2 = new THREE.Vector2(3.90, 0.55), t3 = new THREE.Vector2(3.125, 1.90);
+    const tb1 = makeUnitBar(0.065, 0x4DB6AC), tb2 = makeUnitBar(0.065, 0x4DB6AC), tb3 = makeUnitBar(0.065, 0x4DB6AC);
     const jt1 = joint(), jt2 = joint(), jt3 = joint();
     group.add(tb1, tb2, tb3, jt1, jt2, jt3);
     placeBar(tb1, t1, t2); placeBar(tb2, t2, t3); placeBar(tb3, t3, t1);
     jt1.position.set(t1.x, t1.y, 0); jt2.position.set(t2.x, t2.y, 0); jt3.position.set(t3.x, t3.y, 0);
-    // 推力箭头
-    const push1 = makeArrow(0.8, 0xFF5252); push1.position.set(-3.15, 1.15, 0.5); group.add(push1);
-    const push2 = makeArrow(0.8, 0xFF5252); push2.position.set(2.0, 1.15, 0.5); group.add(push2);
-    const l1 = makeLabel('四边形 · 一推就歪', {border:0xFF8A80, size:0.55}); l1.position.set(-1.7, 2.6, 0); group.add(l1);
-    const l2 = makeLabel('三角形 · 纹丝不动', {border:0x4DB6AC, size:0.55}); l2.position.set(3.1, 2.6, 0); group.add(l2);
-    function placeQuad(){
+    // 底座
+    for(const q of [J1, J2, t1, t2]){
+      const post = new THREE.Mesh(new THREE.BoxGeometry(0.18, q.y, 0.18), mat(0xB9C4D0));
+      post.position.set(q.x, q.y/2, 0); group.add(post);
+    }
+
+    const push1 = makeArrow(0.8, 0xFF5252); push1.position.set(-3.15, 1.45, 0.45); group.add(push1);
+    const push2 = makeArrow(0.8, 0xFF5252); push2.position.set(2.0, 1.45, 0.45); group.add(push2);
+    const l1 = makeLabel('四边形 · 一推就歪', {border:0xFF8A80, size:0.55}); l1.position.set(-1.5, 2.65, 0); group.add(l1);
+    const l2 = makeLabel('三角形 · 纹丝不动', {border:0x4DB6AC, size:0.55}); l2.position.set(3.1, 2.65, 0); group.add(l2);
+
+    function placeQuad(sway){
+      // 平行四边形：两连杆同向摆同一角度 → 四边长度恒定，真实"变形不变长"
+      const u = new THREE.Vector2(Math.sin(sway)*H, Math.cos(sway)*H);
+      const J4 = new THREE.Vector2(J1.x + u.x, J1.y + u.y);
+      const J3 = new THREE.Vector2(J2.x + u.x, J2.y + u.y);
       placeBar(barB, J1, J2); placeBar(barR, J2, J3); placeBar(barT, J3, J4); placeBar(barL, J4, J1);
       jq1.position.set(J1.x, J1.y, 0); jq2.position.set(J2.x, J2.y, 0);
       jq3.position.set(J3.x, J3.y, 0); jq4.position.set(J4.x, J4.y, 0);
     }
-    placeQuad();
+    placeQuad(0);
     return {
       group,
-      update(dt){
-        const s = Math.sin(performance.now()/900)*0.30;
-        J3.x = -0.95 + s; J4.x = -2.5 + s;
-        placeQuad();
+      update(){
+        placeQuad(Math.sin(performance.now()/950)*0.28);
       }
     };
   },
 
-  /* ---------- 13 定滑轮 ---------- */
+  /* ---------- 13 定滑轮：绳长守恒，旗帜与把手严格等行程 ---------- */
   pulley: function(){
     const group = new THREE.Group();
     const base = makeBase(3.4, 3.0, 0xEFE9F5); base.position.y = -0.15; group.add(base);
-    // 立柱
-    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.11, 2.0, 14), mat(0x8E9BA8));
-    pole.position.y = 1.1; group.add(pole);
-    // 滑轮（轴 Z）
-    const wheel = new THREE.Group();
-    const disc = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.15, 32), mat(0xB39DDB, {roughness:0.35}));
-    disc.rotation.x = Math.PI/2; disc.castShadow = true; wheel.add(disc);
-    const groove = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.055, 10, 32), mat(0x7C5FB8));
-    groove.rotation.x = Math.PI/2; wheel.add(groove);
-    wheel.position.set(0, 2.05, 0); group.add(wheel);
-    // 绳索
-    const ropeL = makeUnitBar(0.035, 0x5B4A63); group.add(ropeL);
-    const ropeR = makeUnitBar(0.035, 0x5B4A63); group.add(ropeR);
+    const WHEEL_Y = 2.05, RW = 0.50;
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.095, WHEEL_Y, 16), mat(0x8E9BA8));
+    pole.position.set(0, WHEEL_Y/2, 0); pole.castShadow = true; group.add(pole);
+
+    const wheel = makePulley(RW, 0.16, 0xB39DDB);
+    wheel.position.set(0, WHEEL_Y, 0); group.add(wheel);
+    // 悬挂轮子的轴承架：两块侧板夹住轮轴（不穿过轮盘）
+    for(const sz of [-0.15, 0.15]){
+      const plate = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.46, 0.08), mat(0x8E9BA8));
+      plate.position.set(0, WHEEL_Y + 0.18, sz); plate.castShadow = true; group.add(plate);
+    }
+    const topBar = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.12, 0.38), mat(0x8E9BA8));
+    topBar.position.set(0, WHEEL_Y + 0.40, 0); group.add(topBar);
+    const wAxle = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.42, 12), mat(0x5B4A63));
+    wAxle.rotation.x = Math.PI/2; wAxle.position.set(0, WHEEL_Y, 0); group.add(wAxle);
+
+    const ropeL = makeUnitBar(0.032, 0x5B4A63), ropeR = makeUnitBar(0.032, 0x5B4A63);
+    group.add(ropeL, ropeR);
     // 旗帜
     const flag = new THREE.Group();
-    const stick = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.5, 0.05), mat(0x5B4A63)); flag.add(stick);
-    const cloth = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.3, 0.03), mat(0xFF5252)); cloth.position.set(0.28, 0.16, 0); flag.add(cloth);
+    const stick = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.62, 0.05), mat(0x5B4A63));
+    stick.position.y = -0.31; flag.add(stick);
+    const cloth = new THREE.Mesh(new THREE.BoxGeometry(0.40, 0.44, 0.03), mat(0xFF5252));
+    cloth.position.set(0.21, -0.22, 0); flag.add(cloth);
     group.add(flag);
     // 拉手
-    const handle = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.035, 8, 18), mat(0xFF8A80)); group.add(handle);
-    // 标签
-    const l1 = makeLabel('定滑轮', {border:0xB39DDB, size:0.55}); l1.position.set(0, 2.85, 0); group.add(l1);
-    const l2 = makeLabel('升 ↑', {bg:'rgba(77,182,172,0.92)', fg:'#fff', border:'#4DB6AC', size:0.5}); l2.position.set(-0.95, 1.5, 0); group.add(l2);
-    const l3 = makeLabel('拉 ↓', {bg:'rgba(255,138,128,0.92)', fg:'#fff', border:'#FF8A80', size:0.5}); l3.position.set(0.95, 1.5, 0); group.add(l3);
-    const l4 = makeLabel('往下拉绳子 → 旗帜往上升', {bg:'rgba(77,182,172,0.92)', fg:'#fff', border:'#4DB6AC', size:0.55});
-    l4.position.set(0, 0.0, 1.2); group.add(l4);
+    const handle = new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.032, 8, 18), mat(0xFF8A80));
+    group.add(handle);
+
+    const l1 = makeLabel('定滑轮', {border:0xB39DDB, size:0.55}); l1.position.set(0, WHEEL_Y+RW+0.55, 0); group.add(l1);
+    const l2 = makeLabel('升 ↑', {bg:'rgba(77,182,172,0.92)', fg:'#fff', border:'#4DB6AC', size:0.5}); l2.position.set(-1.0, 1.3, 0); group.add(l2);
+    const l3 = makeLabel('拉 ↓', {bg:'rgba(255,138,128,0.92)', fg:'#fff', border:'#FF8A80', size:0.5}); l3.position.set(1.0, 1.3, 0); group.add(l3);
+    const l4 = makeLabel('往下拉绳子 → 旗帜往上升', {bg:'rgba(77,182,172,0.92)', fg:'#fff', border:'#4DB6AC', size:0.52});
+    l4.position.set(0, 0.1, 1.15); group.add(l4);
+
     let ph = 0;
     return {
       group,
       update(dt){
-        ph += dt*0.4;
-        const k = ph % 1;
-        const flagY = 0.35 + 1.45*k;
-        const handY = 2.35 - 1.45*k;
-        flag.position.set(-0.5, flagY, 0);
-        handle.position.set(0.5, handY, 0);
-        placeBar(ropeL, {x:-0.5, y:2.1}, {x:-0.5, y:flagY+0.28});
-        placeBar(ropeR, {x:0.5, y:2.1}, {x:0.5, y:handY});
-        wheel.rotation.z = -k*Math.PI*4;
-      }
+        ph += dt*0.35;
+        const k = 0.5 - 0.5*Math.cos(ph*Math.PI*2);   // 0..1 平滑往复
+        const travel = 0.95;                          // 旗帜行程
+        const flagTop = 0.55 + travel*k;              // 旗顶（绳子系点），上限 1.50 < 轮底 1.55
+        const handY = (WHEEL_Y - 0.95) - travel*k;    // 把手：等行程下移（定滑轮不省力）
+        flag.position.set(-RW, flagTop, 0);
+        handle.position.set(RW, handY, 0);
+        placeBar(ropeL, {x:-RW, y:WHEEL_Y}, {x:-RW, y:flagTop});
+        placeBar(ropeR, {x: RW, y:WHEEL_Y}, {x: RW, y:handY});
+        wheel.rotation.z = -travel*k/RW;              // 绳移多少，轮就转多少（无相对滑动）
+      },
+      reset(){ ph = 0; }
     };
   },
 
-  /* ---------- 14 弹性势能（弹弓发射） ---------- */
+  /* ---------- 14 弹性势能：拉的方向与射的方向相反，抛体真实落地 ---------- */
   elastic: function(){
     const group = new THREE.Group();
     const base = makeBase(5.8, 3.0, 0xEFE9F5); base.position.y = -0.15; group.add(base);
-    // Y 形支架
-    const legL = makeUnitBar(0.07, 0x8E9BA8), legR = makeUnitBar(0.07, 0x8E9BA8);
-    group.add(legL, legR);
-    const forkL = new THREE.Vector2(-0.55, 1.55), forkR = new THREE.Vector2(0.55, 1.55), grip = new THREE.Vector2(0, 0.25);
-    placeBar(legL, grip, forkL); placeBar(legR, grip, forkR);
-    // 橡皮筋（两条）
-    const bandL = makeUnitBar(0.035, 0xFFB74D), bandR = makeUnitBar(0.035, 0xFFB74D);
+    const forkL = new THREE.Vector2(-0.42, 1.55), forkR = new THREE.Vector2(0.42, 1.55);
+    const crotch = new THREE.Vector2(0, 0.95), grip = new THREE.Vector2(0, 0.05);
+    const legL = makeUnitBar(0.075, 0x8E9BA8), legR = makeUnitBar(0.075, 0x8E9BA8), legM = makeUnitBar(0.085, 0x8E9BA8);
+    group.add(legL, legR, legM);
+    placeBar(legL, crotch, forkL); placeBar(legR, crotch, forkR); placeBar(legM, grip, crotch);
+
+    const bandL = makeUnitBar(0.032, 0xFFB74D), bandR = makeUnitBar(0.032, 0xFFB74D);
     group.add(bandL, bandR);
-    // 弹兜 + 小球
-    const pocket = new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 12), mat(0xFF5252)); group.add(pocket);
-    const ball = new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 16), mat(0x4FC3F7));
+    const pocket = new THREE.Mesh(new THREE.SphereGeometry(0.10, 12, 12), mat(0xFF6B5B));
+    group.add(pocket);
+    const ball = new THREE.Mesh(new THREE.SphereGeometry(0.16, 18, 18), mat(0x4FC3F7));
     ball.castShadow = true; group.add(ball);
-    // 射向箭头
-    const arr = makeArrow(1.3, 0x4DB6AC); arr.position.set(1.5, 1.1, 0.5); group.add(arr);
-    const l1 = makeLabel('弹性势能 → 动能', {bg:'rgba(77,182,172,0.92)', fg:'#fff', border:'#4DB6AC', size:0.58});
-    l1.position.set(0, 2.6, 0); group.add(l1);
-    const l2 = makeLabel('拉紧橡皮筋，一松手"砰"！', {bg:'rgba(255,213,79,0.92)', fg:'#7A5C08', border:'#FFD54F', size:0.55});
-    l2.position.set(0, 0.1, 1.3); group.add(l2);
-    let ph = 0;
+
+    const arr = makeArrow(1.2, 0x4DB6AC); arr.position.set(1.15, 1.75, 0.45); group.add(arr);
+    const l1 = makeLabel('弹性势能 → 动能', {bg:'rgba(77,182,172,0.92)', fg:'#fff', border:'#4DB6AC', size:0.55});
+    l1.position.set(0, 2.45, 0); group.add(l1);
+    const l2 = makeLabel('往后拉紧，一松手"砰"！', {bg:'rgba(255,213,79,0.92)', fg:'#7A5C08', border:'#FFD54F', size:0.52});
+    l2.position.set(0.2, 0.15, 1.25); group.add(l2);
+
+    // 运动时间轴：0-1.0 拉伸 / 1.0 释放 / 1.0-1.8 飞行 / 1.8-2.6 复位
+    const ANCHOR = new THREE.Vector2(0, 1.45);        // 弹兜静止位（两叉中点之间）
+    const PULL = new THREE.Vector2(-0.85, 1.22);      // 向后拉（-X），球才会向 +X 飞
+    const VX = 4.2, VY = 2.0, GRAV = 9.0, R_BALL = 0.16;
+    let t = 0;
+
+    function placeBand(p){
+      placeBar(bandL, forkL, p); placeBar(bandR, forkR, p);
+      pocket.position.set(p.x, p.y, 0);
+    }
+    placeBand(ANCHOR);
+
     return {
       group,
       update(dt){
-        ph += dt*0.5;
-        const cyc = ph % 2;
+        t += dt;
+        const c = t % 2.6;
         let p;
-        if(cyc < 0.75){
-          p = new THREE.Vector2(0, 1.42 - (cyc/0.75)*0.55);
-          ball.visible = false;
-        } else if(cyc < 1.2){
-          const k = (cyc-0.75)/0.45;
-          p = new THREE.Vector2(0, 0.87);
-          const bx = k*2.6, by = 0.92 + k*1.5 - k*k*2.6;
-          ball.position.set(bx, by, 0);
-          ball.visible = by > 0.18;
+        if(c < 1.0){
+          const k = 1 - Math.pow(1 - Math.min(c/1.0, 1), 2);   // 越拉越紧
+          p = ANCHOR.clone().lerp(PULL, k);
+          ball.visible = true;
+          ball.position.set(p.x, p.y, 0);                      // 球被兜住一起后移
+        } else if(c < 2.0){
+          const tau = c - 1.0;
+          p = ANCHOR.clone();                                  // 橡皮筋瞬间回弹
+          const bx = PULL.x + VX*tau;
+          const by = PULL.y + VY*tau - 0.5*GRAV*tau*tau;
+          ball.visible = by > R_BALL + 0.05 && bx < 2.75;
+          ball.position.set(bx, Math.max(by, R_BALL+0.05), 0);
         } else {
-          p = new THREE.Vector2(0, 1.42);
+          p = ANCHOR.clone();
           ball.visible = false;
         }
-        pocket.position.set(p.x, p.y, 0);
-        placeBar(bandL, forkL, p); placeBar(bandR, forkR, p);
-      }
+        placeBand(p);
+      },
+      reset(){ t = 0; ball.visible = true; placeBand(ANCHOR); }
     };
   },
 };
